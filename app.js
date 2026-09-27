@@ -25,8 +25,8 @@ const comics = [
 comics.forEach(comic => {
   if (comic.chapterCount) comic.chapters = Array.from({ length: comic.availableChapters }, (_, index) => ({
     number: index + 1,
-    title: `Chapter ${String(index + 1).padStart(2, '0')}`,
-    status: comic.availableChapters < comic.chapterCount && index + 1 === comic.availableChapters ? 'Available · more chapters planned' : 'Available',
+    title: `Capítulo ${String(index + 1).padStart(2, '0')}`,
+    status: comic.availableChapters < comic.chapterCount && index + 1 === comic.availableChapters ? 'Disponible · habrá más capítulos' : 'Disponible',
     cover: `/series/${comic.slug}/chapters/chapter-${String(index + 1).padStart(2, '0')}/cover/cover.jpg`,
     digitalUrl: null,
     physicalUrl: null,
@@ -51,25 +51,25 @@ const authors = [
 ];
 const projects = [];
 const services = [
-  ['Illustration', 'Character art, key art, covers and promotional illustration.'],
-  ['Comics & manga', 'Sequential art, comic production and visual storytelling.'],
-  ['Concept art', 'Characters, creatures, environments and props.'],
-  ['Design', 'Branding, graphic design, merchandise and promotional design.'],
-  ['Visual development', 'Characters, worldbuilding, game art and visual development.'],
-  ['Creative collaboration', 'Editorial projects, licensed properties and creative partnerships.'],
+  ['Ilustración', 'Arte de personajes, arte clave, portadas e ilustración promocional.'],
+  ['Cómics y manga', 'Narrativa secuencial, producción de cómics y narración visual.'],
+  ['Arte conceptual', 'Personajes, criaturas, entornos y objetos.'],
+  ['Diseño', 'Identidad de marca, diseño gráfico, productos y piezas promocionales.'],
+  ['Desarrollo visual', 'Personajes, creación de mundos, arte para videojuegos y desarrollo visual.'],
+  ['Colaboración creativa', 'Proyectos editoriales, propiedades con licencia y alianzas creativas.'],
 ];
 
 function authorCard(author) {
   return `<a class="creator-card" href="/authors/${author.slug}" data-route>
-    <div class="creator-image"><img src="/artistas/${encodeURIComponent(author.image)}" alt="${esc(author.name)}" loading="lazy"><span>VIEW PROFILE ↗</span></div>
-    <div class="creator-name"><h3>${esc(author.name)}</h3><span>${esc(author.role || 'CREATOR')}</span></div>
-    <p class="creator-descriptor">${esc(author.specialties.length ? author.specialties.join(' · ') : 'Alpha Eve creator portfolio')}</p>
+    <div class="creator-image"><img src="/artistas/${encodeURIComponent(author.image)}" alt="Arte de ${esc(author.name)}" loading="lazy"><span>VER PERFIL ↗</span></div>
+    <div class="creator-name"><h3>${esc(author.name)}</h3><span>${esc(author.role || 'CREADOR/A')}</span></div>
+    <p class="creator-descriptor">${esc(author.specialties.length ? author.specialties.join(' · ') : 'Portafolio creativo de Alpha Eve')}</p>
   </a>`;
 }
 function comicCard(comic, index = 0) {
   return `<a class="comic-card" href="/comics/${comic.slug}" data-route>
-    <div class="comic-card-art"><span class="comic-edition">ALPHA EVE ORIGINAL · ${String(index + 1).padStart(2, '0')}</span>${comic.cover ? `<img src="${esc(comic.cover)}" alt="${esc(comic.title)} cover" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()">` : ''}<strong>${esc(comic.initials)}</strong><span class="comic-art-note">COVER ART TO BE ADDED</span></div>
-    <div class="comic-card-copy"><h3>${esc(comic.title)}</h3><p>${esc(comic.genres?.length ? comic.genres.join(' · ') : 'Genres to be added')} <span>·</span> ${esc(comic.format === 'One-shot' ? 'One-shot' : comic.format === 'Series' ? `Series · ${comic.availableChapters || 0}${comic.chapterCount && comic.chapterCount !== comic.availableChapters ? ` of ${comic.chapterCount}` : ''} chapters` : 'Format to be confirmed')}</p><span class="comic-card-arrow">↗</span></div>
+    <div class="comic-card-art"><span class="comic-edition">ORIGINAL DE ALPHA EVE · ${String(index + 1).padStart(2, '0')}</span>${comic.cover ? `<img src="${esc(comic.cover)}" alt="Portada de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()">` : ''}<strong>${esc(comic.initials)}</strong><span class="comic-art-note">PORTADA POR AGREGAR</span></div>
+    <div class="comic-card-copy"><h3>${esc(comic.title)}</h3><p>${esc(comic.genres?.length ? comic.genres.join(' · ') : 'Géneros por agregar')} <span>·</span> ${esc(comic.format === 'One-shot' ? 'Tomo único (oneshot)' : comic.format === 'Series' ? `Serie · ${comic.availableChapters || 0}${comic.chapterCount && comic.chapterCount !== comic.availableChapters ? ` de ${comic.chapterCount}` : ''} capítulos` : 'Formato por confirmar')}</p><span class="comic-card-arrow">↗</span></div>
   </a>`;
 }
 function ipCard(item) {
@@ -90,7 +90,7 @@ menu?.addEventListener('click', () => {
 function closeMenu() { nav?.classList.remove('open'); menu?.setAttribute('aria-expanded', 'false'); }
 
 function authorDirectory() {
-  return `<section class="directory-page authors-directory"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Home</a><p class="eyebrow">ALPHA EVE STUDIOS · CREATIVE ROSTER</p><h1>AUTHORS<span class="red">.</span></h1><p>Meet the artists and creative minds behind Alpha Eve's worlds. Select a profile to view their portfolio.</p><div class="directory-count">${authors.length} CREATOR PROFILES</div></div><div class="creator-grid directory-creators">${authors.map(authorCard).join('')}</div></section>`;
+  return `<section class="directory-page authors-directory"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS · EQUIPO CREATIVO</p><h1>AUTORES<span class="red">.</span></h1><p>Conoce a los artistas y mentes creativas detrás de los mundos de Alpha Eve. Selecciona un perfil para ver su portafolio.</p><div class="directory-count">${authors.length} PERFILES CREATIVOS</div></div><div class="creator-grid directory-creators">${authors.map(authorCard).join('')}</div></section>`;
 }
 function normalizedTitle(value) {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
@@ -98,7 +98,7 @@ function normalizedTitle(value) {
 const genreOptions = ['Acción', 'Misterio', 'Gore +18', 'Slice of Life', 'Psicológico', 'Isekai', 'Kaiju', 'Ecchi +18', 'Fantasía', 'Cyberpunk', 'Comedia', 'Superhéroes', 'Crimen', 'Vampiros', 'Shonen', 'Aventura', 'Noir', 'Deportivo', 'Sobrenatural', 'Detective', 'Zombies', 'Shojo', 'Horror', 'Mecha', 'Histórico', 'Thriller', 'Artes Marciales', 'Steampunk', 'Seinen', 'Sci-Fi', 'Romance', 'Drama', 'Suspenso', 'Magia', 'Western', 'Josei'];
 function comicDirectory() {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-  return `<section class="directory-page comics-directory"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Home</a><p class="eyebrow">ALPHA EVE STUDIOS · COMICS &amp; MANGA</p><h1>THE COMICS<br>CATALOG<span class="red">.</span></h1><p>Original stories and worlds published by Alpha Eve. Select a series to explore its creators, chapters and artwork.</p><div class="directory-count">${comics.length} SERIES</div></div><div class="catalog-filters"><label class="catalog-search"><span>SEARCH TITLES</span><input id="comic-search" type="search" placeholder="Search comics…" autocomplete="off"></label><fieldset class="catalog-genres"><legend>FILTER BY GENRE</legend><p class="genre-filter-note">Select one or more genres. Genre assignments for each series can be added later.</p><div class="genre-filter-grid">${genreOptions.map(genre => `<label><input type="checkbox" data-comic-genre value="${esc(genre)}"><span>${esc(genre)}</span></label>`).join('')}</div></fieldset></div><nav class="catalog-letters" aria-label="Filter comics by first letter"><button type="button" class="active" data-comic-letter="">ALL</button>${letters.map(letter => `<button type="button" data-comic-letter="${letter}" ${comics.some(comic => normalizedTitle(comic.title).startsWith(letter)) ? '' : 'disabled'}>${letter}</button>`).join('')}</nav><p id="catalog-results-line" class="catalog-results-line" aria-live="polite"></p><div class="comic-directory-grid" id="comic-directory-grid"></div><div class="directory-subsection"><p class="eyebrow">MORE ORIGINAL WORLDS</p><div class="ip-grid">${originalIp.map(ipCard).join('')}</div></div></section>`;
+  return `<section class="directory-page comics-directory"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS · CÓMICS Y MANGA</p><h1>CATÁLOGO DE<br>CÓMICS<span class="red">.</span></h1><p>Historias y mundos originales publicados por Alpha Eve. Selecciona una serie para conocer a sus creadores, capítulos y arte.</p><div class="directory-count">${comics.length} SERIES</div></div><div class="catalog-filters"><label class="catalog-search"><span>BUSCAR TÍTULOS</span><input id="comic-search" type="search" placeholder="Buscar cómics…" autocomplete="off"></label><fieldset class="catalog-genres"><legend>FILTRAR POR GÉNERO</legend><p class="genre-filter-note">Selecciona uno o más géneros. Puedes asignar los géneros a cada serie más adelante.</p><div class="genre-filter-grid">${genreOptions.map(genre => `<label><input type="checkbox" data-comic-genre value="${esc(genre)}"><span>${esc(genre)}</span></label>`).join('')}</div></fieldset></div><nav class="catalog-letters" aria-label="Filtrar cómics por letra inicial"><button type="button" class="active" data-comic-letter="">TODOS</button>${letters.map(letter => `<button type="button" data-comic-letter="${letter}" ${comics.some(comic => normalizedTitle(comic.title).startsWith(letter)) ? '' : 'disabled'}>${letter}</button>`).join('')}</nav><p id="catalog-results-line" class="catalog-results-line" aria-live="polite"></p><div class="comic-directory-grid" id="comic-directory-grid"></div><div class="directory-subsection"><p class="eyebrow">MÁS MUNDOS ORIGINALES</p><div class="ip-grid">${originalIp.map(ipCard).join('')}</div></div></section>`;
 }
 let activeComicLetter = '';
 let activeComicGenres = [];
@@ -116,9 +116,9 @@ function renderComicCatalog() {
   const selectedGenresAssigned = comics.some(comic => activeComicGenres.some(genre => comic.genres?.includes(genre)));
   grid.innerHTML = filtered.length
     ? filtered.map(comic => comicCard(comic, comics.indexOf(comic))).join('')
-    : `<p class="catalog-empty">${activeComicGenres.length && !selectedGenresAssigned ? 'No series have been assigned to the selected genres yet.' : 'No comics match these filters.'}</p>`;
+    : `<p class="catalog-empty">${activeComicGenres.length && !selectedGenresAssigned ? 'Todavía no hay series asignadas a los géneros seleccionados.' : 'Ningún cómic coincide con estos filtros.'}</p>`;
   const resultCount = document.querySelector('#catalog-results-line');
-  if (resultCount) resultCount.textContent = `SHOWING ${filtered.length} OF ${comics.length} SERIES`;
+  if (resultCount) resultCount.textContent = `MOSTRANDO ${filtered.length} DE ${comics.length} SERIES`;
   document.querySelectorAll('[data-comic-letter]').forEach(button => {
     const active = button.getAttribute('data-comic-letter') === activeComicLetter;
     button.classList.toggle('active', active);
@@ -137,50 +137,50 @@ function renderFeaturedComic(direction = 'random') {
     featuredComicIndex = nextIndex;
   }
   const comic = comics[featuredComicIndex];
-  const format = comic.format === 'One-shot' ? 'ONE-SHOT' : comic.format === 'Series' ? `${comic.availableChapters} CHAPTER${comic.availableChapters === 1 ? '' : 'S'}` : 'FORMAT TO BE CONFIRMED';
-  container.innerHTML = `<div class="featured-comic-carousel"><a class="featured-comic-link" href="/comics/${comic.slug}" data-route><div class="featured-comic-cover"><img src="${esc(comic.cover)}" alt="${esc(comic.title)} cover" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()"><strong>${esc(comic.initials)}</strong><span>ALPHA EVE ORIGINAL · ${String(featuredComicIndex + 1).padStart(2, '0')}</span></div><div class="featured-comic-copy"><p class="eyebrow">FEATURED FROM THE CATALOG</p><h3>${esc(comic.title)}</h3><span>${format} · EXPLORE COMIC ↗</span></div></a><div class="featured-comic-controls"><span>${String(featuredComicIndex + 1).padStart(2, '0')} / ${String(comics.length).padStart(2, '0')}</span><button type="button" data-featured-step="-1" aria-label="Previous featured comic">←</button><button type="button" data-featured-step="1" aria-label="Next featured comic">→</button></div></div>`;
+  const format = comic.format === 'One-shot' ? 'TOMO ÚNICO (ONESHOT)' : comic.format === 'Series' ? `${comic.availableChapters} CAPÍTULO${comic.availableChapters === 1 ? '' : 'S'}` : 'FORMATO POR CONFIRMAR';
+  container.innerHTML = `<div class="featured-comic-carousel"><a class="featured-comic-link" href="/comics/${comic.slug}" data-route><div class="featured-comic-cover"><img src="${esc(comic.cover)}" alt="Portada de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()"><strong>${esc(comic.initials)}</strong><span>ORIGINAL DE ALPHA EVE · ${String(featuredComicIndex + 1).padStart(2, '0')}</span></div><div class="featured-comic-copy"><p class="eyebrow">DESTACADO DEL CATÁLOGO</p><h3>${esc(comic.title)}</h3><span>${format} · EXPLORAR CÓMIC ↗</span></div></a><div class="featured-comic-controls"><span>${String(featuredComicIndex + 1).padStart(2, '0')} / ${String(comics.length).padStart(2, '0')}</span><button type="button" data-featured-step="-1" aria-label="Cómic destacado anterior">←</button><button type="button" data-featured-step="1" aria-label="Siguiente cómic destacado">→</button></div></div>`;
 }
 function authorPage(author) {
   const related = comicsFor(author);
   return `<section class="detail-shell author-profile">
-    <a class="detail-back" href="/authors" data-route>← All authors</a>
+    <a class="detail-back" href="/authors" data-route>← Todos los autores</a>
     <div class="detail-hero author-hero"><div class="author-portrait"><img src="/artistas/${encodeURIComponent(author.image)}" alt="${esc(author.name)}" /></div>
-      <div class="detail-copy"><p class="eyebrow">ALPHA EVE · CREATOR PORTFOLIO</p><h1>${esc(author.name)}<span class="red">.</span></h1><div class="detail-meta">${esc(author.role || 'CREATOR PROFILE')}</div><p>${esc(author.bio || 'Artist portfolio and creative profile. Biography and specialties will be added as verified information becomes available.')}</p><a class="button button-dark" href="#contact">Work with ${esc(author.name)} <span>↗</span></a></div></div>
-    <section class="detail-block"><p class="eyebrow">ABOUT</p><h2>Biography &amp; specialties</h2>${author.bio || author.specialties.length ? `<p>${esc(author.bio || author.specialties.join(' · '))}</p>` : '<div class="detail-empty">Biography and creative specialties will be added here.</div>'}</section>
-    <section class="detail-block"><p class="eyebrow">SELECTED WORK</p><h2>Portfolio</h2><div class="portfolio-feature"><img src="/artistas/${encodeURIComponent(author.image)}" alt="Artwork by ${esc(author.name)}" loading="lazy"><div><span>ALPHA EVE CREATOR</span><h3>${esc(author.name)}</h3><p>Portfolio artwork will be added as approved work is available.</p></div></div></section>
-    <section class="detail-block"><p class="eyebrow">COMICS</p><h2>Stories &amp; series</h2>${related.length ? `<div class="comic-directory-grid">${related.map(comicCard).join('')}</div>` : '<div class="detail-empty">No comic credits are linked to this profile yet.</div>'}</section>
-    <section class="detail-block"><p class="eyebrow">PROJECTS &amp; COLLABORATIONS</p><h2>Selected projects</h2><div class="detail-empty">Project credits will appear here when confirmed.</div></section>
-    <section class="detail-block"><p class="eyebrow">GALLERY</p><h2>Artwork &amp; process</h2><div class="author-gallery"><img src="/artistas/${encodeURIComponent(author.image)}" alt="${esc(author.name)} profile artwork" loading="lazy"><div class="detail-empty">Additional illustrations, sketches and covers will be added here.</div></div></section>
-    <section class="detail-block"><p class="eyebrow">CONTACT</p><h2>Work with ${esc(author.name)}</h2><p>For professional inquiries, contact Alpha Eve Studios.</p><a class="button button-dark" href="#contact">Contact Alpha Eve <span>↗</span></a></section>
+      <div class="detail-copy"><p class="eyebrow">ALPHA EVE · PORTAFOLIO CREATIVO</p><h1>${esc(author.name)}<span class="red">.</span></h1><div class="detail-meta">${esc(author.role || 'PERFIL CREATIVO')}</div><p>${esc(author.bio || 'Portafolio y perfil creativo del artista. La biografía y sus especialidades se agregarán cuando se confirme la información.')}</p><a class="button button-dark" href="#contact">Colabora con ${esc(author.name)} <span>↗</span></a></div></div>
+    <section class="detail-block"><p class="eyebrow">ACERCA DEL AUTOR</p><h2>Biografía y especialidades</h2>${author.bio || author.specialties.length ? `<p>${esc(author.bio || author.specialties.join(' · '))}</p>` : '<div class="detail-empty">La biografía y las especialidades creativas aparecerán aquí.</div>'}</section>
+    <section class="detail-block"><p class="eyebrow">TRABAJO DESTACADO</p><h2>Portafolio</h2><div class="portfolio-feature"><img src="/artistas/${encodeURIComponent(author.image)}" alt="Ilustración de ${esc(author.name)}" loading="lazy"><div><span>CREADOR/A DE ALPHA EVE</span><h3>${esc(author.name)}</h3><p>El arte del portafolio se agregará cuando esté disponible.</p></div></div></section>
+    <section class="detail-block"><p class="eyebrow">CÓMICS</p><h2>Historias y series</h2>${related.length ? `<div class="comic-directory-grid">${related.map(comicCard).join('')}</div>` : '<div class="detail-empty">Todavía no hay cómics vinculados a este perfil.</div>'}</section>
+    <section class="detail-block"><p class="eyebrow">PROYECTOS Y COLABORACIONES</p><h2>Proyectos destacados</h2><div class="detail-empty">Los proyectos aparecerán aquí cuando se confirmen.</div></section>
+    <section class="detail-block"><p class="eyebrow">GALERÍA</p><h2>Arte y proceso</h2><div class="author-gallery"><img src="/artistas/${encodeURIComponent(author.image)}" alt="Ilustración de perfil de ${esc(author.name)}" loading="lazy"><div class="detail-empty">Aquí se agregarán más ilustraciones, bocetos y portadas.</div></div></section>
+    <section class="detail-block"><p class="eyebrow">CONTACTO</p><h2>Colabora con ${esc(author.name)}</h2><p>Para consultas profesionales, contacta a Alpha Eve Studios.</p><a class="button button-dark" href="#contact">Contactar a Alpha Eve <span>↗</span></a></section>
   </section>`;
 }
 function comicPage(comic) {
   const linkedAuthors = creatorsFor(comic);
-  const chapterSection = comic.chapters.length ? `<div class="chapter-grid">${comic.chapters.map(chapter => `<article class="chapter-card"><div class="chapter-art"><img src="${esc(chapter.cover)}" alt="${esc(comic.title)} — ${esc(chapter.title)} cover" onerror="this.remove()"><span>CHAPTER COVER TO BE ADDED</span></div><div><b>CHAPTER ${String(chapter.number).padStart(2, '0')}</b><h3>${esc(chapter.title)}</h3><p>${esc(chapter.status || 'Details to be confirmed')}</p>${chapter.digitalUrl ? `<a href="${esc(chapter.digitalUrl)}">BUY DIGITAL ↗</a>` : ''}${chapter.physicalUrl ? `<a href="${esc(chapter.physicalUrl)}">BUY PHYSICAL ↗</a>` : '<span class="purchase-unavailable">Purchase link to be added</span>'}</div></article>`).join('')}</div>` : comic.format === 'One-shot' ? '<div class="detail-empty">This one-shot is presented as a single work. Reading and purchase links will be added when available.</div>' : '<div class="detail-empty">Chapter information has not been added yet.</div>';
-  const charSection = comic.characters.length ? `<div class="character-grid">${comic.characters.map(character => `<article class="character-card"><div class="character-art">${character.image ? `<img src="${esc(character.image)}" alt="${esc(character.name)}">` : 'ARTWORK TO BE ADDED'}</div><h3>${esc(character.name)}</h3></article>`).join('')}</div>` : '<div class="detail-empty">Character artwork and names will be added here.</div>';
-  const gallery = comic.gallery.length ? `<div class="comic-gallery">${comic.gallery.map(image => `<img src="${esc(image.src)}" alt="${esc(image.alt || comic.title)}" loading="lazy">`).join('')}</div>` : '<div class="detail-empty">Promotional art, sketches and interior pages will be added here.</div>';
-  const cover = `<div class="comic-key-art"><img src="${esc(comic.cover)}" alt="${esc(comic.title)} cover" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()"><small>ALPHA EVE ORIGINAL</small><strong>${esc(comic.initials)}</strong><span>KEY ART TO BE ADDED</span></div>`;
-  const coverGallery = `<figure class="cover-image"><img src="${esc(comic.cover)}" alt="${esc(comic.title)} main cover" onerror="this.remove();this.parentElement.classList.add('missing')"><figcaption>MAIN COVER</figcaption></figure>`;
-  const formatBadge = comic.format === 'One-shot' ? '<span class="series-badge oneshot-badge">ONE-SHOT</span>' : comic.format === 'Series' ? `<span class="series-badge">SERIES · ${comic.availableChapters} CHAPTER${comic.availableChapters === 1 ? '' : 'S'}${comic.chapterCount !== comic.availableChapters ? ` · ${comic.availableChapters} OF ${comic.chapterCount}` : ''}</span>` : '<span class="series-badge">FORMAT TO BE CONFIRMED</span>';
-  const genreText = comic.genres?.length ? comic.genres.map(esc).join(' · ') : 'Genres to be added';
+  const chapterSection = comic.chapters.length ? `<div class="chapter-grid">${comic.chapters.map(chapter => `<article class="chapter-card"><div class="chapter-art"><img src="${esc(chapter.cover)}" alt="${esc(comic.title)} — portada del ${esc(chapter.title)}" onerror="this.remove()"><span>PORTADA DEL CAPÍTULO POR AGREGAR</span></div><div><b>CAPÍTULO ${String(chapter.number).padStart(2, '0')}</b><h3>${esc(chapter.title)}</h3><p>${esc(chapter.status || 'Detalles por confirmar')}</p>${chapter.digitalUrl ? `<a href="${esc(chapter.digitalUrl)}">COMPRAR EDICIÓN DIGITAL ↗</a>` : ''}${chapter.physicalUrl ? `<a href="${esc(chapter.physicalUrl)}">COMPRAR EDICIÓN IMPRESA ↗</a>` : '<span class="purchase-unavailable">Enlace de compra por agregar</span>'}</div></article>`).join('')}</div>` : comic.format === 'One-shot' ? '<div class="detail-empty">Este oneshot se presenta como una obra única. Los enlaces de lectura y compra se agregarán cuando estén disponibles.</div>' : '<div class="detail-empty">Todavía no se ha agregado información de los capítulos.</div>';
+  const charSection = comic.characters.length ? `<div class="character-grid">${comic.characters.map(character => `<article class="character-card"><div class="character-art">${character.image ? `<img src="${esc(character.image)}" alt="${esc(character.name)}">` : 'ILUSTRACIÓN POR AGREGAR'}</div><h3>${esc(character.name)}</h3></article>`).join('')}</div>` : '<div class="detail-empty">Los nombres e ilustraciones de los personajes se agregarán aquí.</div>';
+  const gallery = comic.gallery.length ? `<div class="comic-gallery">${comic.gallery.map(image => `<img src="${esc(image.src)}" alt="${esc(image.alt || comic.title)}" loading="lazy">`).join('')}</div>` : '<div class="detail-empty">Aquí se agregarán arte promocional, bocetos y páginas interiores.</div>';
+  const cover = `<div class="comic-key-art"><img src="${esc(comic.cover)}" alt="Portada de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()"><small>ORIGINAL DE ALPHA EVE</small><strong>${esc(comic.initials)}</strong><span>ARTE CLAVE POR AGREGAR</span></div>`;
+  const coverGallery = `<figure class="cover-image"><img src="${esc(comic.cover)}" alt="Portada principal de ${esc(comic.title)}" onerror="this.remove();this.parentElement.classList.add('missing')"><figcaption>PORTADA PRINCIPAL</figcaption></figure>`;
+  const formatBadge = comic.format === 'One-shot' ? '<span class="series-badge oneshot-badge">TOMO ÚNICO · ONESHOT</span>' : comic.format === 'Series' ? `<span class="series-badge">SERIE · ${comic.availableChapters} CAPÍTULO${comic.availableChapters === 1 ? '' : 'S'}${comic.chapterCount !== comic.availableChapters ? ` · ${comic.availableChapters} DE ${comic.chapterCount}` : ''}</span>` : '<span class="series-badge">FORMATO POR CONFIRMAR</span>';
+  const genreText = comic.genres?.length ? comic.genres.map(esc).join(' · ') : 'Géneros por agregar';
   return `<section class="detail-shell comic-detail">
-    <a class="detail-back" href="/comics" data-route>← All comics</a>
-    <div class="series-hero-banner">${cover}<div class="series-hero-shade"></div><div class="series-hero-copy"><p class="eyebrow">ALPHA EVE ORIGINAL · COMIC / MANGA</p><h1>${esc(comic.title)}<span class="red">.</span></h1><div class="series-badges">${formatBadge}<span class="series-badge">GENRE · ${genreText}</span></div><p class="series-hero-synopsis">${esc(comic.synopsis || 'Story synopsis coming soon.')}</p><a class="button button-light" href="#chapters">Read / buy <span>↘</span></a></div></div>
-    <section class="detail-block synopsis-block"><p class="eyebrow">THE STORY</p><h2>Synopsis</h2><p class="series-synopsis">${esc(comic.synopsis || 'The synopsis for this story will be added here.')}</p></section>
-    <section class="detail-block" id="chapters"><p class="eyebrow">READ THE SERIES</p><h2>Chapters</h2>${chapterSection}</section>
-    <section class="detail-block"><p class="eyebrow">COVERS</p><h2>Cover gallery</h2><div class="cover-gallery">${coverGallery}${comic.variants?.length ? comic.variants.map(image => `<figure class="cover-image"><img src="${esc(image)}" alt="${esc(comic.title)} variant cover"><figcaption>VARIANT COVER</figcaption></figure>`).join('') : '<div class="detail-empty">Variant and special covers will appear here when available.</div>'}</div></section>
-    <section class="detail-block"><p class="eyebrow">CHARACTERS</p><h2>Meet the cast</h2>${charSection}</section>
-    <section class="detail-block"><p class="eyebrow">ART &amp; PROCESS</p><h2>Gallery</h2>${gallery}</section>
-    <section class="detail-block"><p class="eyebrow">CREATED BY</p><h2>The creators</h2>${linkedAuthors.length ? `<div class="creator-grid comic-creators">${linkedAuthors.map(authorCard).join('')}</div>` : '<div class="detail-empty">Creator credits will be linked here when confirmed.</div>'}</section>
-    <section class="detail-block"><p class="eyebrow">DISCOVER MORE</p><h2>More from Alpha Eve</h2><div class="comic-directory-grid">${comics.filter(entry => entry.slug !== comic.slug).map(comicCard).join('')}</div></section>
+    <a class="detail-back" href="/comics" data-route>← Todos los cómics</a>
+    <div class="series-hero-banner">${cover}<div class="series-hero-shade"></div><div class="series-hero-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE · CÓMIC / MANGA</p><h1>${esc(comic.title)}<span class="red">.</span></h1><div class="series-badges">${formatBadge}<span class="series-badge">GÉNERO · ${genreText}</span></div><p class="series-hero-synopsis">${esc(comic.synopsis || 'La sinopsis estará disponible próximamente.')}</p><a class="button button-light" href="#chapters">Leer o comprar <span>↘</span></a></div></div>
+    <section class="detail-block synopsis-block"><p class="eyebrow">LA HISTORIA</p><h2>Sinopsis</h2><p class="series-synopsis">${esc(comic.synopsis || 'La sinopsis de esta historia se agregará aquí.')}</p></section>
+    <section class="detail-block" id="chapters"><p class="eyebrow">LEE LA HISTORIA</p><h2>Capítulos</h2>${chapterSection}</section>
+    <section class="detail-block"><p class="eyebrow">PORTADAS</p><h2>Galería de portadas</h2><div class="cover-gallery">${coverGallery}${comic.variants?.length ? comic.variants.map(image => `<figure class="cover-image"><img src="${esc(image)}" alt="Portada alternativa de ${esc(comic.title)}"><figcaption>PORTADA ALTERNATIVA</figcaption></figure>`).join('') : '<div class="detail-empty">Las portadas alternativas y especiales aparecerán aquí cuando estén disponibles.</div>'}</div></section>
+    <section class="detail-block"><p class="eyebrow">PERSONAJES</p><h2>Conoce al elenco</h2>${charSection}</section>
+    <section class="detail-block"><p class="eyebrow">ARTE Y PROCESO</p><h2>Galería</h2>${gallery}</section>
+    <section class="detail-block"><p class="eyebrow">CREADO POR</p><h2>Sus creadores</h2>${linkedAuthors.length ? `<div class="creator-grid comic-creators">${linkedAuthors.map(authorCard).join('')}</div>` : '<div class="detail-empty">Los créditos de creación se vincularán aquí cuando se confirmen.</div>'}</section>
+    <section class="detail-block"><p class="eyebrow">DESCUBRE MÁS</p><h2>Más de Alpha Eve</h2><div class="comic-directory-grid">${comics.filter(entry => entry.slug !== comic.slug).map(comicCard).join('')}</div></section>
   </section>`;
 }
 function simpleDirectory(path) {
-  if (path === '/services') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Home</a><p class="eyebrow">CREATIVE STUDIO · DOMINICAN REPUBLIC</p><h1>OUR<br>SERVICES<span class="red">.</span></h1><p>Creative services for publishers, brands, studios, creators and partners.</p></div><div class="services-grid">${services.map(([title, desc], index) => `<article class="service-item"><span class="service-no">0${index + 1}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p></article>`).join('')}</div><a class="button button-dark" href="/#contact">Work with us <span>↗</span></a></section>`;
-  if (path === '/projects') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Home</a><p class="eyebrow">ALPHA EVE · SELECTED WORK</p><h1>PROJECTS<span class="red">.</span></h1><p>Client work, collaborations, games, illustration and design.</p></div><div class="project-categories">${['OUR IP', 'CLIENT WORK', 'COLLABORATIONS', 'GAMES', 'ILLUSTRATION / DESIGN'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${projects.length ? 'Explore selected work.' : 'Project details and artwork will appear here when available.'}</p></article>`).join('')}</div></section>`;
-  if (path === '/about') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Home</a><p class="eyebrow">ABOUT ALPHA EVE STUDIOS</p><h1>INDEPENDENT<br>SPIRIT. <span class="red">BOUNDLESS</span><br>IMAGINATION.</h1></div><div class="about-page-copy"><p>Alpha Eve Studios is a creative studio and publisher from the Dominican Republic. We develop original intellectual property and provide creative services across comics, manga, illustration, design and visual development.</p><p>We build worlds of our own and collaborate with creative partners around the world.</p><a class="button button-dark" href="/authors" data-route>Meet our creators <span>↗</span></a><a class="text-link" href="/#anniversary">Our story · 2007—2027 ↗</a></div></section>`;
-  if (path === '/packito') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Home</a><p class="eyebrow">A PLATFORM BY ALPHA EVE</p><h1>PACKITO<span class="red">.</span></h1><p>Digital comics &amp; manga. A digital home for comics, creators and original stories.</p></div><div class="detail-empty">Packito's external URL has not been provided yet.</div><a class="text-link" href="#contact">For creators ↗</a></section>`;
-  if (path === '/shop') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Home</a><p class="eyebrow">ALPHA EVE STUDIOS</p><h1>THE SHOP<span class="red">.</span></h1><p>Physical comics, digital editions, prints and merchandise.</p></div><div class="detail-empty">The official store destination will be added when available.</div></section>`;
+  if (path === '/services') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ESTUDIO CREATIVO · REPÚBLICA DOMINICANA</p><h1>NUESTROS<br>SERVICIOS<span class="red">.</span></h1><p>Servicios creativos para editoriales, marcas, estudios, creadores y aliados.</p></div><div class="services-grid">${services.map(([title, desc], index) => `<article class="service-item"><span class="service-no">0${index + 1}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p></article>`).join('')}</div><a class="button button-dark" href="/#contact">Colabora con nosotros <span>↗</span></a></section>`;
+  if (path === '/projects') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño.</p></div><div class="project-categories">${['PROPIEDADES ORIGINALES', 'TRABAJOS PARA CLIENTES', 'COLABORACIONES', 'VIDEOJUEGOS', 'ILUSTRACIÓN / DISEÑO'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${projects.length ? 'Explora algunos de nuestros trabajos.' : 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.'}</p></article>`).join('')}</div></section>`;
+  if (path === '/about') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ACERCA DE ALPHA EVE STUDIOS</p><h1>ESPÍRITU<br>INDEPENDIENTE. <span class="red">IMAGINACIÓN</span><br>SIN LÍMITES.</h1></div><div class="about-page-copy"><p>Alpha Eve Studios es un estudio creativo y editorial de República Dominicana. Desarrollamos propiedades intelectuales originales y ofrecemos servicios creativos de cómics, manga, ilustración, diseño y desarrollo visual.</p><p>Construimos mundos propios y colaboramos con aliados creativos de todo el mundo.</p><a class="button button-dark" href="/authors" data-route>Conoce a nuestros creadores <span>↗</span></a><a class="text-link" href="/#anniversary">Nuestra historia · 2007—2027 ↗</a></div></section>`;
+  if (path === '/packito') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">UNA PLATAFORMA DE ALPHA EVE</p><h1>PACKITO<span class="red">.</span></h1><p>Cómics y manga digitales. Un espacio para cómics, creadores e historias originales.</p></div><div class="detail-empty">Todavía no se ha compartido el enlace externo de Packito.</div><a class="text-link" href="#contact">Para creadores ↗</a></section>`;
+  if (path === '/shop') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS</p><h1>LA TIENDA<span class="red">.</span></h1><p>Cómics impresos y digitales, láminas y productos.</p></div><div class="detail-empty">El enlace de la tienda oficial se agregará cuando esté disponible.</div></section>`;
   return null;
 }
 
@@ -190,43 +190,43 @@ function renderRoute() {
   if (path === '/' || path === '/index.html') {
     app.innerHTML = home;
     renderFeaturedComic();
-    document.title = 'Alpha Eve Studios — Stories. Art. Worlds.';
+    document.title = 'Alpha Eve Studios — Historias. Arte. Mundos.';
     return;
   }
-  if (path === '/authors') { app.innerHTML = authorDirectory(); document.title = 'Authors — Alpha Eve Studios'; return; }
+  if (path === '/authors') { app.innerHTML = authorDirectory(); document.title = 'Autores — Alpha Eve Studios'; return; }
   if (path === '/comics') {
     activeComicLetter = '';
     activeComicGenres = [];
     comicSearchTerm = '';
     app.innerHTML = comicDirectory();
     renderComicCatalog();
-    document.title = 'Comics — Alpha Eve Studios';
+    document.title = 'Cómics — Alpha Eve Studios';
     return;
   }
   const slug = path.split('/').pop();
   if (path.startsWith('/authors/')) {
     const author = authors.find(entry => entry.slug === slug);
     app.innerHTML = author ? authorPage(author) : notFound();
-    document.title = author ? `${author.name} — Alpha Eve Studios` : 'Author not found — Alpha Eve Studios';
+    document.title = author ? `${author.name} — Alpha Eve Studios` : 'Autor no encontrado — Alpha Eve Studios';
     return;
   }
   if (path.startsWith('/comics/')) {
     const comic = comics.find(entry => entry.slug === slug);
     app.innerHTML = comic ? comicPage(comic) : notFound();
-    document.title = comic ? `${comic.title} — Alpha Eve Studios` : 'Comic not found — Alpha Eve Studios';
+    document.title = comic ? `${comic.title} — Alpha Eve Studios` : 'Cómic no encontrado — Alpha Eve Studios';
     return;
   }
   if (path.startsWith('/ip/')) {
     const item = originalIp.find(entry => entry.slug === slug);
-    app.innerHTML = item ? `<section class="detail-shell"><a class="detail-back" href="/comics" data-route>← Comics &amp; original IP</a><div class="detail-hero"><div class="detail-art"><strong>${esc(item.initials)}</strong></div><div class="detail-copy"><p class="eyebrow">ALPHA EVE ORIGINAL</p><h1>${esc(item.title)}<span class="red">.</span></h1><div class="detail-meta">ORIGINAL IP · DETAILS TO BE CONFIRMED</div><p>Project description and artwork will be added when available.</p></div></div></section>` : notFound();
-    document.title = item ? `${item.title} — Alpha Eve Studios` : 'Page not found — Alpha Eve Studios';
+    app.innerHTML = item ? `<section class="detail-shell"><a class="detail-back" href="/comics" data-route>← Cómics y mundos originales</a><div class="detail-hero"><div class="detail-art"><strong>${esc(item.initials)}</strong></div><div class="detail-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE</p><h1>${esc(item.title)}<span class="red">.</span></h1><div class="detail-meta">PROPIEDAD ORIGINAL · DETALLES POR CONFIRMAR</div><p>La descripción y el arte del proyecto se agregarán cuando estén disponibles.</p></div></div></section>` : notFound();
+    document.title = item ? `${item.title} — Alpha Eve Studios` : 'Página no encontrada — Alpha Eve Studios';
     return;
   }
   const directory = simpleDirectory(path);
   app.innerHTML = directory || notFound();
-  document.title = directory ? `${path.slice(1).replace(/^./, letter => letter.toUpperCase())} — Alpha Eve Studios` : 'Page not found — Alpha Eve Studios';
+  document.title = directory ? `${path === '/services' ? 'Servicios' : path === '/projects' ? 'Proyectos' : path === '/about' ? 'Nosotros' : path === '/packito' ? 'Packito' : 'Tienda'} — Alpha Eve Studios` : 'Página no encontrada — Alpha Eve Studios';
 }
-function notFound() { return `<section class="directory-page"><a class="detail-back" href="/" data-route>← Alpha Eve Studios</a><h1>PAGE NOT<br>FOUND<span class="red">.</span></h1><a class="button button-dark" href="/" data-route>Return home <span>↗</span></a></section>`; }
+function notFound() { return `<section class="directory-page"><a class="detail-back" href="/" data-route>← Alpha Eve Studios</a><h1>PÁGINA NO<br>ENCONTRADA<span class="red">.</span></h1><a class="button button-dark" href="/" data-route>Volver al inicio <span>↗</span></a></section>`; }
 
 // The homepage is a preview; full creator and comic catalogs live on their own routes.
 document.querySelector('#ip-grid')?.replaceChildren();
