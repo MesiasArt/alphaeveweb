@@ -21,3 +21,13 @@
 /* El cómic destacado comparte la sección con el encabezado para aprovechar el espacio horizontal. */
 @media(min-width:761px){.ip-section{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.35fr);column-gap:4vw;align-items:center}.ip-head{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:flex-start;gap:24px;margin:0}.ip-head>p{max-width:330px;margin:0}.ip-grid#ip-grid{grid-column:2;grid-row:1 / span 2;width:100%;margin:0;align-self:center}.ip-section>.button{grid-column:1;grid-row:2;justify-self:start;align-self:start}}
 @media(max-width:760px){.ip-section{display:block}.ip-head{display:block}.ip-head>div{margin-bottom:22px}.ip-grid#ip-grid{width:100%}}
+/* Perfiles compactos en la página principal. */
+.creator-section #creator-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:14px 10px;margin-top:28px}
+.creator-section #creator-grid .creator-image{height:auto;aspect-ratio:1.05}
+.creator-section #creator-grid .creator-image span{padding:6px 8px;font-size:7px}
+.creator-section #creator-grid .creator-name{padding:8px 1px}
+.creator-section #creator-grid .creator-name h3{font-size:14px}
+.creator-section #creator-grid .creator-name span{font-size:7px}
+.creator-section #creator-grid .creator-descriptor{margin-top:6px;font-size:9px}
+@media(max-width:1050px){.creator-section #creator-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:760px){.creator-section #creator-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;margin-top:24px}.creator-section #creator-grid .creator-image{aspect-ratio:1.1}}

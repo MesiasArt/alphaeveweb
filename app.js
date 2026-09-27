@@ -233,7 +233,7 @@ document.querySelector('#ip-grid')?.replaceChildren();
 const homeIp = document.querySelector('#ip-grid');
 if (homeIp) homeIp.innerHTML = '';
 const homeCreators = document.querySelector('#creator-grid');
-if (homeCreators) homeCreators.innerHTML = authors.slice(0, 4).map(authorCard).join('');
+if (homeCreators) homeCreators.innerHTML = authors.slice(0, 6).map(authorCard).join('');
 const home = app?.innerHTML ?? '';
 
 document.addEventListener('click', event => {
