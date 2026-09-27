@@ -1,13 +1,21 @@
 # Alpha Eve Studios
 
-Responsive creative studio and publisher website for the 2007–2027 anniversary.
+Responsive creative studio and publisher site for the 2007–2027 anniversary.
 
 ## Run locally
 
 Install dependencies with `npm install`, then run `npm run dev`. `npm run build` creates a static build in `dist/`.
 
-## Content model
+## Pages and content
 
-Original IP and creator records live in `app.js`. Each creator record uses the artistic name from the matching image filename in `artistas/` and links to a reusable `/authors/:slug` portfolio page. Known comics use `/comics/:slug`; other original properties use `/ip/:slug`. Their reusable detail template includes sections for series information, chapters, art, characters, credits and related creators.
+- `/authors` is the creator directory; `/authors/:slug` is a reusable creator portfolio page using the matching image from `artistas/`.
+- `/comics` is the comics directory; `/comics/:slug` is a reusable series page with a cover hero, format, genres, synopsis, chapters, covers, characters, gallery and creator credits.
+- Project, service, Packito, About and shop destinations have separate routes.
 
-The repository provides the Alpha Eve logo and artist portraits. It does not provide creator roles or biographies, client project details, comic chapter data, shop destinations, Packito's URL or contact details. Those sections are prepared for verified content. The hero and featured-work compositions are CSS art studies, not representations of client commissions. Add confirmed artwork and information before launch.
+Series, chapter counts and cover paths are modeled in `app.js`. Creator-to-comic relationships use the `creatorSlugs` field on a comic and `comicSlugs` on a creator. Add confirmed credits to both fields to connect their pages. Genres, synopses, chapter titles, purchase links, creator roles and bios are left unfilled until supplied.
+
+## Series artwork
+
+Add each main cover as `series/<slug>/cover/cover.jpg`. Chapter based series have individual folders; add each image as `series/<slug>/chapters/chapter-01/cover/cover.jpg`, using the next two digit number for each chapter. The complete slug list and chapter folder map is in [series/README.md](series/README.md).
+
+All existing creator portraits and the official Alpha Eve logo are included. Comic covers, chapter art, project artwork, contact details, the shop destination and Packito's external URL have not yet been provided.
