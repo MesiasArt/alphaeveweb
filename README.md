@@ -18,4 +18,4 @@ Series, chapter counts and cover paths are modeled in `app.js`. Creator-to-comic
 
 Add each main cover as `series/<slug>/cover/cover.jpg`. Chapter based series have individual folders; add each image as `series/<slug>/chapters/chapter-01/cover/cover.jpg`, using the next two digit number for each chapter. The complete slug list and chapter folder map is in [series/README.md](series/README.md).
 
-All existing creator portraits and the official Alpha Eve logo are included. Comic covers, chapter art, project artwork, contact details, the shop destination and Packito's external URL have not yet been provided.
+All existing creator portraits and the official Alpha Eve logo are included. Several series covers are now linked from `series/`, including Baká, Bazuca, Escondite, Jagua Tales, La Armadura de mi Hermano, Más Freak de lo Normal, Pantaleta, Ruptura, Tomorrow Girl x Freakier Than Normal and Yanikeke. Chapter cover art, remaining series covers, project artwork, contact details, the shop destination and Packito's external URL are still to be added.
