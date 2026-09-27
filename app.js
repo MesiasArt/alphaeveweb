@@ -92,8 +92,53 @@ function closeMenu() { nav?.classList.remove('open'); menu?.setAttribute('aria-e
 function authorDirectory() {
   return `<section class="directory-page authors-directory"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Home</a><p class="eyebrow">ALPHA EVE STUDIOS · CREATIVE ROSTER</p><h1>AUTHORS<span class="red">.</span></h1><p>Meet the artists and creative minds behind Alpha Eve's worlds. Select a profile to view their portfolio.</p><div class="directory-count">${authors.length} CREATOR PROFILES</div></div><div class="creator-grid directory-creators">${authors.map(authorCard).join('')}</div></section>`;
 }
+function normalizedTitle(value) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+}
+const genreOptions = ['Acción', 'Misterio', 'Gore +18', 'Slice of Life', 'Psicológico', 'Isekai', 'Kaiju', 'Ecchi +18', 'Fantasía', 'Cyberpunk', 'Comedia', 'Superhéroes', 'Crimen', 'Vampiros', 'Shonen', 'Aventura', 'Noir', 'Deportivo', 'Sobrenatural', 'Detective', 'Zombies', 'Shojo', 'Horror', 'Mecha', 'Histórico', 'Thriller', 'Artes Marciales', 'Steampunk', 'Seinen', 'Sci-Fi', 'Romance', 'Drama', 'Suspenso', 'Magia', 'Western', 'Josei'];
 function comicDirectory() {
-  return `<section class="directory-page comics-directory"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Home</a><p class="eyebrow">ALPHA EVE STUDIOS · COMICS &amp; MANGA</p><h1>THE COMICS<br>CATALOG<span class="red">.</span></h1><p>Original stories and worlds published by Alpha Eve. Select a series to explore its creators, chapters and artwork.</p><div class="directory-count">${comics.length} SERIES</div></div><div class="comic-directory-grid">${comics.map(comicCard).join('')}</div><div class="directory-subsection"><p class="eyebrow">MORE ORIGINAL WORLDS</p><div class="ip-grid">${originalIp.map(ipCard).join('')}</div></div></section>`;
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  return `<section class="directory-page comics-directory"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Home</a><p class="eyebrow">ALPHA EVE STUDIOS · COMICS &amp; MANGA</p><h1>THE COMICS<br>CATALOG<span class="red">.</span></h1><p>Original stories and worlds published by Alpha Eve. Select a series to explore its creators, chapters and artwork.</p><div class="directory-count">${comics.length} SERIES</div></div><div class="catalog-filters"><label class="catalog-search"><span>SEARCH TITLES</span><input id="comic-search" type="search" placeholder="Search comics…" autocomplete="off"></label><fieldset class="catalog-genres"><legend>FILTER BY GENRE</legend><p class="genre-filter-note">Select one or more genres. Genre assignments for each series can be added later.</p><div class="genre-filter-grid">${genreOptions.map(genre => `<label><input type="checkbox" data-comic-genre value="${esc(genre)}"><span>${esc(genre)}</span></label>`).join('')}</div></fieldset></div><nav class="catalog-letters" aria-label="Filter comics by first letter"><button type="button" class="active" data-comic-letter="">ALL</button>${letters.map(letter => `<button type="button" data-comic-letter="${letter}" ${comics.some(comic => normalizedTitle(comic.title).startsWith(letter)) ? '' : 'disabled'}>${letter}</button>`).join('')}</nav><p id="catalog-results-line" class="catalog-results-line" aria-live="polite"></p><div class="comic-directory-grid" id="comic-directory-grid"></div><div class="directory-subsection"><p class="eyebrow">MORE ORIGINAL WORLDS</p><div class="ip-grid">${originalIp.map(ipCard).join('')}</div></div></section>`;
+}
+let activeComicLetter = '';
+let activeComicGenres = [];
+let comicSearchTerm = '';
+function renderComicCatalog() {
+  const grid = document.querySelector('#comic-directory-grid');
+  if (!grid) return;
+  const query = normalizedTitle(comicSearchTerm.trim());
+  const filtered = comics.filter(comic => {
+    const title = normalizedTitle(comic.title);
+    return (!activeComicLetter || title.startsWith(activeComicLetter))
+      && (!activeComicGenres.length || activeComicGenres.some(genre => comic.genres?.includes(genre)))
+      && (!query || title.includes(query));
+  });
+  const selectedGenresAssigned = comics.some(comic => activeComicGenres.some(genre => comic.genres?.includes(genre)));
+  grid.innerHTML = filtered.length
+    ? filtered.map(comic => comicCard(comic, comics.indexOf(comic))).join('')
+    : `<p class="catalog-empty">${activeComicGenres.length && !selectedGenresAssigned ? 'No series have been assigned to the selected genres yet.' : 'No comics match these filters.'}</p>`;
+  const resultCount = document.querySelector('#catalog-results-line');
+  if (resultCount) resultCount.textContent = `SHOWING ${filtered.length} OF ${comics.length} SERIES`;
+  document.querySelectorAll('[data-comic-letter]').forEach(button => {
+    const active = button.getAttribute('data-comic-letter') === activeComicLetter;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+}
+let featuredComicIndex = -1;
+function renderFeaturedComic(direction = 'random') {
+  const container = document.querySelector('#ip-grid');
+  if (!container || !comics.length) return;
+  if (typeof direction === 'number' && featuredComicIndex >= 0) {
+    featuredComicIndex = (featuredComicIndex + direction + comics.length) % comics.length;
+  } else if (featuredComicIndex < 0 || direction === 'random') {
+    let nextIndex = Math.floor(Math.random() * comics.length);
+    if (comics.length > 1 && nextIndex === featuredComicIndex) nextIndex = (nextIndex + 1) % comics.length;
+    featuredComicIndex = nextIndex;
+  }
+  const comic = comics[featuredComicIndex];
+  const format = comic.format === 'One-shot' ? 'ONE-SHOT' : comic.format === 'Series' ? `${comic.availableChapters} CHAPTER${comic.availableChapters === 1 ? '' : 'S'}` : 'FORMAT TO BE CONFIRMED';
+  container.innerHTML = `<div class="featured-comic-carousel"><a class="featured-comic-link" href="/comics/${comic.slug}" data-route><div class="featured-comic-cover"><img src="${esc(comic.cover)}" alt="${esc(comic.title)} cover" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()"><strong>${esc(comic.initials)}</strong><span>ALPHA EVE ORIGINAL · ${String(featuredComicIndex + 1).padStart(2, '0')}</span></div><div class="featured-comic-copy"><p class="eyebrow">FEATURED FROM THE CATALOG</p><h3>${esc(comic.title)}</h3><span>${format} · EXPLORE COMIC ↗</span></div></a><div class="featured-comic-controls"><span>${String(featuredComicIndex + 1).padStart(2, '0')} / ${String(comics.length).padStart(2, '0')}</span><button type="button" data-featured-step="-1" aria-label="Previous featured comic">←</button><button type="button" data-featured-step="1" aria-label="Next featured comic">→</button></div></div>`;
 }
 function authorPage(author) {
   const related = comicsFor(author);
@@ -144,11 +189,20 @@ function renderRoute() {
   const path = decodeURI(location.pathname).replace(/\/+$/, '') || '/';
   if (path === '/' || path === '/index.html') {
     app.innerHTML = home;
+    renderFeaturedComic();
     document.title = 'Alpha Eve Studios — Stories. Art. Worlds.';
     return;
   }
   if (path === '/authors') { app.innerHTML = authorDirectory(); document.title = 'Authors — Alpha Eve Studios'; return; }
-  if (path === '/comics') { app.innerHTML = comicDirectory(); document.title = 'Comics — Alpha Eve Studios'; return; }
+  if (path === '/comics') {
+    activeComicLetter = '';
+    activeComicGenres = [];
+    comicSearchTerm = '';
+    app.innerHTML = comicDirectory();
+    renderComicCatalog();
+    document.title = 'Comics — Alpha Eve Studios';
+    return;
+  }
   const slug = path.split('/').pop();
   if (path.startsWith('/authors/')) {
     const author = authors.find(entry => entry.slug === slug);
@@ -177,12 +231,23 @@ function notFound() { return `<section class="directory-page"><a class="detail-b
 // The homepage is a preview; full creator and comic catalogs live on their own routes.
 document.querySelector('#ip-grid')?.replaceChildren();
 const homeIp = document.querySelector('#ip-grid');
-if (homeIp) homeIp.innerHTML = [...comics, ...originalIp].slice(0, 5).map(ipCard).join('');
+if (homeIp) homeIp.innerHTML = '';
 const homeCreators = document.querySelector('#creator-grid');
 if (homeCreators) homeCreators.innerHTML = authors.slice(0, 4).map(authorCard).join('');
 const home = app?.innerHTML ?? '';
 
 document.addEventListener('click', event => {
+  const featuredStep = event.target.closest('[data-featured-step]');
+  if (featuredStep) {
+    renderFeaturedComic(Number(featuredStep.getAttribute('data-featured-step')));
+    return;
+  }
+  const letterButton = event.target.closest('[data-comic-letter]');
+  if (letterButton) {
+    activeComicLetter = letterButton.getAttribute('data-comic-letter') || '';
+    renderComicCatalog();
+    return;
+  }
   const link = event.target.closest('a[data-route]');
   if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   event.preventDefault();
@@ -191,5 +256,18 @@ document.addEventListener('click', event => {
   renderRoute();
   window.scrollTo(0, 0);
 });
+document.addEventListener('input', event => {
+  if (event.target.id !== 'comic-search') return;
+  comicSearchTerm = event.target.value;
+  renderComicCatalog();
+});
+document.addEventListener('change', event => {
+  if (!event.target.matches('[data-comic-genre]')) return;
+  activeComicGenres = [...document.querySelectorAll('[data-comic-genre]:checked')].map(input => input.value);
+  renderComicCatalog();
+});
 window.addEventListener('popstate', renderRoute);
 renderRoute();
+if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  window.setInterval(() => renderFeaturedComic('random'), 8000);
+}
