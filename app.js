@@ -307,9 +307,11 @@ function tesoroPage(project) {
     </section>
 
     <section class="case-section case-details">
-      <div>
+      <div class="case-details-head">
         <p class="eyebrow">03 — PROJECT DETAILS</p>
         <h2>DETALLES<span class="red">.</span></h2>
+      </div>
+      <div class="case-details-body">
         <dl class="case-meta">
           <div><dt>Client</dt><dd>${esc(project.client)}</dd></div>
           <div><dt>Project</dt><dd>${esc(project.title)}</dd></div>
@@ -318,8 +320,8 @@ function tesoroPage(project) {
           <div><dt>Illustration</dt><dd>${esc(project.illustrationBy)}</dd></div>
           <div><dt>Themes</dt><dd>${esc(project.themes.join(' · '))}</dd></div>
         </dl>
+        <figure class="case-logo-mark"><img src="${esc(logo)}" alt="Logo editorial Un Tesoro para Siempre" loading="lazy"></figure>
       </div>
-      <figure class="case-logo-mark"><img src="${esc(logo)}" alt="Logo editorial Un Tesoro para Siempre" loading="lazy"></figure>
     </section>
 
     <section class="case-section case-process">
