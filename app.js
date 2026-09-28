@@ -134,20 +134,63 @@ function renderComicCatalog() {
     button.setAttribute('aria-pressed', String(active));
   });
 }
-let featuredComicIndex = -1;
-function renderFeaturedComic(direction = 'random') {
+let originalsIndex = 0;
+let originalsTimer = 0;
+let originalsHold = 0;
+function originalsCard(comic, decorative) {
+  return `<a class="originals-card" href="/comics/${comic.slug}" data-route><img src="${esc(comic.cover)}" alt="${decorative ? '' : `Portada de ${esc(comic.title)}`}"></a>`;
+}
+function renderOriginals() {
   const container = document.querySelector('#ip-grid');
-  if (!container || !comics.length) return;
-  if (typeof direction === 'number' && featuredComicIndex >= 0) {
-    featuredComicIndex = (featuredComicIndex + direction + comics.length) % comics.length;
-  } else if (featuredComicIndex < 0 || direction === 'random') {
-    let nextIndex = Math.floor(Math.random() * comics.length);
-    if (comics.length > 1 && nextIndex === featuredComicIndex) nextIndex = (nextIndex + 1) % comics.length;
-    featuredComicIndex = nextIndex;
+  if (!container || !comics.length || container.dataset.ready === 'true') return;
+  container.dataset.ready = 'true';
+  const cards = comics.map(comic => originalsCard(comic, false)).join('') + comics.map(comic => originalsCard(comic, true)).join('');
+  container.innerHTML = `<div class="originals-row"><button type="button" class="originals-arrow" data-originals-step="-1" aria-label="Propiedad anterior">‹</button><div class="originals-viewport"><div class="originals-track">${cards}</div></div><button type="button" class="originals-arrow" data-originals-step="1" aria-label="Siguiente propiedad">›</button></div>`;
+  originalsIndex = 0;
+  positionOriginals(false);
+  const row = container.querySelector('.originals-row');
+  row.addEventListener('mouseenter', () => { originalsHold = Date.now() + 600000; });
+  row.addEventListener('mouseleave', () => { originalsHold = 0; });
+  row.querySelector('.originals-track').addEventListener('transitionend', () => {
+    if (originalsIndex < comics.length) return;
+    originalsIndex %= comics.length;
+    positionOriginals(false);
+  });
+}
+function originalsStepSize() {
+  const card = document.querySelector('.originals-card');
+  const track = document.querySelector('.originals-track');
+  if (!card || !track) return 0;
+  const gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;
+  return card.getBoundingClientRect().width + gap;
+}
+function positionOriginals(animate) {
+  const track = document.querySelector('.originals-track');
+  const step = originalsStepSize();
+  if (!track || !step) return;
+  track.style.transition = animate ? 'transform .55s ease' : 'none';
+  track.style.transform = `translateX(${-originalsIndex * step}px)`;
+}
+function stepOriginals(direction) {
+  if (!comics.length) return;
+  if (direction < 0 && originalsIndex <= 0) {
+    originalsIndex = comics.length;
+    positionOriginals(false);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      originalsIndex = comics.length - 1;
+      positionOriginals(true);
+    }));
+    return;
   }
-  const comic = comics[featuredComicIndex];
-  const format = comic.format === 'One-shot' ? 'TOMO ÚNICO (ONESHOT)' : comic.format === 'Series' ? `${comic.availableChapters} CAPÍTULO${comic.availableChapters === 1 ? '' : 'S'}` : 'FORMATO POR CONFIRMAR';
-  container.innerHTML = `<div class="featured-comic-carousel"><a class="featured-comic-link" href="/comics/${comic.slug}" data-route><div class="featured-comic-cover"><img src="${esc(comic.cover)}" alt="Portada de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()"><strong>${esc(comic.initials)}</strong><span>ORIGINAL DE ALPHA EVE · ${String(featuredComicIndex + 1).padStart(2, '0')}</span></div><div class="featured-comic-copy"><p class="eyebrow">DESTACADO DEL CATÁLOGO</p><h3>${esc(comic.title)}</h3><span>${format} · EXPLORAR CÓMIC ↗</span></div></a><div class="featured-comic-controls"><span>${String(featuredComicIndex + 1).padStart(2, '0')} / ${String(comics.length).padStart(2, '0')}</span><button type="button" data-featured-step="-1" aria-label="Cómic destacado anterior">←</button><button type="button" data-featured-step="1" aria-label="Siguiente cómic destacado">→</button></div></div>`;
+  originalsIndex += direction;
+  positionOriginals(true);
+}
+function startOriginals() {
+  if (originalsTimer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  originalsTimer = window.setInterval(() => {
+    if (Date.now() < originalsHold || document.hidden || !document.querySelector('.originals-track')) return;
+    stepOriginals(1);
+  }, 3200);
 }
 function authorPage(author) {
   const related = comicsFor(author);
@@ -277,7 +320,7 @@ function renderRoute() {
   if (contactBand) contactBand.hidden = path === '/contacto';
   if (path === '/' || path === '/index.html') {
     app.innerHTML = home;
-    renderFeaturedComic();
+    renderOriginals();
     document.title = 'Alpha Eve Studios — Historias. Arte. Mundos.';
     mountClientLogos();
     return;
@@ -334,9 +377,10 @@ document.querySelector('.creator-section')?.insertAdjacentHTML('beforebegin', cl
 const home = app?.innerHTML ?? '';
 
 document.addEventListener('click', event => {
-  const featuredStep = event.target.closest('[data-featured-step]');
-  if (featuredStep) {
-    renderFeaturedComic(Number(featuredStep.getAttribute('data-featured-step')));
+  const originalsStep = event.target.closest('[data-originals-step]');
+  if (originalsStep) {
+    originalsHold = Date.now() + 7000;
+    stepOriginals(Number(originalsStep.getAttribute('data-originals-step')));
     return;
   }
   const letterButton = event.target.closest('[data-comic-letter]');
@@ -371,9 +415,8 @@ document.addEventListener('change', event => {
 });
 window.addEventListener('popstate', renderRoute);
 renderRoute();
-if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  window.setInterval(() => renderFeaturedComic('random'), 8000);
-}
+startOriginals();
+window.addEventListener('resize', () => positionOriginals(false));
 
 document.addEventListener('submit', async event => {
   const projectInquiry = event.target.closest('#project-inquiry');
