@@ -46,7 +46,7 @@ const authors = [
   { name: 'ossy_jo', slug: 'ossy_jo', image: 'ossy_jo.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'spencer_draw', slug: 'spencer_draw', image: 'spencer_draw.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'xamurai_rd', slug: 'xamurai_rd', image: 'xamurai_rd.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'yonsoncb', slug: 'yonsoncb', image: 'yonsoncb.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'YonsonCB', slug: 'yonsoncb', image: 'yonsoncb.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: ['un-tesoro-para-siempre', 'tren-de-diversion', 'mision-genial'] },
   { name: 'zukupow', slug: 'zukupow', image: 'zukupow.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
 ];
 const projects = [
@@ -57,10 +57,11 @@ const projects = [
     client: 'Banreservas',
     type: 'Cuento infantil / Ilustración editorial',
     storyBy: 'Evelin Cáceres Castellanos',
-    illustrationBy: 'Francisco Balbuena · Máximo Montero',
+    illustrationBy: 'Yonson Carbonell',
     themes: ['Educación financiera', 'Ahorro', 'Medio ambiente', 'Valores'],
     category: 'TRABAJOS PARA CLIENTES',
     assetDir: '/datos/proyectos/Trabajos-para-clientes/un-tesoro-para-siempre%20(banreservas)',
+    creatorSlugs: ['yonsoncb'],
     assets: {
       hero: 'Banreservas_cuento_3-4 copia.jpg',
       story: 'Banreservas_cuento_2d5-26 copia.jpg',
@@ -80,12 +81,13 @@ const projects = [
     client: 'INDOTEL',
     type: 'Cuento infantil / Ciberseguridad',
     storyBy: 'Anya Damirón',
-    illustrationBy: null,
+    illustrationBy: 'Yonson Carbonell',
     themes: ['Ciberseguridad', 'Educación digital', 'Protección al usuario'],
     category: 'TRABAJOS PARA CLIENTES',
     partner: 'INDOTEL × Alpha Eve',
     headline: 'TREN DE<br>DIVERSION',
     assetDir: '/datos/proyectos/Trabajos-para-clientes/el-tren-de-la-diversion',
+    creatorSlugs: ['yonsoncb'],
     clientLogo: '/clientes/anya%20damiron.png',
     logoAlt: 'Anya Damirón',
     storyCopy: [
@@ -115,12 +117,13 @@ const projects = [
     client: 'Anya Damirón',
     type: 'Juego / Reto familiar',
     storyBy: 'Anya Damirón',
-    illustrationBy: null,
+    illustrationBy: 'Yonson Carbonell',
     themes: ['Rutinas', 'Familia', 'Vuelta a clases', 'Juego'],
     category: 'TRABAJOS PARA CLIENTES',
     partner: 'Anya Damirón × Alpha Eve',
     headline: 'MISIÓN<br>GENIAL',
     assetDir: '/datos/proyectos/Trabajos-para-clientes/Mision-Genial',
+    creatorSlugs: ['yonsoncb'],
     clientLogo: '/clientes/anya%20damiron.png',
     logoAlt: 'Anya Damirón',
     storyCopy: [
@@ -168,6 +171,7 @@ function ipCard(item) {
 }
 function creatorsFor(comic) { return comic.creatorSlugs.map(slug => authors.find(author => author.slug === slug)).filter(Boolean); }
 function comicsFor(author) { return author.comicSlugs.map(slug => comics.find(comic => comic.slug === slug)).filter(Boolean); }
+function projectsFor(author) { return (author.projectSlugs || []).map(slug => projects.find(project => project.slug === slug)).filter(Boolean); }
 
 const app = document.querySelector('#app');
 const menu = document.querySelector('.menu-toggle');
@@ -284,12 +288,13 @@ function startOriginals() {
 }
 function authorPage(author) {
   const related = comicsFor(author);
+  const relatedProjects = projectsFor(author);
   return `<section class="detail-shell author-profile">
     <a class="detail-back" href="/authors" data-route>← Todos los creadores</a>
     <div class="detail-hero author-hero"><div class="author-portrait"><img src="/artistas/${encodeURIComponent(author.image)}" alt="${esc(author.name)}" /></div>
       <div class="detail-copy"><p class="eyebrow">ALPHA EVE · PORTAFOLIO CREATIVO</p><h1>${esc(author.name)}<span class="red">.</span></h1><div class="detail-meta">${esc(author.role || 'PERFIL CREATIVO')}</div><p>${esc(author.bio || 'Portafolio y perfil creativo del artista. La biografía y sus especialidades se agregarán cuando se confirme la información.')}</p><a class="button button-dark" href="#contact">Colabora con ${esc(author.name)} <span>↗</span></a></div></div>
     <section class="detail-block"><p class="eyebrow">ACERCA DEL CREADOR</p><h2>Biografía y especialidades</h2>${author.bio || author.specialties.length ? `<p>${esc(author.bio || author.specialties.join(' · '))}</p>` : '<div class="detail-empty">La biografía y las especialidades creativas aparecerán aquí.</div>'}</section>
-    <section class="detail-block"><p class="eyebrow">PROYECTOS Y COLABORACIONES</p><h2>Proyectos destacados</h2><div class="detail-empty">Los proyectos aparecerán aquí cuando se confirmen.</div></section>
+    <section class="detail-block"><p class="eyebrow">PROYECTOS Y COLABORACIONES</p><h2>Proyectos destacados</h2>${relatedProjects.length ? `<div class="project-feature-grid">${relatedProjects.map(projectCard).join('')}</div>` : '<div class="detail-empty">Los proyectos aparecerán aquí cuando se confirmen.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">CÓMICS</p><h2>Historias y series</h2>${related.length ? `<div class="comic-directory-grid">${related.map(comicCard).join('')}</div>` : '<div class="detail-empty">Todavía no hay cómics vinculados a este perfil.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">GALERÍA</p><h2>Arte y proceso</h2><div class="author-gallery"><img src="/artistas/${encodeURIComponent(author.image)}" alt="Ilustración de perfil de ${esc(author.name)}" loading="lazy"><div class="detail-empty">Aquí se agregarán más ilustraciones, bocetos y portadas.</div></div></section>
     <section class="detail-block"><p class="eyebrow">CONTACTO</p><h2>Colabora con ${esc(author.name)}</h2><p>Para consultas profesionales, contacta a Alpha Eve Studios.</p><a class="button button-dark" href="#contact">Contactar a Alpha Eve <span>↗</span></a></section>

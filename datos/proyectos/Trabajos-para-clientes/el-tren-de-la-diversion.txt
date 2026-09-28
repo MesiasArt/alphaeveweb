@@ -5,7 +5,7 @@ Descripción: El Instituto Dominicano de las Telecomunicaciones (INDOTEL), a tra
 Cliente: INDOTEL
 Imagen: unnamed.jpg
 Historia: Anya Damirón
-Ilustración:
+Ilustración: Yonson Carbonell (YonsonCB)
 Creadores:
-- slug:
-  función:
+- slug: yonsoncb
+  función: Ilustración

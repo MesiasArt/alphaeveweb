@@ -5,7 +5,7 @@ Descripción: Cuento infantil desarrollado para Banreservas alrededor de Jenny l
 Cliente: Banreservas
 Imagen: Banreservas_cuento_2d5-26 copia.jpg
 Historia: Evelin Cáceres Castellanos
-Ilustración: Francisco Balbuena · Máximo Montero
+Ilustración: Yonson Carbonell (YonsonCB)
 Creadores:
-- slug:
-  función:
+- slug: yonsoncb
+  función: Ilustración

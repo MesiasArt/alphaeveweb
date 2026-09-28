@@ -11,7 +11,7 @@ Incluye un libro que les muestra a los niños cómo completar la Misión Genial,
 Cliente: Anya Damirón
 Imagen:
 Historia: Anya Damirón
-Ilustración:
+Ilustración: Yonson Carbonell (YonsonCB)
 Creadores:
-- slug:
-  función:
+- slug: yonsoncb
+  función: Ilustración
