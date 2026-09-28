@@ -1,0 +1,9 @@
+Título: Tomorrow Girl x Freakier Than Normal
+Slug: tomorrow-girl-x-freakier-than-normal
+Formato: One-shot
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

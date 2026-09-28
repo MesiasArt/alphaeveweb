@@ -1,0 +1,9 @@
+Título: La Guagua Voladora
+Slug: la-guagua-voladora
+Formato: One-shot
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

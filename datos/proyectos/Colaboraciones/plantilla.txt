@@ -1,0 +1,9 @@
+Tipo: COLABORACIONES
+Carpeta de imágenes: projectos/Colaboraciones
+Título:
+Descripción:
+Con quién:
+Imagen:
+Creadores:
+- slug:
+  función:

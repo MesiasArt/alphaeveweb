@@ -1,0 +1,9 @@
+Título: Yanikeke
+Slug: yanikeke
+Formato:
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

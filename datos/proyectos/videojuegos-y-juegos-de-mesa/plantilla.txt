@@ -1,0 +1,9 @@
+Tipo: VIDEOJUEGOS Y JUEGOS DE MESA
+Carpeta de imágenes: projectos/videojuegos-y-juegos-de-mesa
+Título:
+Descripción:
+Tipo: videojuego / juego de mesa
+Imagen:
+Creadores:
+- slug:
+  función:

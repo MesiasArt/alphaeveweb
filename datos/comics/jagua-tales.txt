@@ -1,0 +1,9 @@
+Título: Jagua Tales
+Slug: jagua-tales
+Formato:
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

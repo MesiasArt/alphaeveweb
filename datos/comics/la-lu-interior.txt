@@ -1,0 +1,9 @@
+Título: La Lu’ Interior
+Slug: la-lu-interior
+Formato: One-shot
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

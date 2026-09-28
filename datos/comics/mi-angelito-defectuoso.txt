@@ -1,0 +1,9 @@
+Título: Mi Angelito Defectuoso
+Slug: mi-angelito-defectuoso
+Formato: Serie · 1 capítulo
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

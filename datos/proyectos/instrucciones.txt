@@ -1,0 +1,6 @@
+Todavía no hay proyectos cargados, así que cada tipo tiene una plantilla.
+Cuando tengas un proyecto, copia plantilla.txt dentro de su carpeta, cámbiale el nombre y complétala.
+La imagen, si existe, va en la carpeta correspondiente de projectos/.
+
+Slugs de creadores: anderson-07, darkereve, froggynami, manuel_shoo, mesiasart, nattibie, nicodomo, ossy_jo, spencer_draw, xamurai_rd, yonsoncb, zukupow
+Si anotas un creador, el proyecto aparece en su perfil.

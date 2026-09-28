@@ -1,0 +1,8 @@
+Tipo: PROPIEDADES ORIGINALES
+Carpeta de imágenes: projectos/Propiedades-Originales
+Título:
+Descripción:
+Imagen:
+Creadores:
+- slug:
+  función:

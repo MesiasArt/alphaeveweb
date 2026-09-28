@@ -1,0 +1,9 @@
+Título: Umbral, El reino de lo invisible
+Slug: umbral-el-reino-de-lo-invisible
+Formato: One-shot
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

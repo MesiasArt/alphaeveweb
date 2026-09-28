@@ -1,0 +1,5 @@
+Cada archivo de esta carpeta es una persona. No cambies el slug.
+
+Función: el rol general, por ejemplo Ilustrador, Escritor o Colorista.
+Especialidades: separadas por coma. Ejemplo: Portadas, Personajes, Manga.
+Los cómics y proyectos se anotan en sus propias fichas, dentro de datos/comics y datos/proyectos.

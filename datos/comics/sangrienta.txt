@@ -1,0 +1,9 @@
+Título: Sangrienta
+Slug: sangrienta
+Formato: Serie · 1 de 3 capítulos
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

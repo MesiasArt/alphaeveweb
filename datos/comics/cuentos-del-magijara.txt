@@ -1,0 +1,9 @@
+Título: Cuentos del Magijara
+Slug: cuentos-del-magijara
+Formato: Serie · 5 capítulos
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

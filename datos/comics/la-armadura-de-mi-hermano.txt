@@ -1,0 +1,9 @@
+Título: La Armadura de mi Hermano
+Slug: la-armadura-de-mi-hermano
+Formato: One-shot
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

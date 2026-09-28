@@ -1,0 +1,5 @@
+Nombre: xamurai_rd
+Slug: xamurai_rd
+Función:
+Biografía:
+Especialidades:

@@ -1,0 +1,9 @@
+Título: Ruptura
+Slug: ruptura
+Formato: One-shot
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

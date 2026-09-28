@@ -1,0 +1,9 @@
+Título: Quimica al 100%
+Slug: quimica-al-100
+Formato: Serie · 3 capítulos
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

@@ -1,0 +1,5 @@
+Nombre: ossy_jo
+Slug: ossy_jo
+Función:
+Biografía:
+Especialidades:

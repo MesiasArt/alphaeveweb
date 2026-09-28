@@ -1,0 +1,9 @@
+Título: Más Freak de lo Normal
+Slug: mas-freak-de-lo-normal
+Formato: Serie · 7 capítulos
+Tipo:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

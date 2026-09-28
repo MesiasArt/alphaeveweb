@@ -1,0 +1,5 @@
+Nombre: manuel_shoo
+Slug: manuel_shoo
+Función:
+Biografía:
+Especialidades:

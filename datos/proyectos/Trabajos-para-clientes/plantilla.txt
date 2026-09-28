@@ -1,0 +1,9 @@
+Tipo: TRABAJOS PARA CLIENTES
+Carpeta de imágenes: projectos/Trabajos-para-clientes
+Título:
+Descripción:
+Cliente:
+Imagen:
+Creadores:
+- slug:
+  función:
