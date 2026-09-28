@@ -1,0 +1,21 @@
+Tipo: TRABAJOS PARA CLIENTES
+Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/Street-Fighter-Classic-Cover
+Título: Street Fighter Classic — Vol. 2
+Descripción: Portada oficial para Street Fighter Classic, Vol. 2. Darwin Núñez reunió en una misma portada a Ken, Vega, Chun-Li, Sagat y Cammy para UDON Entertainment × Tora Edizioni.
+
+Una oportunidad muy especial para Darwin Núñez, quien fue invitado a realizar una portada oficial para Street Fighter Classic, Vol. 2.
+
+Como fan de Street Fighter desde hace años, Darwin aprovechó la oportunidad para reunir en una misma portada a algunos de sus personajes favoritos de la saga: Ken, Vega, Chun-Li, Sagat y, por supuesto, Cammy.
+
+Un proyecto que permitió llevar una pasión personal al terreno profesional y formar parte de una publicación oficial de una de las franquicias más reconocidas de los videojuegos.
+
+Street Fighter y sus personajes son © Capcom.
+Cliente: UDON Entertainment
+Imagen: Street Fighter Classic Cover Full.jpg
+Historia:
+Ilustración: Darwin Núñez (DarkerEve)
+Editoriales: UDON Entertainment × Tora Edizioni
+Personajes: Ken Masters · Vega · Chun-Li · Cammy White · Sagat
+Creadores:
+- slug: darkereve
+  función: Ilustración / Portada
