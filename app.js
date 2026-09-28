@@ -255,12 +255,49 @@ function comicPage(comic) {
     <section class="detail-block"><p class="eyebrow">DESCUBRE MÁS</p><h2>Más de Alpha Eve</h2><div class="comic-directory-grid">${comics.filter(entry => entry.slug !== comic.slug).map(comicCard).join('')}</div></section>
   </section>`;
 }
+const projectCategories = [
+  'PROPIEDADES ORIGINALES',
+  'TRABAJOS PARA CLIENTES',
+  'COLABORACIONES',
+  'VIDEOJUEGOS Y JUEGOS DE MESA',
+  'ILUSTRACIÓN / DISEÑO',
+];
+let activeProjectCategory = '';
+
+function projectsForCategory(category) {
+  return projects.filter(project => project.category === category);
+}
+
+function projectCategoryBlurb(category) {
+  const count = projectsForCategory(category).length;
+  if (category === 'TRABAJOS PARA CLIENTES' && count) return 'Explora algunos de nuestros trabajos para clientes.';
+  if (count) return `${count} proyecto${count === 1 ? '' : 's'} en esta categoría.`;
+  return 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.';
+}
+
+function projectResultsMarkup() {
+  const filtered = activeProjectCategory ? projectsForCategory(activeProjectCategory) : projects;
+  const label = activeProjectCategory || 'TODOS LOS PROYECTOS';
+  const body = filtered.length
+    ? `<div class="project-feature-grid">${filtered.map(projectCard).join('')}</div>`
+    : `<p class="catalog-empty">${activeProjectCategory ? 'Todavía no hay proyectos en esta categoría.' : 'Los proyectos aparecerán aquí cuando estén disponibles.'}</p>`;
+  return `<section class="directory-subsection" id="project-results"><p class="eyebrow">${esc(label)}</p>${body}</section>`;
+}
+
 function projectCard(project) {
   const cover = projectAsset(project, project.assets?.hero);
   return `<a class="project-card" href="/projects/${esc(project.slug)}" data-route>
     <div class="project-card-art">${cover ? `<img src="${esc(cover)}" alt="${esc(project.title)}" loading="lazy">` : ''}<span>${esc(project.client || 'CLIENTE')}</span></div>
     <div class="project-card-copy"><p class="eyebrow">${esc(project.category || 'PROYECTO')}</p><h3>${esc(project.title)}</h3><p>${esc(project.subtitle || project.type || '')}</p><span>Ver case study ↗</span></div>
   </a>`;
+}
+
+function renderProjectCatalog() {
+  document.querySelectorAll('[data-project-category]').forEach(button => {
+    button.classList.toggle('active', (button.getAttribute('data-project-category') || '') === activeProjectCategory);
+  });
+  const results = document.querySelector('#project-results');
+  if (results) results.outerHTML = projectResultsMarkup();
 }
 function tesoroPage(project) {
   const a = project.assets;
@@ -526,8 +563,7 @@ async function mountHistory() {
 function simpleDirectory(path) {
   if (path === '/services') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ESTUDIO CREATIVO · REPÚBLICA DOMINICANA</p><h1>NUESTROS<br>SERVICIOS<span class="red">.</span></h1><p>Servicios creativos para editoriales, marcas, estudios, creadores y aliados.</p></div><div class="services-grid">${services.map(([title, desc], index) => `<article class="service-item"><span class="service-no">0${index + 1}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p></article>`).join('')}</div><a class="button button-dark" href="/#contact">Colabora con nosotros <span>↗</span></a></section>`;
   if (path === '/projects') {
-    const clientWork = projects.filter(project => project.category === 'TRABAJOS PARA CLIENTES');
-    return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño.</p></div><div class="project-categories">${['PROPIEDADES ORIGINALES', 'TRABAJOS PARA CLIENTES', 'COLABORACIONES', 'VIDEOJUEGOS Y JUEGOS DE MESA', 'ILUSTRACIÓN / DISEÑO'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${category === 'TRABAJOS PARA CLIENTES' && clientWork.length ? 'Explora algunos de nuestros trabajos para clientes.' : 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.'}</p></article>`).join('')}</div>${clientWork.length ? `<section class="directory-subsection"><p class="eyebrow">TRABAJOS PARA CLIENTES</p><div class="project-feature-grid">${clientWork.map(projectCard).join('')}</div></section>` : ''}${clientStrip()}</section>`;
+    return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño. Elige una categoría para filtrar.</p></div><div class="project-categories">${projectCategories.map((category, index) => `<button type="button" data-project-category="${esc(category)}"${category === activeProjectCategory ? ' class="active"' : ''}><span>0${index + 1}</span><h2>${esc(category)}</h2><p>${esc(projectCategoryBlurb(category))}</p></button>`).join('')}</div>${projectResultsMarkup()}${clientStrip()}</section>`;
   }
   if (path === '/about') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ACERCA DE ALPHA EVE STUDIOS</p><h1>ESPÍRITU<br>INDEPENDIENTE. <span class="red">IMAGINACIÓN</span><br>SIN LÍMITES.</h1></div><div class="about-page-copy"><p>Alpha Eve Studios es un estudio creativo y editorial de República Dominicana. Desarrollamos propiedades intelectuales originales y ofrecemos servicios creativos de cómics, manga, ilustración, diseño y desarrollo visual.</p><p>Construimos mundos propios y colaboramos con aliados creativos de todo el mundo.</p><a class="button button-dark" href="/authors" data-route>Conoce a nuestros creadores <span>↗</span></a><a class="text-link" href="/historia" data-route>Nuestra historia · 2007—2027 ↗</a></div></section>`;
   if (path === '/packito') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">UNA PLATAFORMA DE ALPHA EVE</p><h1>PACKITO<span class="red">.</span></h1><p>Cómics y manga digitales. Un espacio para cómics, creadores e historias originales.</p></div><div class="detail-empty">Todavía no se ha compartido el enlace externo de Packito.</div><a class="text-link" href="#contact">Para creadores ↗</a></section>`;
@@ -599,6 +635,7 @@ function renderRoute() {
     document.title = 'Contacto — Alpha Eve Studios';
     return;
   }
+  if (path === '/projects') activeProjectCategory = '';
   const directory = simpleDirectory(path);
   app.innerHTML = directory || notFound();
   document.title = directory ? `${path === '/services' ? 'Servicios' : path === '/projects' ? 'Proyectos' : path === '/about' ? 'Nosotros' : path === '/packito' ? 'Packito' : 'Tienda'} — Alpha Eve Studios` : 'Página no encontrada — Alpha Eve Studios';
@@ -632,6 +669,14 @@ document.addEventListener('click', event => {
   if (typeButton) {
     activeCatalogType = typeButton.getAttribute('data-catalog-type') || '';
     renderComicCatalog();
+    return;
+  }
+  const projectCategory = event.target.closest('[data-project-category]');
+  if (projectCategory) {
+    const next = projectCategory.getAttribute('data-project-category') || '';
+    activeProjectCategory = activeProjectCategory === next ? '' : next;
+    renderProjectCatalog();
+    document.querySelector('#project-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
   const link = event.target.closest('a[data-route]');
