@@ -184,9 +184,38 @@ function comicPage(comic) {
     <section class="detail-block"><p class="eyebrow">DESCUBRE MÁS</p><h2>Más de Alpha Eve</h2><div class="comic-directory-grid">${comics.filter(entry => entry.slug !== comic.slug).map(comicCard).join('')}</div></section>
   </section>`;
 }
+function clientStrip() {
+  return `<section class="client-strip" aria-label="Clientes"><p class="client-strip-label">Clientes</p><div class="client-marquee" data-client-marquee><div class="client-track"></div></div></section>`;
+}
+function clientLogoItem(item, decorative) {
+  if (item.empty) return '<span class="client-logo client-logo-empty" aria-hidden="true"><span>LOGO</span></span>';
+  const name = item.name || String(item.file).replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
+  return `<span class="client-logo"><img src="/clientes/${encodeURIComponent(item.file)}" alt="${decorative ? '' : esc(name)}"></span>`;
+}
+async function mountClientLogos() {
+  const rows = [...document.querySelectorAll('[data-client-marquee]')];
+  if (!rows.length) return;
+  let logos = [];
+  try {
+    const response = await fetch('/clientes/logos.json', { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data)) logos = data.filter(item => item && typeof item.file === 'string' && item.file && !/[\\/]/.test(item.file) && !item.file.includes('..'));
+    }
+  } catch { /* The row stays ready for logos. */ }
+  const source = logos.length ? logos : Array.from({ length: 8 }, () => ({ empty: true }));
+  let sequence = [];
+  while (sequence.length < 8) sequence = sequence.concat(source);
+  const markup = decorative => sequence.map(item => clientLogoItem(item, decorative)).join('');
+  const html = markup(false) + markup(true);
+  rows.forEach(row => {
+    const track = row.querySelector('.client-track');
+    if (track) track.innerHTML = html;
+  });
+}
 function simpleDirectory(path) {
   if (path === '/services') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ESTUDIO CREATIVO · REPÚBLICA DOMINICANA</p><h1>NUESTROS<br>SERVICIOS<span class="red">.</span></h1><p>Servicios creativos para editoriales, marcas, estudios, creadores y aliados.</p></div><div class="services-grid">${services.map(([title, desc], index) => `<article class="service-item"><span class="service-no">0${index + 1}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p></article>`).join('')}</div><a class="button button-dark" href="/#contact">Colabora con nosotros <span>↗</span></a></section>`;
-  if (path === '/projects') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño.</p></div><div class="project-categories">${['PROPIEDADES ORIGINALES', 'TRABAJOS PARA CLIENTES', 'COLABORACIONES', 'VIDEOJUEGOS Y JUEGOS DE MESA', 'ILUSTRACIÓN / DISEÑO'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${projects.length ? 'Explora algunos de nuestros trabajos.' : 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.'}</p></article>`).join('')}</div></section>`;
+  if (path === '/projects') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño.</p></div><div class="project-categories">${['PROPIEDADES ORIGINALES', 'TRABAJOS PARA CLIENTES', 'COLABORACIONES', 'VIDEOJUEGOS Y JUEGOS DE MESA', 'ILUSTRACIÓN / DISEÑO'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${projects.length ? 'Explora algunos de nuestros trabajos.' : 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.'}</p></article>`).join('')}</div>${clientStrip()}</section>`;
   if (path === '/about') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ACERCA DE ALPHA EVE STUDIOS</p><h1>ESPÍRITU<br>INDEPENDIENTE. <span class="red">IMAGINACIÓN</span><br>SIN LÍMITES.</h1></div><div class="about-page-copy"><p>Alpha Eve Studios es un estudio creativo y editorial de República Dominicana. Desarrollamos propiedades intelectuales originales y ofrecemos servicios creativos de cómics, manga, ilustración, diseño y desarrollo visual.</p><p>Construimos mundos propios y colaboramos con aliados creativos de todo el mundo.</p><a class="button button-dark" href="/authors" data-route>Conoce a nuestros creadores <span>↗</span></a><a class="text-link" href="/#anniversary">Nuestra historia · 2007—2027 ↗</a></div></section>`;
   if (path === '/packito') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">UNA PLATAFORMA DE ALPHA EVE</p><h1>PACKITO<span class="red">.</span></h1><p>Cómics y manga digitales. Un espacio para cómics, creadores e historias originales.</p></div><div class="detail-empty">Todavía no se ha compartido el enlace externo de Packito.</div><a class="text-link" href="#contact">Para creadores ↗</a></section>`;
   if (path === '/shop') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS</p><h1>LA TIENDA<span class="red">.</span></h1><p>Cómics impresos y digitales, láminas y productos.</p></div><div class="detail-empty">El enlace de la tienda oficial se agregará cuando esté disponible.</div></section>`;
@@ -200,6 +229,7 @@ function renderRoute() {
     app.innerHTML = home;
     renderFeaturedComic();
     document.title = 'Alpha Eve Studios — Historias. Arte. Mundos.';
+    mountClientLogos();
     return;
   }
   if (path === '/authors') { app.innerHTML = authorDirectory(); document.title = 'Creadores — Alpha Eve Studios'; return; }
@@ -235,6 +265,7 @@ function renderRoute() {
   const directory = simpleDirectory(path);
   app.innerHTML = directory || notFound();
   document.title = directory ? `${path === '/services' ? 'Servicios' : path === '/projects' ? 'Proyectos' : path === '/about' ? 'Nosotros' : path === '/packito' ? 'Packito' : 'Tienda'} — Alpha Eve Studios` : 'Página no encontrada — Alpha Eve Studios';
+  mountClientLogos();
 }
 function notFound() { return `<section class="directory-page"><a class="detail-back" href="/" data-route>← Alpha Eve Studios</a><h1>PÁGINA NO<br>ENCONTRADA<span class="red">.</span></h1><a class="button button-dark" href="/" data-route>Volver al inicio <span>↗</span></a></section>`; }
 
@@ -244,6 +275,7 @@ const homeIp = document.querySelector('#ip-grid');
 if (homeIp) homeIp.innerHTML = '';
 const homeCreators = document.querySelector('#creator-grid');
 if (homeCreators) homeCreators.innerHTML = authors.slice(0, 6).map(authorCard).join('');
+document.querySelector('.creator-section')?.insertAdjacentHTML('beforebegin', clientStrip());
 const home = app?.innerHTML ?? '';
 
 document.addEventListener('click', event => {

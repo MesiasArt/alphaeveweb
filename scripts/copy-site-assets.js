@@ -6,7 +6,7 @@ const output = resolve(root, 'dist');
 
 mkdirSync(output, { recursive: true });
 
-for (const directory of ['artistas', 'series']) {
+for (const directory of ['artistas', 'series', 'clientes']) {
   cpSync(resolve(root, directory), resolve(output, directory), {
     recursive: true,
     filter: source => basename(source).toLowerCase() !== 'readme.md',
