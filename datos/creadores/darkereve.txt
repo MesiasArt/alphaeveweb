@@ -1,5 +1,5 @@
-Nombre: darkereve
+Nombre: DarkerEve
 Slug: darkereve
-Función:
+Función:Presidente
 Biografía:
-Especialidades:
+Especialidades:Portadas, Comics, Manga, Storyboard, Diseño de Personaje.

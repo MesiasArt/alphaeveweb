@@ -1,9 +1,9 @@
 Título: Baká: El Mito Asesino
 Slug: baka-el-mito-asesino
 Formato: One-shot
-Tipo:
-Géneros:
+Tipo: Comics
+Géneros: Accion, Sobrenatural, Ecchi, Gore, Seinen.
 Sinopsis:
-Creadores:
+Creadores: DarkerEve
 - slug:
   función:
