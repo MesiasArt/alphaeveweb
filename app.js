@@ -210,7 +210,7 @@ function renderRoute() {
     comicSearchTerm = '';
     app.innerHTML = comicDirectory();
     renderComicCatalog();
-    document.title = 'Cómics — Alpha Eve Studios';
+    document.title = 'Catálogo — Alpha Eve Studios';
     return;
   }
   const slug = path.split('/').pop();
