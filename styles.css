@@ -173,7 +173,7 @@
 .case-details{grid-template-columns:1fr;align-items:start;gap:28px}
 .case-details-head h2{margin-bottom:0}
 .case-details-body{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(220px,.75fr);gap:18px;align-items:stretch}
-.case-logo-mark{margin:0;display:grid;place-items:center;background:var(--ink);min-height:0;padding:28px;align-self:stretch}
+.case-logo-mark{margin:0;display:grid;place-items:center;background:transparent;min-height:0;padding:0;align-self:stretch}
 .case-logo-mark img{width:min(100%,340px);height:auto;display:block}
 .case-meta{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border-top:1px solid var(--line);border-left:1px solid var(--line)}
 .case-meta>div{padding:18px 16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
