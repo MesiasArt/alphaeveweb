@@ -368,7 +368,7 @@ function historyMoment(moment, index) {
     ? `<figure><img src="${esc(src)}" alt="${esc(moment.titulo || moment.fecha || 'Momento de Alpha Eve')}" onerror="this.remove();this.parentElement.classList.add('missing')"><span>Imagen por agregar</span></figure>`
     : '<figure class="missing"><span>Imagen por agregar</span></figure>';
   const mark = logo
-    ? `<img class="history-logo" src="${esc(logo)}" alt="Primera versión del logo de Alpha Eve">`
+    ? `<aside class="history-logo"><img src="${esc(logo)}" alt="Primera versión del logo de Alpha Eve"><span>Primer logo</span></aside>`
     : '';
   return `<article class="history-moment${flip}"><span class="history-node" aria-hidden="true"></span><div class="history-copy"><span class="history-chapter">${chapter}</span><time>${esc(moment.fecha || 'Fecha')}</time><h2>${esc(moment.titulo || 'Título por agregar')}</h2>${historyParagraphs(moment.texto)}${historyCredits(moment)}</div><div class="history-visual">${figure}${mark}</div></article>`;
 }
