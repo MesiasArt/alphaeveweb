@@ -136,7 +136,16 @@ const projects = [
     purposeCopy: 'Misión Genial ayuda a las familias a organizar las primeras semanas de clases con un reto divertido, canciones y herramientas prácticas para el día a día.',
     closeTitle: 'JUEGO CON<br>PROPÓSITO',
     closeLine: 'Diseño y narrativa para recursos que ayudan a las familias a organizarse jugando.',
-    assets: {},
+    assets: {
+      hero: 'unnadddmed.jpg',
+      story: 'uaaaannamed.jpg',
+      gallery: [
+        { file: 'unnaadmed.jpg', caption: 'El libro' },
+        { file: 'unnamadadaded.jpg', caption: 'Cartas y producto' },
+        { file: 'uaaaadnnamed.jpg', caption: 'En el recreo' },
+        { file: 'unnaadadadamed.jpg', caption: 'Rutina y canciones' },
+      ],
+    },
   },
 ];
 function projectAsset(project, file) {
