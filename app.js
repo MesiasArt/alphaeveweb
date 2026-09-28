@@ -310,7 +310,7 @@ function historyPage() {
 function parseHistory(text) {
   const moments = [];
   let current = null;
-  const blank = () => ({ fecha: '', titulo: '', texto: '', imagen: '', logo: '', fundador: '', integrantes: '' });
+  const blank = () => ({ fecha: '', titulo: '', texto: '', imagen: '', pie: '', logo: '', fundador: '', integrantes: '' });
   const flush = () => {
     if (current && (current.fecha || current.titulo || current.texto || current.imagen || current.logo)) {
       current.texto = current.texto.replace(/\n{3,}/g, '\n\n').trim();
@@ -324,7 +324,7 @@ function parseHistory(text) {
       if (!line && current?.texto) current.texto += '\n\n';
       continue;
     }
-    const match = line.match(/^(Fecha|Título|Titulo|Texto|Imagen|Logo|Fundador|Integrantes|Primeros integrantes)\s*:\s*(.*)$/i);
+    const match = line.match(/^(Fecha|Título|Titulo|Texto|Imagen|Pie|Pie de foto|Leyenda|Logo|Fundador|Integrantes|Primeros integrantes)\s*:\s*(.*)$/i);
     if (!match) {
       if (current) current.texto = current.texto ? `${current.texto}${/\n$/.test(current.texto) ? '' : '\n'}${line}` : line;
       continue;
@@ -337,6 +337,7 @@ function parseHistory(text) {
     else if (key === 'titulo') current.titulo = value;
     else if (key === 'texto') current.texto = value;
     else if (key === 'imagen') current.imagen = value;
+    else if (key === 'pie' || key === 'pie de foto' || key === 'leyenda') current.pie = value;
     else if (key === 'logo') current.logo = value;
     else if (key === 'fundador') current.fundador = value;
     else if (key === 'integrantes' || key === 'primeros integrantes') current.integrantes = value;
@@ -364,13 +365,15 @@ function historyMoment(moment, index) {
   const logo = historyImage(moment.logo);
   const chapter = String(index + 1).padStart(2, '0');
   const flip = index % 2 === 1 ? ' history-moment-flip' : '';
-  const figure = src
-    ? `<figure><img src="${esc(src)}" alt="${esc(moment.titulo || moment.fecha || 'Momento de Alpha Eve')}" onerror="this.remove();this.parentElement.classList.add('missing')"><span>Imagen por agregar</span></figure>`
-    : '<figure class="missing"><span>Imagen por agregar</span></figure>';
+  const photo = src
+    ? `<img src="${esc(src)}" alt="${esc(moment.pie || moment.titulo || moment.fecha || 'Momento de Alpha Eve')}" onerror="this.remove();this.parentElement.classList.add('missing')"><span>Imagen por agregar</span>`
+    : '<span>Imagen por agregar</span>';
+  const caption = moment.pie ? `<figcaption class="history-caption">${esc(moment.pie)}</figcaption>` : '';
   const mark = logo
     ? `<aside class="history-logo"><img src="${esc(logo)}" alt="Primera versión del logo de Alpha Eve"><span>Primer logo</span></aside>`
     : '';
-  return `<article class="history-moment${flip}"><span class="history-node" aria-hidden="true"></span><div class="history-copy"><span class="history-chapter">${chapter}</span><time>${esc(moment.fecha || 'Fecha')}</time><h2>${esc(moment.titulo || 'Título por agregar')}</h2>${historyParagraphs(moment.texto)}${historyCredits(moment)}</div><div class="history-visual">${figure}${mark}</div></article>`;
+  const figure = `<figure${src ? '' : ' class="missing"'}><div class="history-frame"><div class="history-photo">${photo}</div>${mark}</div>${caption}</figure>`;
+  return `<article class="history-moment${flip}"><span class="history-node" aria-hidden="true"></span><div class="history-copy"><span class="history-chapter">${chapter}</span><time>${esc(moment.fecha || 'Fecha')}</time><h2>${esc(moment.titulo || 'Título por agregar')}</h2>${historyParagraphs(moment.texto)}${historyCredits(moment)}</div><div class="history-visual">${figure}</div></article>`;
 }
 async function mountHistory() {
   const list = document.querySelector('#history-list');

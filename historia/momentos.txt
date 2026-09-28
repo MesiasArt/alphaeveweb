@@ -3,6 +3,7 @@
 # Separa cada momento con una línea en blanco.
 # Las fotos van en la carpeta historia/imagenes/
 # En Imagen escribe solo el nombre del archivo, por ejemplo 2007.jpg
+# Pie es el texto pequeño debajo de la foto.
 # Logo opcional: primera marca o sello de ese período.
 # Si todavía no tienes foto, deja Imagen vacío.
 
@@ -16,6 +17,7 @@ Alpha Eve también nace con la intención de fortalecer la creciente comunidad l
 Fundador: Darwin Núñez
 Integrantes: Rafael Soto · Edwin Disla · Luis Manuel Mariñez
 Imagen: 2006.jpg
+Pie: Darwin Núñez, Rafael Soto y Luigi Paredes en la M.C.D. Exposición de Manga y Comics en Dominicana, 2007.
 Logo: 2006-logo.png
 
 Fecha: 2010s
