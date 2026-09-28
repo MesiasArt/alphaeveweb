@@ -1,0 +1,221 @@
+FICHA DE CÓMICS — Alpha Eve Studios
+====================================
+
+Completa lo que falte y deja en blanco lo que todavía no tengas.
+No cambies el slug: es el nombre interno que conecta la página.
+
+GÉNEROS
+Usa solo estos nombres, separados por coma. Puedes poner varios.
+
+Acción, Misterio, Gore +18, Slice of Life, Psicológico, Isekai, Kaiju, Ecchi +18, Fantasía, Cyberpunk, Comedia, Superhéroes, Crimen, Vampiros, Shonen, Aventura, Noir, Deportivo, Sobrenatural, Detective, Zombies, Shojo, Horror, Mecha, Histórico, Thriller, Artes Marciales, Steampunk, Seinen, Sci-Fi, Romance, Drama, Suspenso, Magia, Western, Josei
+
+CREADORES
+Escribe el slug de cada persona y su función en ESE cómic.
+Ejemplos de función: Escritor, Dibujante, Color, Portada, Lettering, Creador.
+Si una persona tiene varias funciones, sepáralas con coma.
+
+Slugs disponibles:
+anderson-07, darkereve, froggynami, manuel_shoo, mesiasart, nattibie, nicodomo, ossy_jo, spencer_draw, xamurai_rd, yonsoncb, zukupow
+
+Al guardar un creador aquí, el cómic aparece en su perfil.
+
+
+------------------------------------------------------------
+Título: A la deriva con mi perro
+Slug: a-la-deriva-con-mi-perro
+Formato: One-shot
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Baká: El Mito Asesino
+Slug: baka-el-mito-asesino
+Formato: One-shot
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Bazuca - La heroína olvidada
+Slug: bazuca-la-heroina-olvidada
+Formato: One-shot
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Cuentos del Magijara
+Slug: cuentos-del-magijara
+Formato: Serie · 5 capítulos
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Escondite
+Slug: escondite
+Formato:
+Géneros:
+Sinopsis:
+Creadores:
+- slug: nattibie
+  función:
+
+------------------------------------------------------------
+Título: How to Hide a Mermaid
+Slug: how-to-hide-a-mermaid
+Formato: Serie · 2 capítulos
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Jagua Tales
+Slug: jagua-tales
+Formato:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: La Armadura de mi Hermano
+Slug: la-armadura-de-mi-hermano
+Formato: One-shot
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: La Guagua Voladora
+Slug: la-guagua-voladora
+Formato: One-shot
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: La Lu’ Interior
+Slug: la-lu-interior
+Formato: One-shot
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Last Breath
+Slug: last-breath
+Formato: One-shot
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Más Freak de lo Normal
+Slug: mas-freak-de-lo-normal
+Formato: Serie · 7 capítulos
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Mi Angelito Defectuoso
+Slug: mi-angelito-defectuoso
+Formato: Serie · 1 capítulo
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Pantaleta
+Slug: pantaleta
+Formato: Serie · 2 capítulos
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Quimica al 100%
+Slug: quimica-al-100
+Formato: Serie · 3 capítulos
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Ruptura
+Slug: ruptura
+Formato: One-shot
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Sangrienta
+Slug: sangrienta
+Formato: Serie · 1 de 3 capítulos
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Tomorrow Girl x Freakier Than Normal
+Slug: tomorrow-girl-x-freakier-than-normal
+Formato: One-shot
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Umbral, El reino de lo invisible
+Slug: umbral-el-reino-de-lo-invisible
+Formato: One-shot
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:
+
+------------------------------------------------------------
+Título: Yanikeke
+Slug: yanikeke
+Formato:
+Géneros:
+Sinopsis:
+Creadores:
+- slug:
+  función:

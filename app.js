@@ -90,7 +90,7 @@ menu?.addEventListener('click', () => {
 function closeMenu() { nav?.classList.remove('open'); menu?.setAttribute('aria-expanded', 'false'); }
 
 function authorDirectory() {
-  return `<section class="directory-page authors-directory"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS · EQUIPO CREATIVO</p><h1>AUTORES<span class="red">.</span></h1><p>Conoce a los artistas y mentes creativas detrás de los mundos de Alpha Eve. Selecciona un perfil para ver su portafolio.</p><div class="directory-count">${authors.length} PERFILES CREATIVOS</div></div><div class="creator-grid directory-creators">${authors.map(authorCard).join('')}</div></section>`;
+  return `<section class="directory-page authors-directory"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS · EQUIPO CREATIVO</p><h1>CREADORES<span class="red">.</span></h1><p>Conoce a los artistas y mentes creativas detrás de los mundos de Alpha Eve. Selecciona un perfil para ver su portafolio.</p><div class="directory-count">${authors.length} PERFILES CREATIVOS</div></div><div class="creator-grid directory-creators">${authors.map(authorCard).join('')}</div></section>`;
 }
 function normalizedTitle(value) {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
@@ -143,10 +143,10 @@ function renderFeaturedComic(direction = 'random') {
 function authorPage(author) {
   const related = comicsFor(author);
   return `<section class="detail-shell author-profile">
-    <a class="detail-back" href="/authors" data-route>← Todos los autores</a>
+    <a class="detail-back" href="/authors" data-route>← Todos los creadores</a>
     <div class="detail-hero author-hero"><div class="author-portrait"><img src="/artistas/${encodeURIComponent(author.image)}" alt="${esc(author.name)}" /></div>
       <div class="detail-copy"><p class="eyebrow">ALPHA EVE · PORTAFOLIO CREATIVO</p><h1>${esc(author.name)}<span class="red">.</span></h1><div class="detail-meta">${esc(author.role || 'PERFIL CREATIVO')}</div><p>${esc(author.bio || 'Portafolio y perfil creativo del artista. La biografía y sus especialidades se agregarán cuando se confirme la información.')}</p><a class="button button-dark" href="#contact">Colabora con ${esc(author.name)} <span>↗</span></a></div></div>
-    <section class="detail-block"><p class="eyebrow">ACERCA DEL AUTOR</p><h2>Biografía y especialidades</h2>${author.bio || author.specialties.length ? `<p>${esc(author.bio || author.specialties.join(' · '))}</p>` : '<div class="detail-empty">La biografía y las especialidades creativas aparecerán aquí.</div>'}</section>
+    <section class="detail-block"><p class="eyebrow">ACERCA DEL CREADOR</p><h2>Biografía y especialidades</h2>${author.bio || author.specialties.length ? `<p>${esc(author.bio || author.specialties.join(' · '))}</p>` : '<div class="detail-empty">La biografía y las especialidades creativas aparecerán aquí.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">PROYECTOS Y COLABORACIONES</p><h2>Proyectos destacados</h2><div class="detail-empty">Los proyectos aparecerán aquí cuando se confirmen.</div></section>
     <section class="detail-block"><p class="eyebrow">CÓMICS</p><h2>Historias y series</h2>${related.length ? `<div class="comic-directory-grid">${related.map(comicCard).join('')}</div>` : '<div class="detail-empty">Todavía no hay cómics vinculados a este perfil.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">GALERÍA</p><h2>Arte y proceso</h2><div class="author-gallery"><img src="/artistas/${encodeURIComponent(author.image)}" alt="Ilustración de perfil de ${esc(author.name)}" loading="lazy"><div class="detail-empty">Aquí se agregarán más ilustraciones, bocetos y portadas.</div></div></section>
@@ -177,7 +177,7 @@ function comicPage(comic) {
 }
 function simpleDirectory(path) {
   if (path === '/services') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ESTUDIO CREATIVO · REPÚBLICA DOMINICANA</p><h1>NUESTROS<br>SERVICIOS<span class="red">.</span></h1><p>Servicios creativos para editoriales, marcas, estudios, creadores y aliados.</p></div><div class="services-grid">${services.map(([title, desc], index) => `<article class="service-item"><span class="service-no">0${index + 1}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p></article>`).join('')}</div><a class="button button-dark" href="/#contact">Colabora con nosotros <span>↗</span></a></section>`;
-  if (path === '/projects') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño.</p></div><div class="project-categories">${['PROPIEDADES ORIGINALES', 'TRABAJOS PARA CLIENTES', 'COLABORACIONES', 'VIDEOJUEGOS', 'ILUSTRACIÓN / DISEÑO'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${projects.length ? 'Explora algunos de nuestros trabajos.' : 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.'}</p></article>`).join('')}</div></section>`;
+  if (path === '/projects') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño.</p></div><div class="project-categories">${['PROPIEDADES ORIGINALES', 'TRABAJOS PARA CLIENTES', 'COLABORACIONES', 'VIDEOJUEGOS Y JUEGOS DE MESA', 'ILUSTRACIÓN / DISEÑO'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${projects.length ? 'Explora algunos de nuestros trabajos.' : 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.'}</p></article>`).join('')}</div></section>`;
   if (path === '/about') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ACERCA DE ALPHA EVE STUDIOS</p><h1>ESPÍRITU<br>INDEPENDIENTE. <span class="red">IMAGINACIÓN</span><br>SIN LÍMITES.</h1></div><div class="about-page-copy"><p>Alpha Eve Studios es un estudio creativo y editorial de República Dominicana. Desarrollamos propiedades intelectuales originales y ofrecemos servicios creativos de cómics, manga, ilustración, diseño y desarrollo visual.</p><p>Construimos mundos propios y colaboramos con aliados creativos de todo el mundo.</p><a class="button button-dark" href="/authors" data-route>Conoce a nuestros creadores <span>↗</span></a><a class="text-link" href="/#anniversary">Nuestra historia · 2007—2027 ↗</a></div></section>`;
   if (path === '/packito') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">UNA PLATAFORMA DE ALPHA EVE</p><h1>PACKITO<span class="red">.</span></h1><p>Cómics y manga digitales. Un espacio para cómics, creadores e historias originales.</p></div><div class="detail-empty">Todavía no se ha compartido el enlace externo de Packito.</div><a class="text-link" href="#contact">Para creadores ↗</a></section>`;
   if (path === '/shop') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS</p><h1>LA TIENDA<span class="red">.</span></h1><p>Cómics impresos y digitales, láminas y productos.</p></div><div class="detail-empty">El enlace de la tienda oficial se agregará cuando esté disponible.</div></section>`;
@@ -193,7 +193,7 @@ function renderRoute() {
     document.title = 'Alpha Eve Studios — Historias. Arte. Mundos.';
     return;
   }
-  if (path === '/authors') { app.innerHTML = authorDirectory(); document.title = 'Autores — Alpha Eve Studios'; return; }
+  if (path === '/authors') { app.innerHTML = authorDirectory(); document.title = 'Creadores — Alpha Eve Studios'; return; }
   if (path === '/comics') {
     activeComicLetter = '';
     activeComicGenres = [];
@@ -207,7 +207,7 @@ function renderRoute() {
   if (path.startsWith('/authors/')) {
     const author = authors.find(entry => entry.slug === slug);
     app.innerHTML = author ? authorPage(author) : notFound();
-    document.title = author ? `${author.name} — Alpha Eve Studios` : 'Autor no encontrado — Alpha Eve Studios';
+    document.title = author ? `${author.name} — Alpha Eve Studios` : 'Creador no encontrado — Alpha Eve Studios';
     return;
   }
   if (path.startsWith('/comics/')) {
