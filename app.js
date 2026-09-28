@@ -305,7 +305,7 @@ function contactPage() {
   </section>`;
 }
 function historyPage() {
-  return `<section class="history-page"><a class="detail-back" href="/#anniversary" data-route>← 20 años</a><p class="eyebrow">2007 — 2027 · REPÚBLICA DOMINICANA</p><h1>NUESTRA<br>HISTORIA<span class="red">.</span></h1><div class="history-list" id="history-list"></div></section>`;
+  return `<section class="history-page"><a class="detail-back" href="/#anniversary" data-route>← 20 años</a><p class="eyebrow">2007 — 2027 · REPÚBLICA DOMINICANA</p><h1>NUESTRA<br>HISTORIA<span class="red">.</span></h1><div class="history-timeline" id="history-list"></div></section>`;
 }
 function parseHistory(text) {
   const moments = [];
@@ -340,12 +340,14 @@ function historyImage(name) {
   if (!name || /[\\/]/.test(name) || name.includes('..')) return '';
   return `/historia/imagenes/${encodeURIComponent(name)}`;
 }
-function historyMoment(moment) {
+function historyMoment(moment, index) {
   const src = historyImage(moment.imagen);
+  const chapter = String(index + 1).padStart(2, '0');
+  const flip = index % 2 === 1 ? ' history-moment-flip' : '';
   const figure = src
     ? `<figure><img src="${esc(src)}" alt="${esc(moment.titulo || moment.fecha || 'Momento de Alpha Eve')}" onerror="this.remove();this.parentElement.classList.add('missing')"><span>Imagen por agregar</span></figure>`
     : '<figure class="missing"><span>Imagen por agregar</span></figure>';
-  return `<article class="history-moment"><time>${esc(moment.fecha || 'Fecha')}</time><div><h2>${esc(moment.titulo || 'Título por agregar')}</h2><p>${esc(moment.texto || 'El texto de este momento se agregará aquí.')}</p></div>${figure}</article>`;
+  return `<article class="history-moment${flip}"><span class="history-node" aria-hidden="true"></span><div class="history-copy"><span class="history-chapter">${chapter}</span><time>${esc(moment.fecha || 'Fecha')}</time><h2>${esc(moment.titulo || 'Título por agregar')}</h2><p>${esc(moment.texto || 'El texto de este momento se agregará aquí.')}</p></div>${figure}</article>`;
 }
 async function mountHistory() {
   const list = document.querySelector('#history-list');
