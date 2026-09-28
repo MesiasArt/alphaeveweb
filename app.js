@@ -334,7 +334,7 @@ projectInquiry?.addEventListener('submit', async event => {
   const body = Object.fromEntries(new FormData(projectInquiry));
   button.disabled = true;
   const label = button.innerHTML;
-  button.textContent = 'Sending…';
+  button.textContent = 'Enviando…';
   try {
     const response = await fetch('/api/contact', {
       method: 'POST',
@@ -344,7 +344,7 @@ projectInquiry?.addEventListener('submit', async event => {
     const isJson = (response.headers.get('content-type') || '').includes('application/json');
     const result = isJson ? await response.json().catch(() => ({})) : {};
     if (!response.ok || !result.ok) {
-      showError(result.error || "We couldn't send your inquiry. Please try again.");
+      showError(result.error || 'No pudimos enviar tu consulta. Inténtalo de nuevo.');
       button.disabled = false;
       button.innerHTML = label;
       return;
@@ -353,7 +353,7 @@ projectInquiry?.addEventListener('submit', async event => {
     document.querySelector('.contact-intro').hidden = true;
     document.querySelector('.inquiry-thanks').hidden = false;
   } catch {
-    showError("We couldn't send your inquiry. Please try again.");
+    showError('No pudimos enviar tu consulta. Inténtalo de nuevo.');
     button.disabled = false;
     button.innerHTML = label;
   }

@@ -1,14 +1,14 @@
 import { EmailMessage } from "cloudflare:email";
 
 const SERVICES = [
-  "Illustration",
-  "Comics & Manga",
-  "Character Design",
-  "Concept Art",
-  "Graphic Design",
-  "Visual Development",
-  "Game Art",
-  "Other",
+  "Ilustración",
+  "Cómics y manga",
+  "Diseño de personajes",
+  "Arte conceptual",
+  "Diseño gráfico",
+  "Desarrollo visual",
+  "Arte para videojuegos",
+  "Otro",
 ];
 
 const WINDOW_MS = 10 * 60 * 1000;
@@ -28,27 +28,27 @@ async function handleContact(request, env) {
     return new Response(null, { status: 204, headers: corsHeaders(request) });
   }
   if (request.method !== "POST") {
-    return json({ ok: false, error: "Method not allowed." }, 405);
+    return json({ ok: false, error: "Método no permitido." }, 405);
   }
   if (!sameSite(request)) {
-    return json({ ok: false, error: "This form can only be submitted from the Alpha Eve website." }, 403);
+    return json({ ok: false, error: "Este formulario solo se puede enviar desde el sitio de Alpha Eve." }, 403);
   }
 
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   if (isRateLimited(ip)) {
-    return json({ ok: false, error: "Too many inquiries from this connection. Please try again later." }, 429);
+    return json({ ok: false, error: "Llegaron demasiadas consultas desde esta conexión. Inténtalo de nuevo más tarde." }, 429);
   }
 
   const length = Number(request.headers.get("content-length") || 0);
   if (length > 32000) {
-    return json({ ok: false, error: "Message is too long." }, 413);
+    return json({ ok: false, error: "El mensaje es demasiado largo." }, 413);
   }
 
   let payload;
   try {
     payload = await request.json();
   } catch {
-    return json({ ok: false, error: "The inquiry could not be read." }, 400);
+    return json({ ok: false, error: "No se pudo leer la consulta." }, 400);
   }
 
   if (singleLine(payload?.confirm_url, 200)) {
@@ -61,14 +61,14 @@ async function handleContact(request, env) {
   const to = singleLine(env.CONTACT_TO, 200);
   const from = singleLine(env.CONTACT_FROM, 200);
   if (!to || !from || !env.EMAIL?.send) {
-    return json({ ok: false, error: "Contact email is not configured yet." }, 503);
+    return json({ ok: false, error: "El correo de contacto todavía no está configurado." }, 503);
   }
 
   try {
     await env.EMAIL.send(new EmailMessage(from, to, mimeMessage({ from, to, inquiry })));
   } catch (error) {
     console.error("Contact email failed", error);
-    return json({ ok: false, error: "We couldn't send your inquiry. Please try again." }, 502);
+    return json({ ok: false, error: "No pudimos enviar tu consulta. Inténtalo de nuevo." }, 502);
   }
 
   return json({ ok: true });
@@ -84,27 +84,27 @@ function validate(payload) {
   const timeline = singleLine(payload?.timeline, 120);
   const reference = singleLine(payload?.reference, 300);
 
-  if (name.length < 2) return { error: "Please enter your name." };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Please enter a valid email address." };
-  if (!SERVICES.includes(service)) return { error: "Please select a service." };
-  if (description.length < 10) return { error: "Please describe the project in a little more detail." };
-  if (reference && !isHttpUrl(reference)) return { error: "The reference must be a full http or https URL." };
+  if (name.length < 2) return { error: "Escribe tu nombre." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Escribe un correo válido." };
+  if (!SERVICES.includes(service)) return { error: "Selecciona un servicio." };
+  if (description.length < 10) return { error: "Describe el proyecto con un poco más de detalle." };
+  if (reference && !isHttpUrl(reference)) return { error: "La referencia debe ser una dirección http o https completa." };
 
   return { name, email, company, service, description, budget, timeline, reference };
 }
 
 function mimeMessage({ from, to, inquiry }) {
-  const subject = encodeHeader(`New project inquiry — ${inquiry.name}`);
+  const subject = encodeHeader(`Nueva consulta de proyecto — ${inquiry.name}`);
   const lines = [
-    `Name: ${inquiry.name}`,
-    `Email: ${inquiry.email}`,
-    `Company / Organization: ${inquiry.company || "—"}`,
-    `Service: ${inquiry.service}`,
-    `Budget range: ${inquiry.budget || "—"}`,
-    `Timeline: ${inquiry.timeline || "—"}`,
-    `Website / reference: ${inquiry.reference || "—"}`,
+    `Nombre: ${inquiry.name}`,
+    `Correo: ${inquiry.email}`,
+    `Empresa / organización: ${inquiry.company || "—"}`,
+    `Servicio: ${inquiry.service}`,
+    `Presupuesto: ${inquiry.budget || "—"}`,
+    `Plazo: ${inquiry.timeline || "—"}`,
+    `Sitio web / referencia: ${inquiry.reference || "—"}`,
     "",
-    "Project description:",
+    "Descripción del proyecto:",
     inquiry.description,
   ];
   return [
