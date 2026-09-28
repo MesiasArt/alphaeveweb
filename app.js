@@ -61,10 +61,15 @@ const projects = [
     themes: ['Educación financiera', 'Ahorro', 'Medio ambiente', 'Valores'],
     category: 'TRABAJOS PARA CLIENTES',
     assets: {
-      hero: 'Banreservas_cuento_2d5-26 copia.jpg',
+      hero: 'Banreservas_cuento_3-4 copia.jpg',
+      story: 'Banreservas_cuento_2d5-26 copia.jpg',
       lucasJenny: 'Lucas y Jenny.jpg',
       jenny: 'Jenny la ballenita.jpg',
       lucas: 'Lucas.jpg',
+      pages: '17 - 18 Un Tesoro para Siempre.jpg',
+      logo: '00 - Editorial Un Tesoro para Siempre LOGO.png',
+      launch: 'lanzamiento.webp',
+      booth: 'montaje.webp',
     },
   },
 ];
@@ -258,16 +263,16 @@ function projectCard(project) {
   </a>`;
 }
 function tesoroPage(project) {
-  const hero = projectAsset(project, project.assets.hero);
-  const lucasJenny = projectAsset(project, project.assets.lucasJenny);
-  const jenny = projectAsset(project, project.assets.jenny);
-  const lucas = projectAsset(project, project.assets.lucas);
-  const gallery = [
-    { src: hero, label: 'Ilustración final' },
-    { src: lucasJenny, label: 'Personajes' },
-    { src: jenny, label: 'Jenny la Ballenita' },
-    { src: lucas, label: 'Lucas' },
-  ];
+  const a = project.assets;
+  const hero = projectAsset(project, a.hero);
+  const storyArt = projectAsset(project, a.story);
+  const lucasJenny = projectAsset(project, a.lucasJenny);
+  const jenny = projectAsset(project, a.jenny);
+  const lucas = projectAsset(project, a.lucas);
+  const pages = projectAsset(project, a.pages);
+  const logo = projectAsset(project, a.logo);
+  const launch = projectAsset(project, a.launch);
+  const booth = projectAsset(project, a.booth);
   return `<article class="case-study">
     <section class="case-hero">
       <div class="case-hero-copy">
@@ -276,7 +281,7 @@ function tesoroPage(project) {
         <h1>UN TESORO<br>PARA SIEMPRE<span class="red">.</span></h1>
         <p class="case-hero-lede">${esc(project.subtitle)}</p>
       </div>
-      <figure class="case-hero-art"><img src="${esc(hero)}" alt="Ilustración de Un Tesoro para Siempre"></figure>
+      <figure class="case-hero-art"><img src="${esc(hero)}" alt="Lucas mira el mar y a Jenny la Ballenita"></figure>
     </section>
 
     <section class="case-section case-story">
@@ -286,7 +291,7 @@ function tesoroPage(project) {
         <p>Un Tesoro para Siempre es un cuento infantil desarrollado para Banreservas, creado alrededor de Jenny la Ballenita, mascota de la institución.</p>
         <p>La historia sigue a Lucas, un niño que durante una excursión a la Bahía de Samaná conoce a Jenny, quien lo guía en una aventura donde descubre conceptos básicos sobre el manejo del dinero, el ahorro y la importancia de trabajar por sus metas.</p>
       </div>
-      <figure class="case-media"><img src="${esc(lucasJenny)}" alt="Lucas y Jenny la Ballenita" loading="lazy"></figure>
+      <figure class="case-media"><img src="${esc(storyArt)}" alt="Ilustraciones del cuento con Lucas y Jenny" loading="lazy"></figure>
     </section>
 
     <section class="case-section case-role">
@@ -298,38 +303,39 @@ function tesoroPage(project) {
       <div class="case-role-grid">
         <figure><img src="${esc(lucas)}" alt="Lucas" loading="lazy"><figcaption>Lucas</figcaption></figure>
         <figure><img src="${esc(jenny)}" alt="Jenny la Ballenita" loading="lazy"><figcaption>Jenny la Ballenita</figcaption></figure>
-        <figure class="case-role-wide"><img src="${esc(hero)}" alt="Ilustraciones finales del cuento" loading="lazy"><figcaption>Ilustraciones finales</figcaption></figure>
       </div>
     </section>
 
     <section class="case-section case-details">
-      <p class="eyebrow">03 — PROJECT DETAILS</p>
-      <h2>DETALLES<span class="red">.</span></h2>
-      <dl class="case-meta">
-        <div><dt>Client</dt><dd>${esc(project.client)}</dd></div>
-        <div><dt>Project</dt><dd>${esc(project.title)}</dd></div>
-        <div><dt>Type</dt><dd>${esc(project.type)}</dd></div>
-        <div><dt>Story</dt><dd>${esc(project.storyBy)}</dd></div>
-        <div><dt>Illustration</dt><dd>${esc(project.illustrationBy)}</dd></div>
-        <div><dt>Themes</dt><dd>${esc(project.themes.join(' · '))}</dd></div>
-      </dl>
+      <div>
+        <p class="eyebrow">03 — PROJECT DETAILS</p>
+        <h2>DETALLES<span class="red">.</span></h2>
+        <dl class="case-meta">
+          <div><dt>Client</dt><dd>${esc(project.client)}</dd></div>
+          <div><dt>Project</dt><dd>${esc(project.title)}</dd></div>
+          <div><dt>Type</dt><dd>${esc(project.type)}</dd></div>
+          <div><dt>Story</dt><dd>${esc(project.storyBy)}</dd></div>
+          <div><dt>Illustration</dt><dd>${esc(project.illustrationBy)}</dd></div>
+          <div><dt>Themes</dt><dd>${esc(project.themes.join(' · '))}</dd></div>
+        </dl>
+      </div>
+      <figure class="case-logo-mark"><img src="${esc(logo)}" alt="Logo editorial Un Tesoro para Siempre" loading="lazy"></figure>
     </section>
 
     <section class="case-section case-process">
       <div class="case-copy case-copy-wide">
         <p class="eyebrow">04 — FROM SKETCH TO STORY</p>
-        <h2>DEL PERSONAJE<br>A LA HISTORIA<span class="red">.</span></h2>
-        <p>Con los assets disponibles mostramos el paso de los personajes principales a las ilustraciones finales del cuento.</p>
+        <h2>DE LOS PERSONAJES<br>A LAS PÁGINAS<span class="red">.</span></h2>
+        <p>El desarrollo visual pasó de los personajes principales a las páginas interiores del cuento.</p>
       </div>
-      <div class="case-process-row">
-        <figure><span>01 · Characters</span><img src="${esc(lucas)}" alt="Diseño de Lucas" loading="lazy"><figcaption>Lucas</figcaption></figure>
-        <figure><span>02 · Characters</span><img src="${esc(jenny)}" alt="Diseño de Jenny" loading="lazy"><figcaption>Jenny</figcaption></figure>
-        <figure class="case-process-final"><span>03 · Final Art</span><img src="${esc(hero)}" alt="Arte final del cuento" loading="lazy"><figcaption>Páginas / ilustraciones finales</figcaption></figure>
+      <div class="case-process-row case-process-pair">
+        <figure><span>01 · Characters</span><img src="${esc(lucasJenny)}" alt="Lucas y Jenny juntos" loading="lazy"><figcaption>Personajes</figcaption></figure>
+        <figure class="case-process-final"><span>02 · Pages</span><img src="${esc(pages)}" alt="Páginas interiores del cuento" loading="lazy"><figcaption>Páginas interiores</figcaption></figure>
       </div>
     </section>
 
     <section class="case-section case-purpose">
-      <figure class="case-media"><img src="${esc(hero)}" alt="Lucas aprendiendo a ahorrar con Jenny" loading="lazy"></figure>
+      <figure class="case-media case-media-photo"><img src="${esc(launch)}" alt="Lanzamiento del cuento Un Tesoro para Siempre" loading="lazy"></figure>
       <div class="case-copy">
         <p class="eyebrow">05 — A STORY WITH PURPOSE</p>
         <h2>UNA HISTORIA<br>CON PROPÓSITO<span class="red">.</span></h2>
@@ -342,8 +348,8 @@ function tesoroPage(project) {
         <p class="eyebrow">06 — PROJECT GALLERY</p>
         <h2>GALERÍA<span class="red">.</span></h2>
       </div>
-      <div class="case-gallery-grid">
-        ${gallery.map(item => `<figure><img src="${esc(item.src)}" alt="${esc(item.label)}" loading="lazy"><figcaption>${esc(item.label)}</figcaption></figure>`).join('')}
+      <div class="case-gallery-grid case-gallery-single">
+        <figure><img src="${esc(booth)}" alt="Montaje del proyecto en evento" loading="lazy"><figcaption>Montaje</figcaption></figure>
       </div>
     </section>
 
