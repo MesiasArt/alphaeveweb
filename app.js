@@ -60,6 +60,7 @@ const projects = [
     illustrationBy: 'Francisco Balbuena · Máximo Montero',
     themes: ['Educación financiera', 'Ahorro', 'Medio ambiente', 'Valores'],
     category: 'TRABAJOS PARA CLIENTES',
+    assetDir: '/datos/proyectos/Trabajos-para-clientes/un-tesoro-para-siempre%20(banreservas)',
     assets: {
       hero: 'Banreservas_cuento_3-4 copia.jpg',
       story: 'Banreservas_cuento_2d5-26 copia.jpg',
@@ -72,11 +73,72 @@ const projects = [
       booth: 'montaje.webp',
     },
   },
+  {
+    title: 'Tren de Diversión',
+    slug: 'tren-de-diversion',
+    subtitle: 'Un cuento infantil sobre ciberseguridad.',
+    client: 'INDOTEL',
+    type: 'Cuento infantil / Ciberseguridad',
+    storyBy: 'Anya Damirón',
+    illustrationBy: null,
+    themes: ['Ciberseguridad', 'Educación digital', 'Protección al usuario'],
+    category: 'TRABAJOS PARA CLIENTES',
+    partner: 'INDOTEL × Alpha Eve',
+    headline: 'TREN DE<br>DIVERSION',
+    assetDir: '/datos/proyectos/Trabajos-para-clientes/el-tren-de-la-diversion',
+    clientLogo: '/clientes/anya%20damiron.png',
+    logoAlt: 'Anya Damirón',
+    storyCopy: [
+      'El Instituto Dominicano de las Telecomunicaciones (INDOTEL), a través de sus departamentos de Ciberseguridad y Protección al Usuario, demuestra su compromiso con la seguridad digital de las nuevas generaciones al anunciar el lanzamiento de dos cuentos infantiles sobre ciberseguridad: «Pantallas en la Granja» y «Tren de Diversión», de la autora Anya Damirón.',
+      'El evento se realizará el lunes 29 de septiembre en la Feria Internacional del Libro Santo Domingo 2025 (FILSD 2025), marcando otro paso hacia una educación digital responsable.',
+    ],
+    roleCopy: 'Desde Alpha Eve participamos en la creación visual del proyecto, dando forma a un universo ilustrado que acerca la ciberseguridad a niñas y niños a través de la narrativa y el diseño.',
+    purposeCopy: 'Tren de Diversión forma parte de una iniciativa de educación digital responsable que busca proteger a las nuevas generaciones con historias claras, cercanas y atractivas.',
+    closeTitle: 'HISTORIAS CON<br>PROPÓSITO',
+    closeLine: 'Ilustración, narrativa y diseño para crear historias que educan y conectan.',
+    assets: {
+      hero: 'unnamed.jpg',
+      story: 'unnaamed.jpg',
+      gallery: [
+        { file: 'unnameddad.jpg', caption: 'El tren de la diversión' },
+        { file: 'unnadaddamed.jpg', caption: 'Personajes y retos' },
+        { file: 'unnadadadadamed.jpg', caption: 'Listos para la aventura' },
+        { file: 'unnadadadadadaamed.jpg', caption: 'Dentro del vagón' },
+        { file: 'unnaadadadadamed.jpg', caption: 'El paisaje del viaje' },
+      ],
+    },
+  },
+  {
+    title: 'Misión Genial',
+    slug: 'mision-genial',
+    subtitle: 'Un reto familiar para volver a la rutina.',
+    client: 'Anya Damirón',
+    type: 'Juego / Reto familiar',
+    storyBy: 'Anya Damirón',
+    illustrationBy: null,
+    themes: ['Rutinas', 'Familia', 'Vuelta a clases', 'Juego'],
+    category: 'TRABAJOS PARA CLIENTES',
+    partner: 'Anya Damirón × Alpha Eve',
+    headline: 'MISIÓN<br>GENIAL',
+    assetDir: '/datos/proyectos/Trabajos-para-clientes/Mision-Genial',
+    clientLogo: '/clientes/anya%20damiron.png',
+    logoAlt: 'Anya Damirón',
+    storyCopy: [
+      'Un reto divertido para volver a la rutina mientras disfrutas tiempo en familia.',
+      '¡Diviértete con tus hijos mientras se organizan! Crea una rutina en casa durante las primeras semanas de clases con un recurso que les dará una aventura familiar. Incluye 2 afiches, 20 cartas, un libro, personajes nuevos, stickers y muchas canciones que formarán parte de su día a día.',
+      'No es un cuento: es una especie de juego o reto, con canciones, sugerencias y personajes nuevos, que invita a los niños a crear su propia rutina para despertar con ganas de marcar las tareas completadas y cumplir desafíos que les ayudarán a hacer amigos y disfrutar más las primeras semanas de clases, tanto en casa como en la escuela.',
+      'Incluye un libro que les muestra a los niños cómo completar la Misión Genial, compartiendo experiencias de otras familias, con códigos QR llenos de canciones para el desayuno, la hora del baño y la hora de dormir. También trae dos afiches, 20 cartas, stickers y puntos adhesivos para que tengan todo lo que necesitan.',
+    ],
+    roleCopy: 'Desde Alpha Eve acompañamos la creación visual del proyecto para que la Misión Genial se sienta clara, jugable y atractiva para toda la familia.',
+    purposeCopy: 'Misión Genial ayuda a las familias a organizar las primeras semanas de clases con un reto divertido, canciones y herramientas prácticas para el día a día.',
+    closeTitle: 'JUEGO CON<br>PROPÓSITO',
+    closeLine: 'Diseño y narrativa para recursos que ayudan a las familias a organizarse jugando.',
+    assets: {},
+  },
 ];
-const tesoroAssetDir = '/datos/proyectos/Trabajos-para-clientes/un-tesoro-para-siempre%20(banreservas)';
 function projectAsset(project, file) {
-  if (!file) return '';
-  return `${tesoroAssetDir}/${encodeURIComponent(file)}`;
+  if (!file || !project?.assetDir) return '';
+  return `${project.assetDir}/${encodeURIComponent(file)}`;
 }
 const services = [
   ['Ilustración', 'Arte de personajes, arte clave, portadas e ilustración promocional.'],
@@ -299,6 +361,96 @@ function projectCard(project) {
     <div class="project-card-art">${cover ? `<img src="${esc(cover)}" alt="${esc(project.title)}" loading="lazy">` : ''}<span>${esc(project.client || 'CLIENTE')}</span></div>
     <div class="project-card-copy"><p class="eyebrow">${esc(project.category || 'PROYECTO')}</p><h3>${esc(project.title)}</h3><p>${esc(project.subtitle || project.type || '')}</p><span>Ver case study ↗</span></div>
   </a>`;
+}
+
+function caseMetaRow(label, value) {
+  if (!value) return '';
+  return `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`;
+}
+
+function clientCasePage(project) {
+  const a = project.assets || {};
+  const hero = projectAsset(project, a.hero);
+  const storyArt = projectAsset(project, a.story);
+  const logo = a.logo ? projectAsset(project, a.logo) : (project.clientLogo || '');
+  const gallery = Array.isArray(a.gallery) ? a.gallery.filter(item => item?.file) : [];
+  const storyHtml = (project.storyCopy || []).map(paragraph => `<p>${esc(paragraph)}</p>`).join('');
+  const partner = project.partner || `${project.client} × Alpha Eve`;
+  const titleHtml = project.headline || esc(project.title);
+  return `<article class="case-study">
+    <section class="case-hero${hero ? '' : ' case-hero-text'}">
+      <div class="case-hero-copy">
+        <a class="detail-back case-back" href="/projects" data-route>← Proyectos</a>
+        <p class="eyebrow">${esc(partner)}</p>
+        <h1>${titleHtml}<span class="red">.</span></h1>
+        <p class="case-hero-lede">${esc(project.subtitle || '')}</p>
+      </div>
+      ${hero ? `<figure class="case-hero-art"><img src="${esc(hero)}" alt="${esc(project.title)}"></figure>` : ''}
+    </section>
+
+    <section class="case-section case-story${storyArt ? '' : ' case-story-text'}">
+      <div class="case-copy">
+        <p class="eyebrow">01 — THE STORY</p>
+        <h2>LA HISTORIA<span class="red">.</span></h2>
+        ${storyHtml}
+      </div>
+      ${storyArt ? `<figure class="case-media"><img src="${esc(storyArt)}" alt="Arte de ${esc(project.title)}" loading="lazy"></figure>` : ''}
+    </section>
+
+    ${project.roleCopy ? `<section class="case-section case-role">
+      <div class="case-copy case-copy-wide">
+        <p class="eyebrow">02 — OUR ROLE</p>
+        <h2>NUESTRO ROL<span class="red">.</span></h2>
+        <p>${esc(project.roleCopy)}</p>
+      </div>
+    </section>` : ''}
+
+    <section class="case-section case-details">
+      <div class="case-details-head">
+        <p class="eyebrow">03 — PROJECT DETAILS</p>
+        <h2>DETALLES<span class="red">.</span></h2>
+      </div>
+      <div class="case-details-body${logo ? '' : ' case-details-body-solo'}">
+        <dl class="case-meta">
+          ${caseMetaRow('Client', project.client)}
+          ${caseMetaRow('Project', project.title)}
+          ${caseMetaRow('Type', project.type)}
+          ${caseMetaRow('Story', project.storyBy)}
+          ${caseMetaRow('Illustration', project.illustrationBy)}
+          ${caseMetaRow('Themes', Array.isArray(project.themes) ? project.themes.join(' · ') : '')}
+        </dl>
+        ${logo ? `<figure class="case-logo-mark"><img src="${esc(logo)}" alt="${esc(project.logoAlt || project.client || project.title)}" loading="lazy"></figure>` : ''}
+      </div>
+    </section>
+
+    ${project.purposeCopy ? `<section class="case-section case-purpose case-purpose-text">
+      <div class="case-copy case-copy-wide">
+        <p class="eyebrow">04 — PURPOSE</p>
+        <h2>CON PROPÓSITO<span class="red">.</span></h2>
+        <p>${esc(project.purposeCopy)}</p>
+      </div>
+    </section>` : ''}
+
+    ${gallery.length ? `<section class="case-section case-gallery">
+      <div class="case-copy case-copy-wide">
+        <p class="eyebrow">05 — PROJECT GALLERY</p>
+        <h2>GALERÍA<span class="red">.</span></h2>
+      </div>
+      <div class="case-gallery-grid case-gallery-multi">
+        ${gallery.map(item => {
+          const src = projectAsset(project, item.file);
+          return `<figure class="case-shot"><img src="${esc(src)}" alt="${esc(item.caption || project.title)}" loading="lazy">${item.caption ? `<figcaption>${esc(item.caption)}</figcaption>` : ''}</figure>`;
+        }).join('')}
+      </div>
+    </section>` : ''}
+
+    <section class="case-close">
+      <p class="eyebrow">${esc(partner)}</p>
+      <h2>${project.closeTitle || 'PROYECTOS CON<br>PROPÓSITO'}<span class="red">.</span></h2>
+      <p>${esc(project.closeLine || 'Ilustración, narrativa y diseño para crear historias que conectan.')}</p>
+      <a class="button button-light" href="/projects" data-route>Ver más proyectos <span>↗</span></a>
+    </section>
+  </article>`;
 }
 
 function renderProjectCatalog() {
@@ -626,6 +778,11 @@ function renderRoute() {
     const project = projects.find(entry => entry.slug === slug);
     if (project?.slug === 'un-tesoro-para-siempre') {
       app.innerHTML = tesoroPage(project);
+      document.title = `${project.title} — Alpha Eve Studios`;
+      return;
+    }
+    if (project) {
+      app.innerHTML = clientCasePage(project);
       document.title = `${project.title} — Alpha Eve Studios`;
       return;
     }
