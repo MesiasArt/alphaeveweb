@@ -348,7 +348,7 @@ function projectCategoryBlurb(category) {
 function projectResultsMarkup() {
   if (activeProjectCategory === 'PROPIEDADES ORIGINALES') {
     const body = comics.length
-      ? `<div class="project-originals-block"><p class="project-originals-label">Cómics</p><div class="comic-directory-grid project-originals-grid">${comics.map((comic, index) => comicCard(comic, index)).join('')}</div></div>`
+      ? `<div class="project-originals-block"><p class="project-originals-label">Cómics</p><div class="project-originals-grid">${comics.map((comic, index) => comicCard(comic, index)).join('')}</div></div>`
       : '<p class="catalog-empty">Todavía no hay propiedades originales en esta categoría.</p>';
     return `<section class="directory-subsection" id="project-results"><p class="eyebrow">PROPIEDADES ORIGINALES</p>${body}</section>`;
   }

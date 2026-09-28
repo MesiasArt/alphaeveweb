@@ -138,16 +138,17 @@
 .project-feature-grid{display:grid;grid-template-columns:1fr;gap:28px;margin-top:28px}
 .project-originals-block{margin-top:28px}
 .project-originals-label{margin:0 0 16px;font:10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.project-originals-grid{margin-top:0;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px 10px}
+.project-originals-grid{display:grid;margin-top:0;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px 10px}
+.project-originals-grid .comic-card{min-width:0}
 .project-originals-grid .comic-card-art{height:auto;aspect-ratio:.72;min-height:0}
-.project-originals-grid .comic-card-art strong{font-size:clamp(18px,2vw,28px)}
-.project-originals-grid .comic-card-copy{padding:10px 22px 10px 0}
-.project-originals-grid .comic-card-copy h3{font-size:clamp(12px,1.1vw,15px);margin:0 0 6px}
+.project-originals-grid .comic-card-art strong{font-size:clamp(16px,1.6vw,24px)}
+.project-originals-grid .comic-card-copy{padding:8px 18px 8px 0}
+.project-originals-grid .comic-card-copy h3{font-size:clamp(11px,1vw,14px);margin:0 0 5px;line-height:1.2}
 .project-originals-grid .comic-card-copy p{font-size:6px;line-height:1.35}
-.project-originals-grid .comic-edition,.project-originals-grid .comic-art-note{font-size:6px;left:8px}
-.project-originals-grid .comic-edition{top:8px}
-.project-originals-grid .comic-art-note{bottom:8px}
-.project-originals-grid .comic-card-arrow{top:10px;font-size:12px}
+.project-originals-grid .comic-edition,.project-originals-grid .comic-art-note{font-size:6px;left:7px}
+.project-originals-grid .comic-edition{top:7px}
+.project-originals-grid .comic-art-note{bottom:7px}
+.project-originals-grid .comic-card-arrow{top:8px;font-size:11px}
 @media(max-width:1100px){.project-originals-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:760px){.project-originals-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px}.project-originals-grid .comic-card-art{aspect-ratio:.75}.project-originals-grid .comic-card-copy h3{font-size:12px}.project-originals-grid .comic-card-copy p{display:none}}
 @media(max-width:480px){.project-originals-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
