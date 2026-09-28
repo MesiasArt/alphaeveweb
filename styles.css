@@ -113,11 +113,11 @@
 .history-frame{position:relative}
 .history-photo{position:relative;aspect-ratio:4/3;background:#101010;overflow:hidden}
 .history-photo img{width:100%;height:100%;object-fit:cover;display:block}
-.history-logo{position:absolute;z-index:3;left:-8%;bottom:-18%;width:104px;display:flex;flex-direction:column;gap:7px;overflow:visible}
-.history-logo img{width:100%;height:auto;display:block;background:var(--paper);padding:12px;object-fit:contain;object-position:center}
-.history-logo span{font:8px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#c6c1ba;text-align:center}
-.history-moment-flip .history-logo{left:auto;right:-8%}
-.history-caption{display:block;margin:44px 0 0;font:10px/1.5 var(--mono);letter-spacing:.03em;color:#8d8882}
+.history-logo{position:absolute;z-index:3;left:12px;bottom:12px;width:104px;display:flex;flex-direction:column;gap:6px;padding:8px 8px 7px;background:var(--paper);overflow:visible}
+.history-logo img{width:100%;height:auto;display:block;background:transparent;padding:0;object-fit:contain;object-position:center}
+.history-logo span{font:8px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink);text-align:center}
+.history-moment-flip .history-logo{left:auto;right:12px}
+.history-caption{display:block;margin:12px 0 0;font:10px/1.5 var(--mono);letter-spacing:.03em;color:#8d8882}
 .history-photo span{position:absolute;inset:0;display:none;place-items:center;padding:16px;text-align:center;font:10px var(--mono);letter-spacing:.08em;color:#8d8882}
 .history-photo.missing,.history-moment figure:not(:has(img)) .history-photo{background:transparent;border:1px solid rgba(244,241,235,.22)}
 .history-photo.missing span,.history-moment figure:not(:has(img)) .history-photo span{display:grid}
@@ -132,5 +132,5 @@
   .history-moment h2,.history-moment p,.history-moment .history-credits,.history-moment-flip h2,.history-moment-flip p,.history-moment-flip .history-credits{margin-left:0}
   .history-moment time{font-size:clamp(46px,13vw,68px)}
   .history-visual,.history-moment-flip .history-visual,.history-moment:nth-child(4n+3) .history-visual,.history-moment:nth-child(4n) .history-visual{order:2;width:min(100%,460px);justify-self:start;transform:translate(10px,0);margin-top:8px}
-  .history-logo,.history-moment-flip .history-logo{left:auto;right:-4%;bottom:-18%;width:88px}
+  .history-logo,.history-moment-flip .history-logo{left:auto;right:10px;bottom:10px;width:88px}
 }
