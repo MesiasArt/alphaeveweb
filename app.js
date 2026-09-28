@@ -63,9 +63,9 @@ const projects = [
     assets: {
       hero: 'Banreservas_cuento_3-4 copia.jpg',
       story: 'Banreservas_cuento_2d5-26 copia.jpg',
-      lucasJenny: 'Lucas y Jenny.jpg',
-      jenny: 'Jenny la ballenita.jpg',
-      lucas: 'Lucas.jpg',
+      lucasJenny: 'Lucas y Jenny.png',
+      jenny: 'Jenny la ballenita.png',
+      lucas: 'Lucas.png',
       pages: '17 - 18 Un Tesoro para Siempre.jpg',
       logo: '00 - Editorial Un Tesoro para Siempre LOGO.png',
       launch: 'lanzamiento.webp',
@@ -301,8 +301,8 @@ function tesoroPage(project) {
         <p>Desde Alpha Eve participamos en la creación visual del proyecto, llevando la historia a un universo colorido y atractivo para el público infantil a través de la ilustración y el desarrollo visual de los personajes y escenarios.</p>
       </div>
       <div class="case-role-grid">
-        <figure><img src="${esc(lucas)}" alt="Lucas" loading="lazy"><figcaption>Lucas</figcaption></figure>
-        <figure><img src="${esc(jenny)}" alt="Jenny la Ballenita" loading="lazy"><figcaption>Jenny la Ballenita</figcaption></figure>
+        <figure class="case-cutout"><img src="${esc(lucas)}" alt="Lucas" loading="lazy"><figcaption>Lucas</figcaption></figure>
+        <figure class="case-cutout"><img src="${esc(jenny)}" alt="Jenny la Ballenita" loading="lazy"><figcaption>Jenny la Ballenita</figcaption></figure>
       </div>
     </section>
 
@@ -329,13 +329,13 @@ function tesoroPage(project) {
         <p>El desarrollo visual pasó de los personajes principales a las páginas interiores del cuento.</p>
       </div>
       <div class="case-process-row case-process-pair">
-        <figure><span>01 · Characters</span><img src="${esc(lucasJenny)}" alt="Lucas y Jenny juntos" loading="lazy"><figcaption>Personajes</figcaption></figure>
+        <figure class="case-cutout"><span>01 · Characters</span><img src="${esc(lucasJenny)}" alt="Lucas y Jenny juntos" loading="lazy"><figcaption>Personajes</figcaption></figure>
         <figure class="case-process-final"><span>02 · Pages</span><img src="${esc(pages)}" alt="Páginas interiores del cuento" loading="lazy"><figcaption>Páginas interiores</figcaption></figure>
       </div>
     </section>
 
     <section class="case-section case-purpose">
-      <figure class="case-media case-media-photo"><img src="${esc(launch)}" alt="Lanzamiento del cuento Un Tesoro para Siempre" loading="lazy"></figure>
+      <figure class="case-photo-sm"><img src="${esc(launch)}" alt="Lanzamiento del cuento Un Tesoro para Siempre" loading="lazy"></figure>
       <div class="case-copy">
         <p class="eyebrow">05 — A STORY WITH PURPOSE</p>
         <h2>UNA HISTORIA<br>CON PROPÓSITO<span class="red">.</span></h2>
@@ -349,7 +349,7 @@ function tesoroPage(project) {
         <h2>GALERÍA<span class="red">.</span></h2>
       </div>
       <div class="case-gallery-grid case-gallery-single">
-        <figure><img src="${esc(booth)}" alt="Montaje del proyecto en evento" loading="lazy"><figcaption>Montaje</figcaption></figure>
+        <figure class="case-photo-sm case-photo-sm-center"><img src="${esc(booth)}" alt="Montaje del proyecto en evento" loading="lazy"><figcaption>Montaje</figcaption></figure>
       </div>
     </section>
 
