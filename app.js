@@ -385,7 +385,9 @@ function authorSocialsHtml(author) {
   const handle = (author.social || author.role || author.slug || '').replace(/\s+/g, '').replace(/^@/, '');
   if (!handle) return '';
   const label = `@${handle}`;
-  return `<div class="author-socials"><p class="eyebrow">REDES</p><div class="author-social-links"><a href="https://instagram.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener noreferrer">Instagram ${esc(label)}</a><a href="https://x.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener noreferrer">X ${esc(label)}</a></div></div>`;
+  const igIcon = '<svg class="social-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor"/></svg>';
+  const xIcon = '<svg class="social-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 4h3.4l4.3 5.8L16.8 4H20l-6.1 7.1L20.4 20h-3.4l-4.7-6.3L7.2 20H4l6.5-7.6L4 4z"/></svg>';
+  return `<div class="author-socials"><p class="eyebrow">REDES</p><div class="author-social-links"><a class="author-social" href="https://instagram.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener noreferrer" aria-label="Instagram ${esc(label)}">${igIcon}<span>${esc(label)}</span></a><a class="author-social" href="https://x.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener noreferrer" aria-label="X ${esc(label)}">${xIcon}<span>${esc(label)}</span></a></div></div>`;
 }
 
 function authorPage(author) {
