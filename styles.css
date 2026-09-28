@@ -233,3 +233,5 @@
   .case-process-final img{aspect-ratio:16/9}
   .case-close{padding:72px 6vw}
 }
+
+.author-socials{margin:18px 0 22px}.author-socials>.eyebrow{margin-bottom:10px}.author-social-links{display:flex;flex-wrap:wrap;gap:10px 14px}.author-social-links a{font:10px var(--mono);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:2px}.author-social-links a:hover{color:var(--red);border-color:var(--red)}.author-specialties{margin:14px 0 0;font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.author-profile .detail-copy>p{max-width:54ch}

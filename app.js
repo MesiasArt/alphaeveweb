@@ -36,18 +36,28 @@ const pantaleta = comics.find(comic => comic.slug === 'pantaleta');
 if (pantaleta?.chapters[1]) pantaleta.chapters[1].cover = pantaleta.cover;
 const originalIp = [];
 const authors = [
-  { name: 'Anderson F. Encarnación', slug: 'anderson-07', image: 'anderson-07.jpg', role: 'Anderson-07', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'Darwin Núñez', slug: 'darkereve', image: 'darkereve.jpg', role: 'DarkerEve', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'froggynami', slug: 'froggynami', image: 'froggynami.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'Manuel Shoo', slug: 'manuel_shoo', image: 'manuel_shoo.jpg', role: 'Manuel Shoo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'Francisco Balbuena', slug: 'mesiasart', image: 'mesiasart.jpg', role: 'MesiasArt', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['un-tesoro-para-siempre'] },
-  { name: 'Nathalia Rivera', slug: 'nattibie', image: 'Nattibie.jpg', role: 'Nattibie', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'Nicole Hernández', slug: 'nicodomo', image: 'Nicodomo.jpg', role: 'Nicodomo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'Osvaldo J. Flores', slug: 'ossy_jo', image: 'ossy_jo.jpg', role: 'Ossy Jo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'Spencer Liriano Rafael', slug: 'spencer_draw', image: 'spencer_draw.jpg', role: 'Spencer_Draw', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'Máximo Montero', slug: 'xamurai_rd', image: 'xamurai_rd.jpg', role: 'XamuraiRD', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['un-tesoro-para-siempre'] },
-  { name: 'Yonson Carbonell', slug: 'yonsoncb', image: 'yonsoncb.jpg', role: 'YonsonCB', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['tren-de-diversion', 'mision-genial'] },
-  { name: 'Diego Colón', slug: 'zukupow', image: 'zukupow.jpg', role: 'Zukupow', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Anderson F. Encarnación', slug: 'anderson-07', image: 'anderson-07.jpg', role: 'Anderson-07', social: 'anderson07', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Darwin Núñez', slug: 'darkereve', image: 'darkereve.jpg', role: 'DarkerEve', social: 'darkereve', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'froggynami', slug: 'froggynami', image: 'froggynami.jpg', role: null, social: 'froggynami', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Manuel Shoo', slug: 'manuel_shoo', image: 'manuel_shoo.jpg', role: 'Manuel Shoo', social: 'manuelshoo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Francisco Balbuena', slug: 'mesiasart', image: 'mesiasart.jpg', role: 'MesiasArt', social: 'mesiasart', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['un-tesoro-para-siempre'] },
+  { name: 'Nathalia Rivera', slug: 'nattibie', image: 'Nattibie.jpg', role: 'Nattibie', social: 'nattibie', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Nicole Hernández', slug: 'nicodomo', image: 'Nicodomo.jpg', role: 'Nicodomo', social: 'nicodomo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Osvaldo J. Flores', slug: 'ossy_jo', image: 'ossy_jo.jpg', role: 'Ossy Jo', social: 'ossy_jo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Spencer Liriano Rafael', slug: 'spencer_draw', image: 'spencer_draw.jpg', role: 'Spencer_Draw', social: 'spencer_draw', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Máximo Montero', slug: 'xamurai_rd', image: 'xamurai_rd.jpg', role: 'XamuraiRD', social: 'xamurai_rd', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['un-tesoro-para-siempre'] },
+  {
+    name: 'Yonson Carbonell',
+    slug: 'yonsoncb',
+    image: 'yonsoncb.jpg',
+    role: 'YonsonCB',
+    social: 'yonsoncb',
+    bio: 'Soy ilustrador y artista de cómics basado en República Dominicana. Mi trabajo nace del interés por el ambiente, la emoción y la historia. Ya sea a través de la tensión silenciosa de un panel de novela gráfica o de la energía vibrante de una ilustración comercial, uso un trazo firme, colores con textura y composiciones dinámicas para construir mundos que se sienten habitados y personajes que se sienten reales. Siempre estoy emocionado de embarcarme en nuevas aventuras visuales.\n\nHago trabajo freelance desde 2020 y he colaborado con compañías como Lexus, Chestnut Tree Games, Lifeline Comics, Plague Doctor Press, GoalCast, Ko-fi, la embajada de Estados Unidos y más.',
+    specialties: ['Ilustración', 'Cómics', 'Narrativa visual'],
+    comicSlugs: [],
+    projectSlugs: ['tren-de-diversion', 'mision-genial'],
+  },
+  { name: 'Diego Colón', slug: 'zukupow', image: 'zukupow.jpg', role: 'Zukupow', social: 'zukupow', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
 ];
 const projects = [
   {
@@ -295,14 +305,28 @@ function startOriginals() {
     stepOriginals(1);
   }, 3200);
 }
+function authorBioHtml(author) {
+  if (!author.bio) return '';
+  return author.bio.split(/\n{2,}/).map(part => `<p>${esc(part.trim())}</p>`).join('');
+}
+
+function authorSocialsHtml(author) {
+  const handle = (author.social || author.role || author.slug || '').replace(/\s+/g, '').replace(/^@/, '');
+  if (!handle) return '';
+  const label = `@${handle}`;
+  return `<div class="author-socials"><p class="eyebrow">REDES</p><div class="author-social-links"><a href="https://instagram.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener noreferrer">Instagram ${esc(label)}</a><a href="https://x.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener noreferrer">X ${esc(label)}</a></div></div>`;
+}
+
 function authorPage(author) {
   const related = comicsFor(author);
   const relatedProjects = projectsFor(author);
+  const bioHtml = authorBioHtml(author);
+  const specialties = author.specialties?.length ? `<p class="author-specialties">${esc(author.specialties.join(' · '))}</p>` : '';
   return `<section class="detail-shell author-profile">
     <a class="detail-back" href="/authors" data-route>← Todos los creadores</a>
     <div class="detail-hero author-hero"><div class="author-portrait"><img src="/artistas/${encodeURIComponent(author.image)}" alt="${esc(author.name)}" /></div>
-      <div class="detail-copy"><p class="eyebrow">ALPHA EVE · PORTAFOLIO CREATIVO</p><h1>${esc(author.name)}<span class="red">.</span></h1><div class="detail-meta">${esc(author.role || 'PERFIL CREATIVO')}</div><p>${esc(author.bio || 'Portafolio y perfil creativo del artista. La biografía y sus especialidades se agregarán cuando se confirme la información.')}</p><a class="button button-dark" href="#contact">Colabora con ${esc(author.name)} <span>↗</span></a></div></div>
-    <section class="detail-block"><p class="eyebrow">ACERCA DEL CREADOR</p><h2>Biografía y especialidades</h2>${author.bio || author.specialties.length ? `<p>${esc(author.bio || author.specialties.join(' · '))}</p>` : '<div class="detail-empty">La biografía y las especialidades creativas aparecerán aquí.</div>'}</section>
+      <div class="detail-copy"><p class="eyebrow">ALPHA EVE · PORTAFOLIO CREATIVO</p><h1>${esc(author.name)}<span class="red">.</span></h1><div class="detail-meta">${esc(author.role || 'PERFIL CREATIVO')}</div>${bioHtml || `<p>${esc('Portafolio y perfil creativo del artista. La biografía y sus especialidades se agregarán cuando se confirme la información.')}</p>`}${authorSocialsHtml(author)}<a class="button button-dark" href="#contact">Colabora con ${esc(author.name)} <span>↗</span></a></div></div>
+    <section class="detail-block"><p class="eyebrow">ACERCA DEL CREADOR</p><h2>Biografía y especialidades</h2>${bioHtml || specialties ? `${bioHtml}${specialties}` : '<div class="detail-empty">La biografía y las especialidades creativas aparecerán aquí.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">PROYECTOS Y COLABORACIONES</p><h2>Proyectos destacados</h2>${relatedProjects.length ? `<div class="project-originals-grid">${relatedProjects.map((project, index) => projectCard(project, index)).join('')}</div>` : '<div class="detail-empty">Los proyectos aparecerán aquí cuando se confirmen.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">CÓMICS</p><h2>Historias y series</h2>${related.length ? `<div class="comic-directory-grid">${related.map(comicCard).join('')}</div>` : '<div class="detail-empty">Todavía no hay cómics vinculados a este perfil.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">GALERÍA</p><h2>Arte y proceso</h2><div class="author-gallery"><img src="/artistas/${encodeURIComponent(author.image)}" alt="Ilustración de perfil de ${esc(author.name)}" loading="lazy"><div class="detail-empty">Aquí se agregarán más ilustraciones, bocetos y portadas.</div></div></section>
