@@ -4,6 +4,11 @@ FICHA DE CÓMICS — Alpha Eve Studios
 Completa lo que falte y deja en blanco lo que todavía no tengas.
 No cambies el slug: es el nombre interno que conecta la página.
 
+TIPO
+Elige uno. No es un género. Escríbelo exactamente así:
+
+Comics, Manga, Cuentos Infantiles, Novelas, Artbooks, Otros
+
 GÉNEROS
 Usa solo estos nombres, separados por coma. Puedes poner varios.
 
@@ -24,6 +29,7 @@ Al guardar un creador aquí, el cómic aparece en su perfil.
 Título: A la deriva con mi perro
 Slug: a-la-deriva-con-mi-perro
 Formato: One-shot
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -34,6 +40,7 @@ Creadores:
 Título: Baká: El Mito Asesino
 Slug: baka-el-mito-asesino
 Formato: One-shot
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -44,6 +51,7 @@ Creadores:
 Título: Bazuca - La heroína olvidada
 Slug: bazuca-la-heroina-olvidada
 Formato: One-shot
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -54,6 +62,7 @@ Creadores:
 Título: Cuentos del Magijara
 Slug: cuentos-del-magijara
 Formato: Serie · 5 capítulos
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -64,6 +73,7 @@ Creadores:
 Título: Escondite
 Slug: escondite
 Formato:
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -74,6 +84,7 @@ Creadores:
 Título: How to Hide a Mermaid
 Slug: how-to-hide-a-mermaid
 Formato: Serie · 2 capítulos
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -84,6 +95,7 @@ Creadores:
 Título: Jagua Tales
 Slug: jagua-tales
 Formato:
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -94,6 +106,7 @@ Creadores:
 Título: La Armadura de mi Hermano
 Slug: la-armadura-de-mi-hermano
 Formato: One-shot
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -104,6 +117,7 @@ Creadores:
 Título: La Guagua Voladora
 Slug: la-guagua-voladora
 Formato: One-shot
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -114,6 +128,7 @@ Creadores:
 Título: La Lu’ Interior
 Slug: la-lu-interior
 Formato: One-shot
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -124,6 +139,7 @@ Creadores:
 Título: Last Breath
 Slug: last-breath
 Formato: One-shot
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -134,6 +150,7 @@ Creadores:
 Título: Más Freak de lo Normal
 Slug: mas-freak-de-lo-normal
 Formato: Serie · 7 capítulos
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -144,6 +161,7 @@ Creadores:
 Título: Mi Angelito Defectuoso
 Slug: mi-angelito-defectuoso
 Formato: Serie · 1 capítulo
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -154,6 +172,7 @@ Creadores:
 Título: Pantaleta
 Slug: pantaleta
 Formato: Serie · 2 capítulos
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -164,6 +183,7 @@ Creadores:
 Título: Quimica al 100%
 Slug: quimica-al-100
 Formato: Serie · 3 capítulos
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -174,6 +194,7 @@ Creadores:
 Título: Ruptura
 Slug: ruptura
 Formato: One-shot
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -184,6 +205,7 @@ Creadores:
 Título: Sangrienta
 Slug: sangrienta
 Formato: Serie · 1 de 3 capítulos
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -194,6 +216,7 @@ Creadores:
 Título: Tomorrow Girl x Freakier Than Normal
 Slug: tomorrow-girl-x-freakier-than-normal
 Formato: One-shot
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -204,6 +227,7 @@ Creadores:
 Título: Umbral, El reino de lo invisible
 Slug: umbral-el-reino-de-lo-invisible
 Formato: One-shot
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
@@ -214,6 +238,7 @@ Creadores:
 Título: Yanikeke
 Slug: yanikeke
 Formato:
+Tipo:
 Géneros:
 Sinopsis:
 Creadores:
