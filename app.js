@@ -355,18 +355,20 @@ function projectCategoryBlurb(category) {
 }
 
 function projectResultsMarkup() {
+  if (!activeProjectCategory) {
+    return `<section class="directory-subsection" id="project-results"><p class="catalog-empty project-pick-hint">Elige una categoría para ver los proyectos.</p></section>`;
+  }
   if (activeProjectCategory === 'PROPIEDADES ORIGINALES') {
     const body = comics.length
       ? `<div class="project-originals-block"><p class="project-originals-label">Cómics</p><div class="project-originals-grid">${comics.map((comic, index) => comicCard(comic, index)).join('')}</div></div>`
       : '<p class="catalog-empty">Todavía no hay propiedades originales en esta categoría.</p>';
     return `<section class="directory-subsection" id="project-results"><p class="eyebrow">PROPIEDADES ORIGINALES</p>${body}</section>`;
   }
-  const filtered = activeProjectCategory ? projectsForCategory(activeProjectCategory) : projects;
-  const label = activeProjectCategory || 'TODOS LOS PROYECTOS';
+  const filtered = projectsForCategory(activeProjectCategory);
   const body = filtered.length
     ? `<div class="project-originals-grid">${filtered.map((project, index) => projectCard(project, index)).join('')}</div>`
-    : `<p class="catalog-empty">${activeProjectCategory ? 'Todavía no hay proyectos en esta categoría.' : 'Los proyectos aparecerán aquí cuando estén disponibles.'}</p>`;
-  return `<section class="directory-subsection" id="project-results"><p class="eyebrow">${esc(label)}</p>${body}</section>`;
+    : '<p class="catalog-empty">Todavía no hay proyectos en esta categoría.</p>';
+  return `<section class="directory-subsection" id="project-results"><p class="eyebrow">${esc(activeProjectCategory)}</p>${body}</section>`;
 }
 
 function projectCard(project, index = 0) {
@@ -857,7 +859,9 @@ document.addEventListener('click', event => {
     const next = projectCategory.getAttribute('data-project-category') || '';
     activeProjectCategory = activeProjectCategory === next ? '' : next;
     renderProjectCatalog();
-    document.querySelector('#project-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (activeProjectCategory) {
+      document.querySelector('#project-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     return;
   }
   const link = event.target.closest('a[data-route]');
