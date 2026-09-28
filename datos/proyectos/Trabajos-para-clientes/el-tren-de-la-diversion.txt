@@ -1,0 +1,11 @@
+Tipo: TRABAJOS PARA CLIENTES
+Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/el-tren-de-la-diversion
+Título: Tren de Diversión
+Descripción: El Instituto Dominicano de las Telecomunicaciones (INDOTEL), a través de sus departamentos de Ciberseguridad y Protección al Usuario, demuestra su compromiso con la seguridad digital de las nuevas generaciones al anunciar el lanzamiento de dos cuentos infantiles sobre ciberseguridad: «Pantallas en la Granja» y «Tren de Diversión», de la autora Anya Damirón. El evento se realizará el lunes 29 de septiembre en la Feria Internacional del Libro Santo Domingo 2025 (FILSD 2025), marcando otro paso hacia una educación digital responsable.
+Cliente: INDOTEL
+Imagen: unnamed.jpg
+Historia: Anya Damirón
+Ilustración:
+Creadores:
+- slug:
+  función:

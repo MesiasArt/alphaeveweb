@@ -1,0 +1,17 @@
+Tipo: TRABAJOS PARA CLIENTES
+Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/Mision-Genial
+Título: Misión Genial
+Descripción: Un reto divertido para volver a la rutina mientras disfrutas tiempo en familia.
+
+¡Diviértete con tus hijos mientras se organizan! Crea una rutina en casa durante las primeras semanas de clases con un recurso que les dará una aventura familiar. Incluye 2 afiches, 20 cartas, un libro, personajes nuevos, stickers y muchas canciones que formarán parte de su día a día.
+
+No es un cuento: es una especie de juego o reto, con canciones, sugerencias y personajes nuevos, que invita a los niños a crear su propia rutina para despertar con ganas de marcar las tareas completadas y cumplir desafíos que les ayudarán a hacer amigos y disfrutar más las primeras semanas de clases, tanto en casa como en la escuela.
+
+Incluye un libro que les muestra a los niños cómo completar la Misión Genial, compartiendo experiencias de otras familias, con códigos QR llenos de canciones para el desayuno, la hora del baño y la hora de dormir. También trae dos afiches, 20 cartas, stickers y puntos adhesivos para que tengan todo lo que necesitan.
+Cliente: Anya Damirón
+Imagen:
+Historia: Anya Damirón
+Ilustración:
+Creadores:
+- slug:
+  función:
