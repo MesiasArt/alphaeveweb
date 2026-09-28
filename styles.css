@@ -52,7 +52,7 @@
 .client-track{display:flex;align-items:center;gap:72px;width:max-content;animation:client-scroll 36s linear infinite}
 .client-marquee:hover .client-track{animation-play-state:paused}
 .client-logo{flex:none;height:52px;display:flex;align-items:center;justify-content:center}
-.client-logo img{height:34px;width:auto;max-width:148px;object-fit:contain;filter:grayscale(1);opacity:.86}
+.client-logo img{height:36px;width:auto;max-width:168px;object-fit:contain}
 .client-logo-empty{width:132px;border:1px dashed rgba(23,23,23,.28);font:9px var(--mono);letter-spacing:.14em;color:#9a958d}
 .client-strip+.creator-section{padding-top:58px}
 .directory-page .client-strip{margin:62px -8.3vw 0;border-top:1px solid var(--line)}
