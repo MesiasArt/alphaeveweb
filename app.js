@@ -213,6 +213,54 @@ async function mountClientLogos() {
     if (track) track.innerHTML = html;
   });
 }
+function contactPage() {
+  return `<section class="directory-page contact-page">
+    <div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">CONSULTA DE PROYECTO</p><h1>EMPIEZA UN<br>PROYECTO<span class="red">.</span></h1><p>Cuéntanos tu proyecto y cómo Alpha Eve puede ayudar.</p></div>
+    <div class="contact-page-layout">
+      <aside class="studio-contact">
+        <p class="eyebrow">EL ESTUDIO</p>
+        <address>Calle Alberto Peguero #60<br>Ens. Miraflores, R.D.</address>
+        <a href="tel:+18096889334"><span>Teléfono</span>809-688-9334</a>
+        <a href="https://wa.me/18097876166" target="_blank" rel="noopener"><span>WhatsApp</span>809-787-6166</a>
+        <a href="mailto:alphaeverd@gmail.com"><span>Correo</span>alphaeverd@gmail.com</a>
+        <a href="https://www.alphaeve.net" target="_blank" rel="noopener"><span>Web</span>www.alphaeve.net</a>
+        <a class="studio-map" href="https://maps.app.goo.gl/N6iHSij4fonyNNhC8" target="_blank" rel="noopener"><span>Oficina</span>Ver en el mapa <b>↗</b></a>
+      </aside>
+      <div class="contact-page-form">
+        <form id="project-inquiry" class="inquiry-form" method="post" action="/api/contact" novalidate>
+          <label class="inquiry-trap" aria-hidden="true">Deja este campo vacío<input type="text" name="confirm_url" tabindex="-1" autocomplete="off"></label>
+          <label>Nombre *<input name="name" type="text" required maxlength="120" autocomplete="name"></label>
+          <label>Correo *<input name="email" type="email" required maxlength="200" autocomplete="email"></label>
+          <label class="inquiry-wide">Empresa / organización<input name="company" type="text" maxlength="160" autocomplete="organization"></label>
+          <label class="inquiry-wide">Servicio *
+            <select name="service" required>
+              <option value="">Selecciona un servicio</option>
+              <option>Ilustración</option>
+              <option>Cómics y manga</option>
+              <option>Diseño de personajes</option>
+              <option>Arte conceptual</option>
+              <option>Diseño gráfico</option>
+              <option>Desarrollo visual</option>
+              <option>Arte para videojuegos</option>
+              <option>Otro</option>
+            </select>
+          </label>
+          <label class="inquiry-wide">Descripción del proyecto *<textarea name="description" required minlength="10" maxlength="4000" rows="6"></textarea></label>
+          <label>Presupuesto<input name="budget" type="text" maxlength="120"></label>
+          <label>Plazo<input name="timeline" type="text" maxlength="120"></label>
+          <label class="inquiry-wide">Sitio web / referencia<input name="reference" type="url" maxlength="300" placeholder="https://"></label>
+          <p class="inquiry-error" role="alert" hidden></p>
+          <button class="button button-dark" type="submit">Enviar consulta <span>↗</span></button>
+        </form>
+        <div class="inquiry-thanks" hidden>
+          <p class="eyebrow">CONSULTA DE PROYECTO</p>
+          <h2>GRACIAS<span class="red">.</span></h2>
+          <p>Recibimos tu consulta de proyecto.<br>Te responderemos pronto.</p>
+        </div>
+      </div>
+    </div>
+  </section>`;
+}
 function simpleDirectory(path) {
   if (path === '/services') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ESTUDIO CREATIVO · REPÚBLICA DOMINICANA</p><h1>NUESTROS<br>SERVICIOS<span class="red">.</span></h1><p>Servicios creativos para editoriales, marcas, estudios, creadores y aliados.</p></div><div class="services-grid">${services.map(([title, desc], index) => `<article class="service-item"><span class="service-no">0${index + 1}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p></article>`).join('')}</div><a class="button button-dark" href="/#contact">Colabora con nosotros <span>↗</span></a></section>`;
   if (path === '/projects') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño.</p></div><div class="project-categories">${['PROPIEDADES ORIGINALES', 'TRABAJOS PARA CLIENTES', 'COLABORACIONES', 'VIDEOJUEGOS Y JUEGOS DE MESA', 'ILUSTRACIÓN / DISEÑO'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${projects.length ? 'Explora algunos de nuestros trabajos.' : 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.'}</p></article>`).join('')}</div>${clientStrip()}</section>`;
@@ -225,6 +273,8 @@ function simpleDirectory(path) {
 function renderRoute() {
   if (!app) return;
   const path = decodeURI(location.pathname).replace(/\/+$/, '') || '/';
+  const contactBand = document.querySelector('.contact-section');
+  if (contactBand) contactBand.hidden = path === '/contacto';
   if (path === '/' || path === '/index.html') {
     app.innerHTML = home;
     renderFeaturedComic();
@@ -260,6 +310,11 @@ function renderRoute() {
     const item = originalIp.find(entry => entry.slug === slug);
     app.innerHTML = item ? `<section class="detail-shell"><a class="detail-back" href="/comics" data-route>← Cómics y mundos originales</a><div class="detail-hero"><div class="detail-art"><strong>${esc(item.initials)}</strong></div><div class="detail-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE</p><h1>${esc(item.title)}<span class="red">.</span></h1><div class="detail-meta">PROPIEDAD ORIGINAL · DETALLES POR CONFIRMAR</div><p>La descripción y el arte del proyecto se agregarán cuando estén disponibles.</p></div></div></section>` : notFound();
     document.title = item ? `${item.title} — Alpha Eve Studios` : 'Página no encontrada — Alpha Eve Studios';
+    return;
+  }
+  if (path === '/contacto') {
+    app.innerHTML = contactPage();
+    document.title = 'Contacto — Alpha Eve Studios';
     return;
   }
   const directory = simpleDirectory(path);
@@ -320,8 +375,9 @@ if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   window.setInterval(() => renderFeaturedComic('random'), 8000);
 }
 
-const projectInquiry = document.querySelector('#project-inquiry');
-projectInquiry?.addEventListener('submit', async event => {
+document.addEventListener('submit', async event => {
+  const projectInquiry = event.target.closest('#project-inquiry');
+  if (!projectInquiry) return;
   event.preventDefault();
   const error = projectInquiry.querySelector('.inquiry-error');
   const button = projectInquiry.querySelector('button[type="submit"]');
@@ -350,8 +406,7 @@ projectInquiry?.addEventListener('submit', async event => {
       return;
     }
     projectInquiry.hidden = true;
-    document.querySelector('.contact-intro').hidden = true;
-    document.querySelector('.inquiry-thanks').hidden = false;
+    projectInquiry.parentElement.querySelector('.inquiry-thanks').hidden = false;
   } catch {
     showError('No pudimos enviar tu consulta. Inténtalo de nuevo.');
     button.disabled = false;
