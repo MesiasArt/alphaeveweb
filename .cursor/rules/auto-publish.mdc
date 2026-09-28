@@ -1,0 +1,16 @@
+---
+description: Commit and push finished site changes so they can be seen on the remote
+alwaysApply: true
+---
+
+# Publish finished changes
+
+The owner asked that finished site changes always be committed and pushed to `origin` so they can see them.
+
+When a task in this repo changes files and the work is complete:
+
+1. Review the diff. Do not commit secrets (`.env`, credentials, keys).
+2. Commit with a short message in this repo's style.
+3. Push the current branch to `origin` with a normal push. Never force-push.
+
+Do this without waiting for a separate commit or push request. Skip it when there is nothing to commit, when that change was just published, or when the user said not to publish that change.
