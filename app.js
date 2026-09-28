@@ -49,7 +49,30 @@ const authors = [
   { name: 'yonsoncb', slug: 'yonsoncb', image: 'yonsoncb.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'zukupow', slug: 'zukupow', image: 'zukupow.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
 ];
-const projects = [];
+const projects = [
+  {
+    title: 'Un Tesoro para Siempre',
+    slug: 'un-tesoro-para-siempre',
+    subtitle: 'Una historia para aprender a ahorrar.',
+    client: 'Banreservas',
+    type: 'Cuento infantil / Ilustración editorial',
+    storyBy: 'Evelin Cáceres Castellanos',
+    illustrationBy: 'Francisco Balbuena · Máximo Montero',
+    themes: ['Educación financiera', 'Ahorro', 'Medio ambiente', 'Valores'],
+    category: 'TRABAJOS PARA CLIENTES',
+    assets: {
+      hero: 'Banreservas_cuento_2d5-26 copia.jpg',
+      lucasJenny: 'Lucas y Jenny.jpg',
+      jenny: 'Jenny la ballenita.jpg',
+      lucas: 'Lucas.jpg',
+    },
+  },
+];
+const tesoroAssetDir = '/datos/proyectos/Trabajos-para-clientes/un-tesoro-para-siempre%20(banreservas)';
+function projectAsset(project, file) {
+  if (!file) return '';
+  return `${tesoroAssetDir}/${encodeURIComponent(file)}`;
+}
 const services = [
   ['Ilustración', 'Arte de personajes, arte clave, portadas e ilustración promocional.'],
   ['Cómics y manga', 'Narrativa secuencial, producción de cómics y narración visual.'],
@@ -227,6 +250,111 @@ function comicPage(comic) {
     <section class="detail-block"><p class="eyebrow">DESCUBRE MÁS</p><h2>Más de Alpha Eve</h2><div class="comic-directory-grid">${comics.filter(entry => entry.slug !== comic.slug).map(comicCard).join('')}</div></section>
   </section>`;
 }
+function projectCard(project) {
+  const cover = projectAsset(project, project.assets?.hero);
+  return `<a class="project-card" href="/projects/${esc(project.slug)}" data-route>
+    <div class="project-card-art">${cover ? `<img src="${esc(cover)}" alt="${esc(project.title)}" loading="lazy">` : ''}<span>${esc(project.client || 'CLIENTE')}</span></div>
+    <div class="project-card-copy"><p class="eyebrow">${esc(project.category || 'PROYECTO')}</p><h3>${esc(project.title)}</h3><p>${esc(project.subtitle || project.type || '')}</p><span>Ver case study ↗</span></div>
+  </a>`;
+}
+function tesoroPage(project) {
+  const hero = projectAsset(project, project.assets.hero);
+  const lucasJenny = projectAsset(project, project.assets.lucasJenny);
+  const jenny = projectAsset(project, project.assets.jenny);
+  const lucas = projectAsset(project, project.assets.lucas);
+  const gallery = [
+    { src: hero, label: 'Ilustración final' },
+    { src: lucasJenny, label: 'Personajes' },
+    { src: jenny, label: 'Jenny la Ballenita' },
+    { src: lucas, label: 'Lucas' },
+  ];
+  return `<article class="case-study">
+    <section class="case-hero">
+      <div class="case-hero-copy">
+        <a class="detail-back case-back" href="/projects" data-route>← Proyectos</a>
+        <p class="eyebrow">Banreservas × Alpha Eve</p>
+        <h1>UN TESORO<br>PARA SIEMPRE<span class="red">.</span></h1>
+        <p class="case-hero-lede">${esc(project.subtitle)}</p>
+      </div>
+      <figure class="case-hero-art"><img src="${esc(hero)}" alt="Ilustración de Un Tesoro para Siempre"></figure>
+    </section>
+
+    <section class="case-section case-story">
+      <div class="case-copy">
+        <p class="eyebrow">01 — THE STORY</p>
+        <h2>LA HISTORIA<span class="red">.</span></h2>
+        <p>Un Tesoro para Siempre es un cuento infantil desarrollado para Banreservas, creado alrededor de Jenny la Ballenita, mascota de la institución.</p>
+        <p>La historia sigue a Lucas, un niño que durante una excursión a la Bahía de Samaná conoce a Jenny, quien lo guía en una aventura donde descubre conceptos básicos sobre el manejo del dinero, el ahorro y la importancia de trabajar por sus metas.</p>
+      </div>
+      <figure class="case-media"><img src="${esc(lucasJenny)}" alt="Lucas y Jenny la Ballenita" loading="lazy"></figure>
+    </section>
+
+    <section class="case-section case-role">
+      <div class="case-copy case-copy-wide">
+        <p class="eyebrow">02 — OUR ROLE</p>
+        <h2>NUESTRO ROL<span class="red">.</span></h2>
+        <p>Desde Alpha Eve participamos en la creación visual del proyecto, llevando la historia a un universo colorido y atractivo para el público infantil a través de la ilustración y el desarrollo visual de los personajes y escenarios.</p>
+      </div>
+      <div class="case-role-grid">
+        <figure><img src="${esc(lucas)}" alt="Lucas" loading="lazy"><figcaption>Lucas</figcaption></figure>
+        <figure><img src="${esc(jenny)}" alt="Jenny la Ballenita" loading="lazy"><figcaption>Jenny la Ballenita</figcaption></figure>
+        <figure class="case-role-wide"><img src="${esc(hero)}" alt="Ilustraciones finales del cuento" loading="lazy"><figcaption>Ilustraciones finales</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="case-section case-details">
+      <p class="eyebrow">03 — PROJECT DETAILS</p>
+      <h2>DETALLES<span class="red">.</span></h2>
+      <dl class="case-meta">
+        <div><dt>Client</dt><dd>${esc(project.client)}</dd></div>
+        <div><dt>Project</dt><dd>${esc(project.title)}</dd></div>
+        <div><dt>Type</dt><dd>${esc(project.type)}</dd></div>
+        <div><dt>Story</dt><dd>${esc(project.storyBy)}</dd></div>
+        <div><dt>Illustration</dt><dd>${esc(project.illustrationBy)}</dd></div>
+        <div><dt>Themes</dt><dd>${esc(project.themes.join(' · '))}</dd></div>
+      </dl>
+    </section>
+
+    <section class="case-section case-process">
+      <div class="case-copy case-copy-wide">
+        <p class="eyebrow">04 — FROM SKETCH TO STORY</p>
+        <h2>DEL PERSONAJE<br>A LA HISTORIA<span class="red">.</span></h2>
+        <p>Con los assets disponibles mostramos el paso de los personajes principales a las ilustraciones finales del cuento.</p>
+      </div>
+      <div class="case-process-row">
+        <figure><span>01 · Characters</span><img src="${esc(lucas)}" alt="Diseño de Lucas" loading="lazy"><figcaption>Lucas</figcaption></figure>
+        <figure><span>02 · Characters</span><img src="${esc(jenny)}" alt="Diseño de Jenny" loading="lazy"><figcaption>Jenny</figcaption></figure>
+        <figure class="case-process-final"><span>03 · Final Art</span><img src="${esc(hero)}" alt="Arte final del cuento" loading="lazy"><figcaption>Páginas / ilustraciones finales</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="case-section case-purpose">
+      <figure class="case-media"><img src="${esc(hero)}" alt="Lucas aprendiendo a ahorrar con Jenny" loading="lazy"></figure>
+      <div class="case-copy">
+        <p class="eyebrow">05 — A STORY WITH PURPOSE</p>
+        <h2>UNA HISTORIA<br>CON PROPÓSITO<span class="red">.</span></h2>
+        <p>El proyecto buscaba acercar conceptos de educación financiera a los niños de una manera sencilla y entretenida, utilizando la narrativa y la ilustración como herramientas educativas.</p>
+      </div>
+    </section>
+
+    <section class="case-section case-gallery">
+      <div class="case-copy case-copy-wide">
+        <p class="eyebrow">06 — PROJECT GALLERY</p>
+        <h2>GALERÍA<span class="red">.</span></h2>
+      </div>
+      <div class="case-gallery-grid">
+        ${gallery.map(item => `<figure><img src="${esc(item.src)}" alt="${esc(item.label)}" loading="lazy"><figcaption>${esc(item.label)}</figcaption></figure>`).join('')}
+      </div>
+    </section>
+
+    <section class="case-close">
+      <p class="eyebrow">BANRESERVAS × ALPHA EVE</p>
+      <h2>STORIES WITH<br>PURPOSE<span class="red">.</span></h2>
+      <p>Ilustración, narrativa y diseño para crear historias que conectan.</p>
+      <a class="button button-light" href="/projects" data-route>View more projects <span>↗</span></a>
+    </section>
+  </article>`;
+}
 function clientStrip() {
   return `<section class="client-strip" aria-label="Clientes"><p class="client-strip-label">Clientes</p><div class="client-marquee" data-client-marquee><div class="client-track"></div></div></section>`;
 }
@@ -389,7 +517,10 @@ async function mountHistory() {
 }
 function simpleDirectory(path) {
   if (path === '/services') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ESTUDIO CREATIVO · REPÚBLICA DOMINICANA</p><h1>NUESTROS<br>SERVICIOS<span class="red">.</span></h1><p>Servicios creativos para editoriales, marcas, estudios, creadores y aliados.</p></div><div class="services-grid">${services.map(([title, desc], index) => `<article class="service-item"><span class="service-no">0${index + 1}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p></article>`).join('')}</div><a class="button button-dark" href="/#contact">Colabora con nosotros <span>↗</span></a></section>`;
-  if (path === '/projects') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño.</p></div><div class="project-categories">${['PROPIEDADES ORIGINALES', 'TRABAJOS PARA CLIENTES', 'COLABORACIONES', 'VIDEOJUEGOS Y JUEGOS DE MESA', 'ILUSTRACIÓN / DISEÑO'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${projects.length ? 'Explora algunos de nuestros trabajos.' : 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.'}</p></article>`).join('')}</div>${clientStrip()}</section>`;
+  if (path === '/projects') {
+    const clientWork = projects.filter(project => project.category === 'TRABAJOS PARA CLIENTES');
+    return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño.</p></div><div class="project-categories">${['PROPIEDADES ORIGINALES', 'TRABAJOS PARA CLIENTES', 'COLABORACIONES', 'VIDEOJUEGOS Y JUEGOS DE MESA', 'ILUSTRACIÓN / DISEÑO'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${category === 'TRABAJOS PARA CLIENTES' && clientWork.length ? 'Explora algunos de nuestros trabajos para clientes.' : 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.'}</p></article>`).join('')}</div>${clientWork.length ? `<section class="directory-subsection"><p class="eyebrow">TRABAJOS PARA CLIENTES</p><div class="project-feature-grid">${clientWork.map(projectCard).join('')}</div></section>` : ''}${clientStrip()}</section>`;
+  }
   if (path === '/about') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ACERCA DE ALPHA EVE STUDIOS</p><h1>ESPÍRITU<br>INDEPENDIENTE. <span class="red">IMAGINACIÓN</span><br>SIN LÍMITES.</h1></div><div class="about-page-copy"><p>Alpha Eve Studios es un estudio creativo y editorial de República Dominicana. Desarrollamos propiedades intelectuales originales y ofrecemos servicios creativos de cómics, manga, ilustración, diseño y desarrollo visual.</p><p>Construimos mundos propios y colaboramos con aliados creativos de todo el mundo.</p><a class="button button-dark" href="/authors" data-route>Conoce a nuestros creadores <span>↗</span></a><a class="text-link" href="/historia" data-route>Nuestra historia · 2007—2027 ↗</a></div></section>`;
   if (path === '/packito') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">UNA PLATAFORMA DE ALPHA EVE</p><h1>PACKITO<span class="red">.</span></h1><p>Cómics y manga digitales. Un espacio para cómics, creadores e historias originales.</p></div><div class="detail-empty">Todavía no se ha compartido el enlace externo de Packito.</div><a class="text-link" href="#contact">Para creadores ↗</a></section>`;
   if (path === '/shop') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS</p><h1>LA TIENDA<span class="red">.</span></h1><p>Cómics impresos y digitales, láminas y productos.</p></div><div class="detail-empty">El enlace de la tienda oficial se agregará cuando esté disponible.</div></section>`;
@@ -436,6 +567,17 @@ function renderRoute() {
     const item = originalIp.find(entry => entry.slug === slug);
     app.innerHTML = item ? `<section class="detail-shell"><a class="detail-back" href="/comics" data-route>← Cómics y mundos originales</a><div class="detail-hero"><div class="detail-art"><strong>${esc(item.initials)}</strong></div><div class="detail-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE</p><h1>${esc(item.title)}<span class="red">.</span></h1><div class="detail-meta">PROPIEDAD ORIGINAL · DETALLES POR CONFIRMAR</div><p>La descripción y el arte del proyecto se agregarán cuando estén disponibles.</p></div></div></section>` : notFound();
     document.title = item ? `${item.title} — Alpha Eve Studios` : 'Página no encontrada — Alpha Eve Studios';
+    return;
+  }
+  if (path.startsWith('/projects/')) {
+    const project = projects.find(entry => entry.slug === slug);
+    if (project?.slug === 'un-tesoro-para-siempre') {
+      app.innerHTML = tesoroPage(project);
+      document.title = `${project.title} — Alpha Eve Studios`;
+      return;
+    }
+    app.innerHTML = notFound();
+    document.title = 'Proyecto no encontrado — Alpha Eve Studios';
     return;
   }
   if (path === '/historia') {
