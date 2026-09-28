@@ -269,6 +269,9 @@ function projectsForCategory(category) {
 }
 
 function projectCategoryBlurb(category) {
+  if (category === 'PROPIEDADES ORIGINALES' && comics.length) {
+    return `Cómics y mundos propios · ${comics.length} títulos. Pronto también videojuegos y más.`;
+  }
   const count = projectsForCategory(category).length;
   if (category === 'TRABAJOS PARA CLIENTES' && count) return 'Explora algunos de nuestros trabajos para clientes.';
   if (count) return `${count} proyecto${count === 1 ? '' : 's'} en esta categoría.`;
@@ -276,6 +279,12 @@ function projectCategoryBlurb(category) {
 }
 
 function projectResultsMarkup() {
+  if (activeProjectCategory === 'PROPIEDADES ORIGINALES') {
+    const body = comics.length
+      ? `<div class="project-originals-block"><p class="project-originals-label">Cómics</p><div class="comic-directory-grid project-originals-grid">${comics.map((comic, index) => comicCard(comic, index)).join('')}</div></div>`
+      : '<p class="catalog-empty">Todavía no hay propiedades originales en esta categoría.</p>';
+    return `<section class="directory-subsection" id="project-results"><p class="eyebrow">PROPIEDADES ORIGINALES</p>${body}</section>`;
+  }
   const filtered = activeProjectCategory ? projectsForCategory(activeProjectCategory) : projects;
   const label = activeProjectCategory || 'TODOS LOS PROYECTOS';
   const body = filtered.length
