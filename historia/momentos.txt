@@ -3,12 +3,20 @@
 # Separa cada momento con una línea en blanco.
 # Las fotos van en la carpeta historia/imagenes/
 # En Imagen escribe solo el nombre del archivo, por ejemplo 2007.jpg
+# Logo opcional: primera marca o sello de ese período.
 # Si todavía no tienes foto, deja Imagen vacío.
 
-Fecha: 2007
+Fecha: 2006
 Título: El inicio
-Texto:
-Imagen:
+Texto: Alpha Eve surge a finales de 2006 como un estudio fundado por Darwin Núñez, con la visión de impulsar el cómic y la ilustración en República Dominicana.
+
+Desde sus inicios, el estudio se enfocó en la creación y publicación de cómics, manga e ilustraciones, buscando contar historias con una identidad propia y conectar con el público dominicano.
+
+Alpha Eve también nace con la intención de fortalecer la creciente comunidad local de cómics, anime y manga, colaborando con artistas, grupos y organizaciones del país.
+Fundador: Darwin Núñez
+Integrantes: Rafael Soto · Edwin Disla · Luis Manuel Mariñez
+Imagen: 2006.jpg
+Logo: 2006-logo.png
 
 Fecha: 2010s
 Título: Crecimiento

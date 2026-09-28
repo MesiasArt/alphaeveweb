@@ -310,28 +310,36 @@ function historyPage() {
 function parseHistory(text) {
   const moments = [];
   let current = null;
+  const blank = () => ({ fecha: '', titulo: '', texto: '', imagen: '', logo: '', fundador: '', integrantes: '' });
   const flush = () => {
-    if (current && (current.fecha || current.titulo || current.texto || current.imagen)) moments.push(current);
+    if (current && (current.fecha || current.titulo || current.texto || current.imagen || current.logo)) {
+      current.texto = current.texto.replace(/\n{3,}/g, '\n\n').trim();
+      moments.push(current);
+    }
     current = null;
   };
   for (const raw of String(text || '').split(/\r?\n/)) {
     const line = raw.trim();
     if (!line || line.startsWith('#')) {
-      if (!line) flush();
+      if (!line && current?.texto) current.texto += '\n\n';
       continue;
     }
-    const match = line.match(/^(Fecha|Título|Titulo|Texto|Imagen)\s*:\s*(.*)$/i);
+    const match = line.match(/^(Fecha|Título|Titulo|Texto|Imagen|Logo|Fundador|Integrantes|Primeros integrantes)\s*:\s*(.*)$/i);
     if (!match) {
-      if (current) current.texto = current.texto ? `${current.texto} ${line}` : line;
+      if (current) current.texto = current.texto ? `${current.texto}${/\n$/.test(current.texto) ? '' : '\n'}${line}` : line;
       continue;
     }
-    if (!current) current = { fecha: '', titulo: '', texto: '', imagen: '' };
-    const key = match[1].toLowerCase().replace('í', 'i');
+    const key = match[1].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const value = match[2].trim();
+    if (key === 'fecha') flush();
+    if (!current) current = blank();
     if (key === 'fecha') current.fecha = value;
     else if (key === 'titulo') current.titulo = value;
     else if (key === 'texto') current.texto = value;
     else if (key === 'imagen') current.imagen = value;
+    else if (key === 'logo') current.logo = value;
+    else if (key === 'fundador') current.fundador = value;
+    else if (key === 'integrantes' || key === 'primeros integrantes') current.integrantes = value;
   }
   flush();
   return moments;
@@ -340,14 +348,29 @@ function historyImage(name) {
   if (!name || /[\\/]/.test(name) || name.includes('..')) return '';
   return `/historia/imagenes/${encodeURIComponent(name)}`;
 }
+function historyParagraphs(text) {
+  const parts = String(text || '').split(/\n{2,}/).map(part => part.trim()).filter(Boolean);
+  if (!parts.length) return '<p>El texto de este momento se agregará aquí.</p>';
+  return parts.map(part => `<p>${esc(part)}</p>`).join('');
+}
+function historyCredits(moment) {
+  const rows = [];
+  if (moment.fundador) rows.push(`<div><dt>Fundador</dt><dd>${esc(moment.fundador)}</dd></div>`);
+  if (moment.integrantes) rows.push(`<div><dt>Primeros integrantes</dt><dd>${esc(moment.integrantes)}</dd></div>`);
+  return rows.length ? `<dl class="history-credits">${rows.join('')}</dl>` : '';
+}
 function historyMoment(moment, index) {
   const src = historyImage(moment.imagen);
+  const logo = historyImage(moment.logo);
   const chapter = String(index + 1).padStart(2, '0');
   const flip = index % 2 === 1 ? ' history-moment-flip' : '';
   const figure = src
     ? `<figure><img src="${esc(src)}" alt="${esc(moment.titulo || moment.fecha || 'Momento de Alpha Eve')}" onerror="this.remove();this.parentElement.classList.add('missing')"><span>Imagen por agregar</span></figure>`
     : '<figure class="missing"><span>Imagen por agregar</span></figure>';
-  return `<article class="history-moment${flip}"><span class="history-node" aria-hidden="true"></span><div class="history-copy"><span class="history-chapter">${chapter}</span><time>${esc(moment.fecha || 'Fecha')}</time><h2>${esc(moment.titulo || 'Título por agregar')}</h2><p>${esc(moment.texto || 'El texto de este momento se agregará aquí.')}</p></div>${figure}</article>`;
+  const mark = logo
+    ? `<img class="history-logo" src="${esc(logo)}" alt="Primera versión del logo de Alpha Eve">`
+    : '';
+  return `<article class="history-moment${flip}"><span class="history-node" aria-hidden="true"></span><div class="history-copy"><span class="history-chapter">${chapter}</span><time>${esc(moment.fecha || 'Fecha')}</time><h2>${esc(moment.titulo || 'Título por agregar')}</h2>${historyParagraphs(moment.texto)}${historyCredits(moment)}</div><div class="history-visual">${figure}${mark}</div></article>`;
 }
 async function mountHistory() {
   const list = document.querySelector('#history-list');
