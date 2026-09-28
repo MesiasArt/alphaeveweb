@@ -5,7 +5,15 @@ Descripción: Diseño de gafetes para Comic Con República Dominicana 2025. La e
 Cliente: Comic Con República Dominicana
 Imagen: vegeta comic con3.jpg
 Historia:
-Ilustración:
+Ilustración: Spencer Liriano Rafael (Spencer_Draw) · Nathalia Rivera (Nattibie) · Francisco Balbuena (MesiasArt) · Yonson Carbonell (YonsonCB) · Máximo Montero (XamuraiRD)
 Creadores:
-- slug:
-  función:
+- slug: spencer_draw
+  función: Ilustración
+- slug: nattibie
+  función: Ilustración
+- slug: mesiasart
+  función: Ilustración
+- slug: yonsoncb
+  función: Ilustración
+- slug: xamurai_rd
+  función: Ilustración
