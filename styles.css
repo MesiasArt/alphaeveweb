@@ -63,13 +63,13 @@
 .client-marquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
 .client-track{display:flex;align-items:center;gap:72px;width:max-content;animation:client-scroll 36s linear infinite}
 .client-marquee:hover .client-track{animation-play-state:paused}
-.client-logo{flex:none;height:52px;display:flex;align-items:center;justify-content:center}
-.client-logo img{height:36px;width:auto;max-width:168px;object-fit:contain}
+.client-logo{flex:none;height:78px;display:flex;align-items:center;justify-content:center}
+.client-logo img{height:64px;width:auto;max-width:340px;object-fit:contain}
 .client-logo-empty{width:132px;border:1px dashed rgba(244,241,235,.35);font:9px var(--mono);letter-spacing:.14em;color:rgba(244,241,235,.55)}
 .client-strip+.creator-section{padding-top:58px}
 .directory-page .client-strip{margin:62px -8.3vw 0}
 @keyframes client-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@media(max-width:760px){.client-strip-label,.directory-page .client-strip-label{padding-left:6vw;padding-right:6vw}.client-track{gap:48px;animation-duration:28s}.client-logo img{height:28px;max-width:120px}.client-logo-empty{width:108px;height:44px}.client-strip+.creator-section{padding-top:42px}.directory-page .client-strip{margin-left:-6vw;margin-right:-6vw}}
+@media(max-width:760px){.client-strip-label,.directory-page .client-strip-label{padding-left:6vw;padding-right:6vw}.client-track{gap:48px;animation-duration:28s}.client-logo img{height:48px;max-width:240px}.client-logo-empty{width:108px;height:44px}.client-strip+.creator-section{padding-top:42px}.directory-page .client-strip{margin-left:-6vw;margin-right:-6vw}}
 @media(prefers-reduced-motion:reduce){.client-track{animation:none}.originals-track{transition:none}}
 .originals-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;border:1px solid var(--ink);background:rgba(0,0,0,.16);padding:16px 8px}
 .originals-viewport{overflow:hidden;min-width:0}
