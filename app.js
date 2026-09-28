@@ -36,18 +36,18 @@ const pantaleta = comics.find(comic => comic.slug === 'pantaleta');
 if (pantaleta?.chapters[1]) pantaleta.chapters[1].cover = pantaleta.cover;
 const originalIp = [];
 const authors = [
-  { name: 'anderson-07', slug: 'anderson-07', image: 'anderson-07.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'darkereve', slug: 'darkereve', image: 'darkereve.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Anderson F. Encarnación', slug: 'anderson-07', image: 'anderson-07.jpg', role: 'Anderson-07', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Darwin Núñez', slug: 'darkereve', image: 'darkereve.jpg', role: 'DarkerEve', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'froggynami', slug: 'froggynami', image: 'froggynami.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'manuel_shoo', slug: 'manuel_shoo', image: 'manuel_shoo.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'mesiasart', slug: 'mesiasart', image: 'mesiasart.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'Nattibie', slug: 'nattibie', image: 'Nattibie.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'Nicodomo', slug: 'nicodomo', image: 'Nicodomo.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'ossy_jo', slug: 'ossy_jo', image: 'ossy_jo.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'spencer_draw', slug: 'spencer_draw', image: 'spencer_draw.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'xamurai_rd', slug: 'xamurai_rd', image: 'xamurai_rd.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  { name: 'YonsonCB', slug: 'yonsoncb', image: 'yonsoncb.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: ['un-tesoro-para-siempre', 'tren-de-diversion', 'mision-genial'] },
-  { name: 'zukupow', slug: 'zukupow', image: 'zukupow.jpg', role: null, bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Manuel Shoo', slug: 'manuel_shoo', image: 'manuel_shoo.jpg', role: 'Manuel Shoo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Francisco Balbuena', slug: 'mesiasart', image: 'mesiasart.jpg', role: 'MesiasArt', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Nathalia Rivera', slug: 'nattibie', image: 'Nattibie.jpg', role: 'Nattibie', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Nicole Hernández', slug: 'nicodomo', image: 'Nicodomo.jpg', role: 'Nicodomo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Osvaldo J. Flores', slug: 'ossy_jo', image: 'ossy_jo.jpg', role: 'Ossy Jo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Spencer Liriano Rafael', slug: 'spencer_draw', image: 'spencer_draw.jpg', role: 'Spencer_Draw', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Máximo Montero', slug: 'xamurai_rd', image: 'xamurai_rd.jpg', role: 'XamuraiRD', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Yonson Carbonell', slug: 'yonsoncb', image: 'yonsoncb.jpg', role: 'YonsonCB', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['un-tesoro-para-siempre', 'tren-de-diversion', 'mision-genial'] },
+  { name: 'Diego Colón', slug: 'zukupow', image: 'zukupow.jpg', role: 'Zukupow', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
 ];
 const projects = [
   {
