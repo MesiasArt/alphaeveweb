@@ -294,7 +294,7 @@ function authorPage(author) {
     <div class="detail-hero author-hero"><div class="author-portrait"><img src="/artistas/${encodeURIComponent(author.image)}" alt="${esc(author.name)}" /></div>
       <div class="detail-copy"><p class="eyebrow">ALPHA EVE · PORTAFOLIO CREATIVO</p><h1>${esc(author.name)}<span class="red">.</span></h1><div class="detail-meta">${esc(author.role || 'PERFIL CREATIVO')}</div><p>${esc(author.bio || 'Portafolio y perfil creativo del artista. La biografía y sus especialidades se agregarán cuando se confirme la información.')}</p><a class="button button-dark" href="#contact">Colabora con ${esc(author.name)} <span>↗</span></a></div></div>
     <section class="detail-block"><p class="eyebrow">ACERCA DEL CREADOR</p><h2>Biografía y especialidades</h2>${author.bio || author.specialties.length ? `<p>${esc(author.bio || author.specialties.join(' · '))}</p>` : '<div class="detail-empty">La biografía y las especialidades creativas aparecerán aquí.</div>'}</section>
-    <section class="detail-block"><p class="eyebrow">PROYECTOS Y COLABORACIONES</p><h2>Proyectos destacados</h2>${relatedProjects.length ? `<div class="project-feature-grid">${relatedProjects.map(projectCard).join('')}</div>` : '<div class="detail-empty">Los proyectos aparecerán aquí cuando se confirmen.</div>'}</section>
+    <section class="detail-block"><p class="eyebrow">PROYECTOS Y COLABORACIONES</p><h2>Proyectos destacados</h2>${relatedProjects.length ? `<div class="project-originals-grid">${relatedProjects.map((project, index) => projectCard(project, index)).join('')}</div>` : '<div class="detail-empty">Los proyectos aparecerán aquí cuando se confirmen.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">CÓMICS</p><h2>Historias y series</h2>${related.length ? `<div class="comic-directory-grid">${related.map(comicCard).join('')}</div>` : '<div class="detail-empty">Todavía no hay cómics vinculados a este perfil.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">GALERÍA</p><h2>Arte y proceso</h2><div class="author-gallery"><img src="/artistas/${encodeURIComponent(author.image)}" alt="Ilustración de perfil de ${esc(author.name)}" loading="lazy"><div class="detail-empty">Aquí se agregarán más ilustraciones, bocetos y portadas.</div></div></section>
     <section class="detail-block"><p class="eyebrow">CONTACTO</p><h2>Colabora con ${esc(author.name)}</h2><p>Para consultas profesionales, contacta a Alpha Eve Studios.</p><a class="button button-dark" href="#contact">Contactar a Alpha Eve <span>↗</span></a></section>
@@ -355,16 +355,17 @@ function projectResultsMarkup() {
   const filtered = activeProjectCategory ? projectsForCategory(activeProjectCategory) : projects;
   const label = activeProjectCategory || 'TODOS LOS PROYECTOS';
   const body = filtered.length
-    ? `<div class="project-feature-grid">${filtered.map(projectCard).join('')}</div>`
+    ? `<div class="project-originals-grid">${filtered.map((project, index) => projectCard(project, index)).join('')}</div>`
     : `<p class="catalog-empty">${activeProjectCategory ? 'Todavía no hay proyectos en esta categoría.' : 'Los proyectos aparecerán aquí cuando estén disponibles.'}</p>`;
   return `<section class="directory-subsection" id="project-results"><p class="eyebrow">${esc(label)}</p>${body}</section>`;
 }
 
-function projectCard(project) {
+function projectCard(project, index = 0) {
   const cover = projectAsset(project, project.assets?.hero);
-  return `<a class="project-card" href="/projects/${esc(project.slug)}" data-route>
-    <div class="project-card-art">${cover ? `<img src="${esc(cover)}" alt="${esc(project.title)}" loading="lazy">` : ''}<span>${esc(project.client || 'CLIENTE')}</span></div>
-    <div class="project-card-copy"><p class="eyebrow">${esc(project.category || 'PROYECTO')}</p><h3>${esc(project.title)}</h3><p>${esc(project.subtitle || project.type || '')}</p><span>Ver case study ↗</span></div>
+  const initials = (project.title || 'AE').split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
+  return `<a class="comic-card" href="/projects/${esc(project.slug)}" data-route>
+    <div class="comic-card-art"><span class="comic-edition">${esc(project.client || 'CLIENTE')} · ${String(index + 1).padStart(2, '0')}</span>${cover ? `<img src="${esc(cover)}" alt="${esc(project.title)}" loading="lazy" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()">` : ''}<strong>${esc(initials)}</strong><span class="comic-art-note">IMAGEN POR AGREGAR</span></div>
+    <div class="comic-card-copy"><h3>${esc(project.title)}</h3><p>${esc(project.type || project.category || 'Proyecto')} <span>·</span> ${esc(project.subtitle || project.client || 'Case study')}</p><span class="comic-card-arrow">↗</span></div>
   </a>`;
 }
 
