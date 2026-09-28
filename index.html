@@ -76,7 +76,43 @@
 
     <section class="shop-section" id="shop"><div><p class="eyebrow">LLÉVATE UN MUNDO</p><h2>LA<br>TIENDA<span class="red">.</span></h2></div><p>Cómics, impresiones, productos y ediciones especiales. Descubre lo que tenemos disponible.</p><a class="button button-light" href="#contact">Ver cómics <span>↗</span></a></section>
   </main>
-  <section class="contact-section" id="contact"><p class="eyebrow">CONSULTAS CREATIVAS</p><h2>¿QUÉ MUNDO<br>VAMOS A CREAR<span class="red">?</span></h2><p>Pronto agregaremos los datos de contacto.</p></section>
+  <section class="contact-section" id="contact">
+    <div class="contact-intro">
+      <p class="eyebrow">PROJECT INQUIRY</p>
+      <h2>START A<br>PROJECT<span class="red">.</span></h2>
+      <p>Tell us about your project and how Alpha Eve can help.</p>
+    </div>
+    <form id="project-inquiry" class="inquiry-form" method="post" action="/api/contact" novalidate>
+      <label class="inquiry-trap" aria-hidden="true">Leave this field empty<input type="text" name="confirm_url" tabindex="-1" autocomplete="off"></label>
+      <label>Name *<input name="name" type="text" required maxlength="120" autocomplete="name"></label>
+      <label>Email *<input name="email" type="email" required maxlength="200" autocomplete="email"></label>
+      <label class="inquiry-wide">Company / Organization<input name="company" type="text" maxlength="160" autocomplete="organization"></label>
+      <label class="inquiry-wide">Service *
+        <select name="service" required>
+          <option value="">Select a service</option>
+          <option>Illustration</option>
+          <option>Comics &amp; Manga</option>
+          <option>Character Design</option>
+          <option>Concept Art</option>
+          <option>Graphic Design</option>
+          <option>Visual Development</option>
+          <option>Game Art</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label class="inquiry-wide">Project Description *<textarea name="description" required minlength="10" maxlength="4000" rows="6"></textarea></label>
+      <label>Budget Range<input name="budget" type="text" maxlength="120"></label>
+      <label>Timeline<input name="timeline" type="text" maxlength="120"></label>
+      <label class="inquiry-wide">Website / Reference URL<input name="reference" type="url" maxlength="300" placeholder="https://"></label>
+      <p class="inquiry-error" role="alert" hidden></p>
+      <button class="button button-dark" type="submit">Send inquiry <span>↗</span></button>
+    </form>
+    <div class="inquiry-thanks" hidden>
+      <p class="eyebrow">PROJECT INQUIRY</p>
+      <h2>THANK<br>YOU<span class="red">.</span></h2>
+      <p>Your project inquiry has been received.<br>We'll get back to you soon.</p>
+    </div>
+  </section>
   <footer class="site-footer"><div class="footer-top"><a class="brand brand-footer" href="#home"><img src="/alpha%20eve%20logo.png" alt="Alpha Eve" /><span class="studio-label">ESTUDIOS</span></a><p>HISTORIAS. ARTE. MUNDOS.</p><a class="footer-contact" href="#contact">HABLEMOS ↗</a></div><div class="footer-bottom"><span>REPÚBLICA DOMINICANA · 2007—2027</span><span>ESTUDIO CREATIVO Y EDITORIAL INDEPENDIENTE</span><a href="#home">VOLVER ARRIBA ↑</a></div></footer>
   <script type="module" src="/app.js"></script>
 </body>

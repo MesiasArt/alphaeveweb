@@ -287,3 +287,42 @@ renderRoute();
 if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   window.setInterval(() => renderFeaturedComic('random'), 8000);
 }
+
+const projectInquiry = document.querySelector('#project-inquiry');
+projectInquiry?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const error = projectInquiry.querySelector('.inquiry-error');
+  const button = projectInquiry.querySelector('button[type="submit"]');
+  const showError = message => {
+    error.hidden = false;
+    error.textContent = message;
+  };
+  error.hidden = true;
+  if (!projectInquiry.reportValidity()) return;
+  const body = Object.fromEntries(new FormData(projectInquiry));
+  button.disabled = true;
+  const label = button.innerHTML;
+  button.textContent = 'Sending…';
+  try {
+    const response = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const isJson = (response.headers.get('content-type') || '').includes('application/json');
+    const result = isJson ? await response.json().catch(() => ({})) : {};
+    if (!response.ok || !result.ok) {
+      showError(result.error || "We couldn't send your inquiry. Please try again.");
+      button.disabled = false;
+      button.innerHTML = label;
+      return;
+    }
+    projectInquiry.hidden = true;
+    document.querySelector('.contact-intro').hidden = true;
+    document.querySelector('.inquiry-thanks').hidden = false;
+  } catch {
+    showError("We couldn't send your inquiry. Please try again.");
+    button.disabled = false;
+    button.innerHTML = label;
+  }
+});
