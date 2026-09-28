@@ -20,10 +20,16 @@ Imagen: 2006.jpg
 Pie: Darwin Núñez, Rafael Soto y Luigi Paredes en la M.C.D. Exposición de Manga y Comics en Dominicana, 2007.
 Logo: 2006-logo.png
 
-Fecha: 2010s
-Título: Crecimiento
-Texto:
-Imagen:
+Fecha: 2013
+Título: Nueva era
+Texto: Alpha Eve entra en una nueva etapa con el lanzamiento de una plataforma digital de webcómics, reuniendo a una nueva generación de talentos dominicanos.
+
+Se integran al equipo Francisco Balbuena, Carlos Reyes, Diego Colón, Laura Hernández, Osvaldo Flores, Elvis Labrada, Humberto Castillo, Jean Sena, Anderson Feliz Encarnación y Yatxel Sánchez, con títulos como La Moneda, Mythos y Mi Profesor Striker.
+
+Ese mismo año, Alpha Eve abre por primera vez sus propias oficinas en la calle Alberto Peguero.
+
+Un nuevo formato. Una nueva generación. Un espacio propio.
+Imagen: 2013.jpg
 
 Fecha: 2020s
 Título: Nuevos mundos
