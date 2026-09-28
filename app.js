@@ -304,10 +304,65 @@ function contactPage() {
     </div>
   </section>`;
 }
+function historyPage() {
+  return `<section class="history-page"><a class="detail-back" href="/#anniversary" data-route>← 20 años</a><p class="eyebrow">2007 — 2027 · REPÚBLICA DOMINICANA</p><h1>NUESTRA<br>HISTORIA<span class="red">.</span></h1><div class="history-list" id="history-list"></div></section>`;
+}
+function parseHistory(text) {
+  const moments = [];
+  let current = null;
+  const flush = () => {
+    if (current && (current.fecha || current.titulo || current.texto || current.imagen)) moments.push(current);
+    current = null;
+  };
+  for (const raw of String(text || '').split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) {
+      if (!line) flush();
+      continue;
+    }
+    const match = line.match(/^(Fecha|Título|Titulo|Texto|Imagen)\s*:\s*(.*)$/i);
+    if (!match) {
+      if (current) current.texto = current.texto ? `${current.texto} ${line}` : line;
+      continue;
+    }
+    if (!current) current = { fecha: '', titulo: '', texto: '', imagen: '' };
+    const key = match[1].toLowerCase().replace('í', 'i');
+    const value = match[2].trim();
+    if (key === 'fecha') current.fecha = value;
+    else if (key === 'titulo') current.titulo = value;
+    else if (key === 'texto') current.texto = value;
+    else if (key === 'imagen') current.imagen = value;
+  }
+  flush();
+  return moments;
+}
+function historyImage(name) {
+  if (!name || /[\\/]/.test(name) || name.includes('..')) return '';
+  return `/historia/imagenes/${encodeURIComponent(name)}`;
+}
+function historyMoment(moment) {
+  const src = historyImage(moment.imagen);
+  const figure = src
+    ? `<figure><img src="${esc(src)}" alt="${esc(moment.titulo || moment.fecha || 'Momento de Alpha Eve')}" onerror="this.remove();this.parentElement.classList.add('missing')"><span>Imagen por agregar</span></figure>`
+    : '<figure class="missing"><span>Imagen por agregar</span></figure>';
+  return `<article class="history-moment"><time>${esc(moment.fecha || 'Fecha')}</time><div><h2>${esc(moment.titulo || 'Título por agregar')}</h2><p>${esc(moment.texto || 'El texto de este momento se agregará aquí.')}</p></div>${figure}</article>`;
+}
+async function mountHistory() {
+  const list = document.querySelector('#history-list');
+  if (!list) return;
+  let moments = [];
+  try {
+    const response = await fetch('/historia/momentos.txt', { cache: 'no-store' });
+    if (response.ok) moments = parseHistory(await response.text());
+  } catch { /* The page explains how to fill the template. */ }
+  list.innerHTML = moments.length
+    ? moments.map(historyMoment).join('')
+    : '<p class="history-note">Agrega cada momento en historia/momentos.txt y las fotos en historia/imagenes/.</p>';
+}
 function simpleDirectory(path) {
   if (path === '/services') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ESTUDIO CREATIVO · REPÚBLICA DOMINICANA</p><h1>NUESTROS<br>SERVICIOS<span class="red">.</span></h1><p>Servicios creativos para editoriales, marcas, estudios, creadores y aliados.</p></div><div class="services-grid">${services.map(([title, desc], index) => `<article class="service-item"><span class="service-no">0${index + 1}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p></article>`).join('')}</div><a class="button button-dark" href="/#contact">Colabora con nosotros <span>↗</span></a></section>`;
   if (path === '/projects') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE · TRABAJO DESTACADO</p><h1>PROYECTOS<span class="red">.</span></h1><p>Trabajos para clientes, colaboraciones, videojuegos, ilustración y diseño.</p></div><div class="project-categories">${['PROPIEDADES ORIGINALES', 'TRABAJOS PARA CLIENTES', 'COLABORACIONES', 'VIDEOJUEGOS Y JUEGOS DE MESA', 'ILUSTRACIÓN / DISEÑO'].map((category, index) => `<article><span>0${index + 1}</span><h2>${category}</h2><p>${projects.length ? 'Explora algunos de nuestros trabajos.' : 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.'}</p></article>`).join('')}</div>${clientStrip()}</section>`;
-  if (path === '/about') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ACERCA DE ALPHA EVE STUDIOS</p><h1>ESPÍRITU<br>INDEPENDIENTE. <span class="red">IMAGINACIÓN</span><br>SIN LÍMITES.</h1></div><div class="about-page-copy"><p>Alpha Eve Studios es un estudio creativo y editorial de República Dominicana. Desarrollamos propiedades intelectuales originales y ofrecemos servicios creativos de cómics, manga, ilustración, diseño y desarrollo visual.</p><p>Construimos mundos propios y colaboramos con aliados creativos de todo el mundo.</p><a class="button button-dark" href="/authors" data-route>Conoce a nuestros creadores <span>↗</span></a><a class="text-link" href="/#anniversary">Nuestra historia · 2007—2027 ↗</a></div></section>`;
+  if (path === '/about') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ACERCA DE ALPHA EVE STUDIOS</p><h1>ESPÍRITU<br>INDEPENDIENTE. <span class="red">IMAGINACIÓN</span><br>SIN LÍMITES.</h1></div><div class="about-page-copy"><p>Alpha Eve Studios es un estudio creativo y editorial de República Dominicana. Desarrollamos propiedades intelectuales originales y ofrecemos servicios creativos de cómics, manga, ilustración, diseño y desarrollo visual.</p><p>Construimos mundos propios y colaboramos con aliados creativos de todo el mundo.</p><a class="button button-dark" href="/authors" data-route>Conoce a nuestros creadores <span>↗</span></a><a class="text-link" href="/historia" data-route>Nuestra historia · 2007—2027 ↗</a></div></section>`;
   if (path === '/packito') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">UNA PLATAFORMA DE ALPHA EVE</p><h1>PACKITO<span class="red">.</span></h1><p>Cómics y manga digitales. Un espacio para cómics, creadores e historias originales.</p></div><div class="detail-empty">Todavía no se ha compartido el enlace externo de Packito.</div><a class="text-link" href="#contact">Para creadores ↗</a></section>`;
   if (path === '/shop') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS</p><h1>LA TIENDA<span class="red">.</span></h1><p>Cómics impresos y digitales, láminas y productos.</p></div><div class="detail-empty">El enlace de la tienda oficial se agregará cuando esté disponible.</div></section>`;
   return null;
@@ -353,6 +408,12 @@ function renderRoute() {
     const item = originalIp.find(entry => entry.slug === slug);
     app.innerHTML = item ? `<section class="detail-shell"><a class="detail-back" href="/comics" data-route>← Cómics y mundos originales</a><div class="detail-hero"><div class="detail-art"><strong>${esc(item.initials)}</strong></div><div class="detail-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE</p><h1>${esc(item.title)}<span class="red">.</span></h1><div class="detail-meta">PROPIEDAD ORIGINAL · DETALLES POR CONFIRMAR</div><p>La descripción y el arte del proyecto se agregarán cuando estén disponibles.</p></div></div></section>` : notFound();
     document.title = item ? `${item.title} — Alpha Eve Studios` : 'Página no encontrada — Alpha Eve Studios';
+    return;
+  }
+  if (path === '/historia') {
+    app.innerHTML = historyPage();
+    document.title = 'Nuestra historia — Alpha Eve Studios';
+    mountHistory();
     return;
   }
   if (path === '/contacto') {

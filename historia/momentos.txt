@@ -1,0 +1,26 @@
+# Nuestra historia
+# Copia un bloque completo para agregar otro momento.
+# Separa cada momento con una línea en blanco.
+# Las fotos van en la carpeta historia/imagenes/
+# En Imagen escribe solo el nombre del archivo, por ejemplo 2007.jpg
+# Si todavía no tienes foto, deja Imagen vacío.
+
+Fecha: 2007
+Título: El inicio
+Texto:
+Imagen:
+
+Fecha: 2010s
+Título: Crecimiento
+Texto:
+Imagen:
+
+Fecha: 2020s
+Título: Nuevos mundos
+Texto:
+Imagen:
+
+Fecha: 2027
+Título: Un nuevo capítulo
+Texto:
+Imagen:
