@@ -192,6 +192,42 @@ const projects = [
       ],
     },
   },
+  {
+    title: 'Gafetes Comic Con 2025',
+    slug: 'comic-con-2025-gafetes',
+    subtitle: 'Diseño de gafetes · Comic Con República Dominicana',
+    client: 'Comic Con República Dominicana',
+    type: 'Diseño de gafetes / Ilustración',
+    storyBy: null,
+    illustrationBy: null,
+    themes: ['Comic Con', 'Gafetes', 'Evento'],
+    category: 'TRABAJOS PARA CLIENTES',
+    partner: 'Comic Con República Dominicana × Alpha Eve',
+    headline: 'GAFETES<br>COMIC CON',
+    assetDir: '/datos/proyectos/Trabajos-para-clientes/comic-con-2025-gafetes',
+    creatorSlugs: [],
+    clientLogo: '/clientes/comic-con-republica-dominicana-2026-logo-trans-blanco.png',
+    logoAlt: 'Comic Con República Dominicana',
+    storyCopy: [
+      'Diseño de gafetes para Comic Con República Dominicana 2025.',
+      'La edición 2024 se agregará cuando estén disponibles las imágenes.',
+    ],
+    roleCopy: 'Desde Alpha Eve participamos en la creación visual de los gafetes del evento.',
+    purposeCopy: 'Piezas gráficas para identificación y merchandising del evento.',
+    closeTitle: 'EVENTOS CON<br>IDENTIDAD',
+    closeLine: 'Ilustración y diseño para experiencias en vivo.',
+    assets: {
+      hero: 'vegeta comic con3.jpg',
+      story: 'Dragon Ball y Miyuki.jpg',
+      gallery: [
+        { file: 'Comic_Con_destrok_ copia.jpg', caption: 'Gafete' },
+        { file: 'Dragon Ball y Miyuki.jpg', caption: 'Dragon Ball' },
+        { file: 'Hulk y Anita 1 (2).JPG', caption: 'Hulk' },
+        { file: 'LOTR (2).jpg', caption: 'LOTR' },
+        { file: 'vegeta comic con3.jpg', caption: 'Vegeta' },
+      ],
+    },
+  },
 ];
 function projectAsset(project, file) {
   if (!file || !project?.assetDir) return '';
