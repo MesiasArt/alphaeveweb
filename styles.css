@@ -236,8 +236,8 @@
 }
 
 .author-socials{margin:18px 0 22px}.author-socials>.eyebrow{margin-bottom:10px}.author-social-links{display:flex;flex-wrap:wrap;gap:12px 18px}.author-social{display:inline-flex;align-items:center;gap:8px;color:var(--ink);font:10px var(--mono);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid transparent;padding-bottom:2px}.author-social .social-icon{width:16px;height:16px;flex:none;display:block}.author-social:hover{color:var(--red)}.author-social:hover span{border-bottom-color:var(--red)}.author-social span{border-bottom:1px solid var(--line);padding-bottom:1px}.author-specialties{margin:14px 0 0;font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.author-profile .detail-copy>p{max-width:54ch}
-.author-profile .author-works-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 12px;max-width:920px}
-@media(max-width:760px){.author-profile .author-works-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 8px}}
+.author-profile .author-works-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px 12px;max-width:none}
+@media(max-width:760px){.author-profile .author-works-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px 8px}}
 @media(max-width:480px){.author-profile .author-works-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .comic-credits{margin-top:22px;display:grid;gap:8px;max-width:62ch}
 .comic-credits p{margin:0;font-size:13px;line-height:1.55;color:#5f5a54}
