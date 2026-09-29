@@ -1,5 +1,94 @@
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 
+function lightboxTrigger({ src, caption = '', alt = '' }) {
+  if (!src) return '';
+  return `<button type="button" class="lightbox-trigger" data-lightbox-item data-lightbox-src="${esc(src)}" data-lightbox-caption="${esc(caption)}" aria-label="Ver imagen ampliada">
+    <img src="${esc(src)}" alt="${esc(alt || caption || 'Imagen de galería')}" loading="lazy">
+    <span class="lightbox-zoom" aria-hidden="true">Ver</span>
+  </button>`;
+}
+
+let lightboxItems = [];
+let lightboxIndex = 0;
+
+function ensureLightbox() {
+  let root = document.getElementById('lightbox');
+  if (root) return root;
+  root = document.createElement('div');
+  root.id = 'lightbox';
+  root.className = 'lightbox';
+  root.hidden = true;
+  root.setAttribute('role', 'dialog');
+  root.setAttribute('aria-modal', 'true');
+  root.setAttribute('aria-label', 'Visor de galería');
+  root.innerHTML = `
+    <button type="button" class="lightbox-backdrop" data-lightbox-close aria-label="Cerrar"></button>
+    <div class="lightbox-panel">
+      <button type="button" class="lightbox-close" data-lightbox-close aria-label="Cerrar">×</button>
+      <button type="button" class="lightbox-nav lightbox-prev" data-lightbox-prev aria-label="Anterior">‹</button>
+      <figure class="lightbox-frame">
+        <img data-lightbox-image alt="">
+        <figcaption data-lightbox-caption></figcaption>
+      </figure>
+      <button type="button" class="lightbox-nav lightbox-next" data-lightbox-next aria-label="Siguiente">›</button>
+      <p class="lightbox-count" data-lightbox-count></p>
+    </div>`;
+  document.body.appendChild(root);
+  return root;
+}
+
+function renderLightbox() {
+  const root = ensureLightbox();
+  const item = lightboxItems[lightboxIndex];
+  if (!item) return;
+  const img = root.querySelector('[data-lightbox-image]');
+  const caption = root.querySelector('[data-lightbox-caption]');
+  const count = root.querySelector('[data-lightbox-count]');
+  const prev = root.querySelector('[data-lightbox-prev]');
+  const next = root.querySelector('[data-lightbox-next]');
+  img.src = item.src;
+  img.alt = item.caption || 'Imagen ampliada';
+  caption.textContent = item.caption || '';
+  caption.hidden = !item.caption;
+  count.textContent = `${lightboxIndex + 1} / ${lightboxItems.length}`;
+  const multi = lightboxItems.length > 1;
+  prev.hidden = !multi;
+  next.hidden = !multi;
+  count.hidden = !multi;
+}
+
+function openLightbox(items, index = 0) {
+  if (!items?.length) return;
+  lightboxItems = items;
+  lightboxIndex = Math.max(0, Math.min(index, items.length - 1));
+  const root = ensureLightbox();
+  root.hidden = false;
+  document.body.classList.add('lightbox-open');
+  renderLightbox();
+}
+
+function closeLightbox() {
+  const root = document.getElementById('lightbox');
+  if (!root || root.hidden) return;
+  root.hidden = true;
+  document.body.classList.remove('lightbox-open');
+  lightboxItems = [];
+  lightboxIndex = 0;
+}
+
+function stepLightbox(delta) {
+  if (lightboxItems.length < 2) return;
+  lightboxIndex = (lightboxIndex + delta + lightboxItems.length) % lightboxItems.length;
+  renderLightbox();
+}
+
+function collectLightboxItems(group) {
+  return [...group.querySelectorAll('[data-lightbox-item]')].map(button => ({
+    src: button.getAttribute('data-lightbox-src') || '',
+    caption: button.getAttribute('data-lightbox-caption') || '',
+  })).filter(item => item.src);
+}
+
 const comics = [
   { title: 'A la deriva con mi perro', slug: 'a-la-deriva-con-mi-perro', initials: 'DERIVA', format: 'One-shot', genres: [], status: null, synopsis: null, cover: '/series/a-la-deriva-con-mi-perro/cover/A%20LA%20DERIVA%20CON%20MI%20PERRO%20DEF_001%20cover%20copia.jpg', creatorSlugs: [], chapters: [], characters: [], gallery: [] },
   { title: 'Baká: El Mito Asesino', slug: 'baka-el-mito-asesino', initials: 'BAKÁ', format: 'One-shot', genres: [], status: null, synopsis: null, cover: '/series/baka-el-mito-asesino/cover/Baka%20El%20mito%20Asesino%20Vol.1.jpg', creatorSlugs: [], chapters: [], characters: [], gallery: [] },
@@ -485,7 +574,7 @@ function authorPage(author) {
     <section class="detail-block"><p class="eyebrow">ACERCA DEL CREADOR</p><h2>Biografía y especialidades</h2>${bioHtml || specialties ? `${bioHtml}${specialties}` : '<div class="detail-empty">La biografía y las especialidades creativas aparecerán aquí.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">PROYECTOS Y COLABORACIONES</p><h2>Proyectos destacados</h2>${relatedProjects.length ? `<div class="project-originals-grid">${relatedProjects.map((project, index) => projectCard(project, index)).join('')}</div>` : '<div class="detail-empty">Los proyectos aparecerán aquí cuando se confirmen.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">CÓMICS</p><h2>Historias y series</h2>${related.length ? `<div class="comic-directory-grid">${related.map(comicCard).join('')}</div>` : '<div class="detail-empty">Todavía no hay cómics vinculados a este perfil.</div>'}</section>
-    <section class="detail-block"><p class="eyebrow">GALERÍA</p><h2>Arte y proceso</h2><div class="author-gallery"><img src="/artistas/${encodeURIComponent(author.image)}" alt="Ilustración de perfil de ${esc(author.name)}" loading="lazy"><div class="detail-empty">Aquí se agregarán más ilustraciones, bocetos y portadas.</div></div></section>
+    <section class="detail-block"><p class="eyebrow">GALERÍA</p><h2>Arte y proceso</h2><div class="author-gallery" data-lightbox-group>${lightboxTrigger({ src: `/artistas/${encodeURIComponent(author.image)}`, caption: `Ilustración de perfil · ${author.name}`, alt: `Ilustración de perfil de ${author.name}` })}<div class="detail-empty">Aquí se agregarán más ilustraciones, bocetos y portadas.</div></div></section>
     <section class="detail-block"><p class="eyebrow">CONTACTO</p><h2>Colabora con ${esc(author.name)}</h2><p>Para consultas profesionales, contacta a Alpha Eve Studios.</p><a class="button button-dark" href="#contact">Contactar a Alpha Eve <span>↗</span></a></section>
   </section>`;
 }
@@ -493,10 +582,12 @@ function comicPage(comic) {
   const linkedAuthors = creatorsFor(comic);
   const chapterSection = comic.chapters.length ? `<div class="chapter-grid">${comic.chapters.map(chapter => `<article class="chapter-card"><div class="chapter-art"><img src="${esc(chapter.cover)}" alt="${esc(comic.title)} — portada del ${esc(chapter.title)}" onerror="this.remove()"><span>PORTADA DEL CAPÍTULO POR AGREGAR</span></div><div><b>CAPÍTULO ${String(chapter.number).padStart(2, '0')}</b><h3>${esc(chapter.title)}</h3><p>${esc(chapter.status || 'Detalles por confirmar')}</p>${chapter.digitalUrl ? `<a href="${esc(chapter.digitalUrl)}">COMPRAR EDICIÓN DIGITAL ↗</a>` : ''}${chapter.physicalUrl ? `<a href="${esc(chapter.physicalUrl)}">COMPRAR EDICIÓN IMPRESA ↗</a>` : '<span class="purchase-unavailable">Enlace de compra por agregar</span>'}</div></article>`).join('')}</div>` : comic.format === 'One-shot' ? '<div class="detail-empty">Este oneshot se presenta como una obra única. Los enlaces de lectura y compra se agregarán cuando estén disponibles.</div>' : '<div class="detail-empty">Todavía no se ha agregado información de los capítulos.</div>';
   const charSection = comic.characters.length ? `<div class="character-grid">${comic.characters.map(character => `<article class="character-card"><div class="character-art">${character.image ? `<img src="${esc(character.image)}" alt="${esc(character.name)}">` : 'ILUSTRACIÓN POR AGREGAR'}</div><h3>${esc(character.name)}</h3></article>`).join('')}</div>` : '<div class="detail-empty">Los nombres e ilustraciones de los personajes se agregarán aquí.</div>';
-  const gallery = comic.gallery.length ? `<div class="comic-gallery">${comic.gallery.map(image => `<img src="${esc(image.src)}" alt="${esc(image.alt || comic.title)}" loading="lazy">`).join('')}</div>` : '<div class="detail-empty">Aquí se agregarán arte promocional, bocetos y páginas interiores.</div>';
+  const gallery = comic.gallery.length
+    ? `<div class="comic-gallery" data-lightbox-group>${comic.gallery.map(image => lightboxTrigger({ src: image.src, caption: image.alt || comic.title, alt: image.alt || comic.title })).join('')}</div>`
+    : '<div class="detail-empty">Aquí se agregarán arte promocional, bocetos y páginas interiores.</div>';
   const heroBanner = `/series/hero-banners/${comic.slug}.jpg`;
   const cover = `<div class="comic-key-art"><img src="${esc(heroBanner)}" alt="Banner de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src='${esc(comic.cover)}'}else{this.remove()}"><small>ORIGINAL DE ALPHA EVE</small><strong>${esc(comic.initials)}</strong><span>ARTE CLAVE POR AGREGAR</span></div>`;
-  const coverGallery = `<figure class="cover-image"><img src="${esc(comic.cover)}" alt="Portada principal de ${esc(comic.title)}" onerror="this.remove();this.parentElement.classList.add('missing')"><figcaption>PORTADA PRINCIPAL</figcaption></figure>`;
+  const coverGallery = `<figure class="cover-image">${lightboxTrigger({ src: comic.cover, caption: 'Portada principal', alt: `Portada principal de ${comic.title}` })}<figcaption>PORTADA PRINCIPAL</figcaption></figure>`;
   const formatBadge = comic.format === 'One-shot' ? '<span class="series-badge oneshot-badge">TOMO ÚNICO · ONESHOT</span>' : comic.format === 'Series' ? `<span class="series-badge">SERIE · ${comic.availableChapters} CAPÍTULO${comic.availableChapters === 1 ? '' : 'S'}${comic.chapterCount !== comic.availableChapters ? ` · ${comic.availableChapters} DE ${comic.chapterCount}` : ''}</span>` : '<span class="series-badge">FORMATO POR CONFIRMAR</span>';
   const genreText = comic.genres?.length ? comic.genres.map(esc).join(' · ') : 'Géneros por agregar';
   return `<section class="detail-shell comic-detail">
@@ -504,7 +595,7 @@ function comicPage(comic) {
     <div class="series-hero-banner">${cover}<div class="series-hero-shade"></div><div class="series-hero-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE · CÓMIC / MANGA</p><h1>${esc(comic.title)}<span class="red">.</span></h1><div class="series-badges">${formatBadge}<span class="series-badge">GÉNERO · ${genreText}</span></div><p class="series-hero-synopsis">${esc(comic.synopsis || 'La sinopsis estará disponible próximamente.')}</p><a class="button button-light" href="#chapters">Leer o comprar <span>↘</span></a></div></div>
     <section class="detail-block synopsis-block"><p class="eyebrow">LA HISTORIA</p><h2>Sinopsis</h2><p class="series-synopsis">${esc(comic.synopsis || 'La sinopsis de esta historia se agregará aquí.')}</p></section>
     <section class="detail-block" id="chapters"><p class="eyebrow">LEE LA HISTORIA</p><h2>Capítulos</h2>${chapterSection}</section>
-    <section class="detail-block"><p class="eyebrow">PORTADAS</p><h2>Galería de portadas</h2><div class="cover-gallery">${coverGallery}${comic.variants?.length ? comic.variants.map(image => `<figure class="cover-image"><img src="${esc(image)}" alt="Portada alternativa de ${esc(comic.title)}"><figcaption>PORTADA ALTERNATIVA</figcaption></figure>`).join('') : '<div class="detail-empty">Las portadas alternativas y especiales aparecerán aquí cuando estén disponibles.</div>'}</div></section>
+    <section class="detail-block"><p class="eyebrow">PORTADAS</p><h2>Galería de portadas</h2><div class="cover-gallery" data-lightbox-group>${coverGallery}${comic.variants?.length ? comic.variants.map(image => `<figure class="cover-image">${lightboxTrigger({ src: image, caption: 'Portada alternativa', alt: `Portada alternativa de ${comic.title}` })}<figcaption>PORTADA ALTERNATIVA</figcaption></figure>`).join('') : '<div class="detail-empty">Las portadas alternativas y especiales aparecerán aquí cuando estén disponibles.</div>'}</div></section>
     <section class="detail-block"><p class="eyebrow">PERSONAJES</p><h2>Conoce al elenco</h2>${charSection}</section>
     <section class="detail-block"><p class="eyebrow">ARTE Y PROCESO</p><h2>Galería</h2>${gallery}</section>
     <section class="detail-block"><p class="eyebrow">CREADO POR</p><h2>Sus creadores</h2>${linkedAuthors.length ? `<div class="creator-grid comic-creators">${linkedAuthors.map(authorCard).join('')}</div>` : '<div class="detail-empty">Los créditos de creación se vincularán aquí cuando se confirmen.</div>'}</section>
@@ -634,10 +725,10 @@ function clientCasePage(project) {
         <p class="eyebrow">05 — PROJECT GALLERY</p>
         <h2>GALERÍA<span class="red">.</span></h2>
       </div>
-      <div class="case-gallery-grid case-gallery-multi">
+      <div class="case-gallery-grid case-gallery-multi" data-lightbox-group>
         ${gallery.map(item => {
           const src = projectAsset(project, item.file);
-          return `<figure class="case-shot"><img src="${esc(src)}" alt="${esc(item.caption || project.title)}" loading="lazy">${item.caption ? `<figcaption>${esc(item.caption)}</figcaption>` : ''}</figure>`;
+          return `<figure class="case-shot">${lightboxTrigger({ src, caption: item.caption || project.title, alt: item.caption || project.title })}${item.caption ? `<figcaption>${esc(item.caption)}</figcaption>` : ''}</figure>`;
         }).join('')}
       </div>
     </section>` : ''}
@@ -746,8 +837,8 @@ function tesoroPage(project) {
         <p class="eyebrow">06 — PROJECT GALLERY</p>
         <h2>GALERÍA<span class="red">.</span></h2>
       </div>
-      <div class="case-gallery-grid case-gallery-single">
-        <figure class="case-photo-sm case-photo-sm-center"><img src="${esc(booth)}" alt="Montaje del proyecto en evento" loading="lazy"><figcaption>Montaje</figcaption></figure>
+      <div class="case-gallery-grid case-gallery-single" data-lightbox-group>
+        <figure class="case-photo-sm case-photo-sm-center">${lightboxTrigger({ src: booth, caption: 'Montaje', alt: 'Montaje del proyecto en evento' })}<figcaption>Montaje</figcaption></figure>
       </div>
     </section>
 
@@ -1017,6 +1108,27 @@ document.querySelector('.creator-section')?.insertAdjacentHTML('beforebegin', cl
 const home = app?.innerHTML ?? '';
 
 document.addEventListener('click', event => {
+  if (event.target.closest('[data-lightbox-close]')) {
+    closeLightbox();
+    return;
+  }
+  if (event.target.closest('[data-lightbox-prev]')) {
+    stepLightbox(-1);
+    return;
+  }
+  if (event.target.closest('[data-lightbox-next]')) {
+    stepLightbox(1);
+    return;
+  }
+  const lightboxItem = event.target.closest('[data-lightbox-item]');
+  if (lightboxItem) {
+    event.preventDefault();
+    const group = lightboxItem.closest('[data-lightbox-group]') || lightboxItem.parentElement;
+    const items = collectLightboxItems(group);
+    const index = items.findIndex(item => item.src === lightboxItem.getAttribute('data-lightbox-src'));
+    openLightbox(items, index < 0 ? 0 : index);
+    return;
+  }
   const originalsStep = event.target.closest('[data-originals-step]');
   if (originalsStep) {
     originalsHold = Date.now() + 7000;
@@ -1048,10 +1160,18 @@ document.addEventListener('click', event => {
   const link = event.target.closest('a[data-route]');
   if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   event.preventDefault();
+  closeLightbox();
   history.pushState({}, '', link.getAttribute('href'));
   closeMenu();
   renderRoute();
   window.scrollTo(0, 0);
+});
+document.addEventListener('keydown', event => {
+  const root = document.getElementById('lightbox');
+  if (!root || root.hidden) return;
+  if (event.key === 'Escape') closeLightbox();
+  if (event.key === 'ArrowLeft') stepLightbox(-1);
+  if (event.key === 'ArrowRight') stepLightbox(1);
 });
 document.addEventListener('input', event => {
   if (event.target.id !== 'comic-search') return;
@@ -1063,7 +1183,10 @@ document.addEventListener('change', event => {
   activeComicGenres = [...document.querySelectorAll('[data-comic-genre]:checked')].map(input => input.value);
   renderComicCatalog();
 });
-window.addEventListener('popstate', renderRoute);
+window.addEventListener('popstate', () => {
+  closeLightbox();
+  renderRoute();
+});
 renderRoute();
 startOriginals();
 window.addEventListener('resize', () => positionOriginals(false));

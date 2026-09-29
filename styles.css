@@ -215,8 +215,8 @@
 .case-details-body-solo{grid-template-columns:1fr}
 .case-purpose-text{grid-template-columns:1fr}
 .case-gallery-multi{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-.case-shot{margin:0;overflow:hidden;background:#111}
-.case-shot img{width:100%;height:100%;max-height:520px;object-fit:cover;display:block}
+.case-shot{margin:0;overflow:hidden;background:transparent;position:relative}
+.case-shot img{width:100%;height:100%;max-height:520px;object-fit:contain;display:block;background:transparent}
 .case-shot figcaption{margin:10px 0 0;font:9px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;background:transparent}
 .case-close{padding:110px 8.3vw;background:var(--ink);color:var(--paper);border-top:1px solid #3d3c3a}
 .case-close h2{font:700 clamp(52px,8vw,108px)/.84 var(--display);letter-spacing:-.09em;margin:0 0 18px;max-width:12ch}
@@ -236,3 +236,37 @@
 }
 
 .author-socials{margin:18px 0 22px}.author-socials>.eyebrow{margin-bottom:10px}.author-social-links{display:flex;flex-wrap:wrap;gap:12px 18px}.author-social{display:inline-flex;align-items:center;gap:8px;color:var(--ink);font:10px var(--mono);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid transparent;padding-bottom:2px}.author-social .social-icon{width:16px;height:16px;flex:none;display:block}.author-social:hover{color:var(--red)}.author-social:hover span{border-bottom-color:var(--red)}.author-social span{border-bottom:1px solid var(--line);padding-bottom:1px}.author-specialties{margin:14px 0 0;font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.author-profile .detail-copy>p{max-width:54ch}
+
+body.lightbox-open{overflow:hidden}
+.lightbox{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:24px}
+.lightbox[hidden]{display:none}
+.lightbox-backdrop{position:absolute;inset:0;border:0;padding:0;margin:0;background:rgba(10,10,10,.88);cursor:pointer}
+.lightbox-panel{position:relative;z-index:1;width:min(1100px,94vw);max-height:90vh;display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr auto;gap:12px 8px;align-items:center;justify-items:center}
+.lightbox-frame{margin:0;grid-column:2;grid-row:2;max-width:100%;max-height:78vh;display:grid;place-items:center}
+.lightbox-frame img{max-width:min(100%,92vw);max-height:72vh;width:auto;height:auto;object-fit:contain;display:block;background:transparent}
+.lightbox-frame figcaption{margin-top:12px;color:#f4f1eb;font:11px/1.45 var(--mono);letter-spacing:.06em;text-align:center;max-width:60ch}
+.lightbox-close,.lightbox-nav{border:1px solid rgba(244,241,235,.35);background:rgba(23,23,23,.7);color:#f4f1eb;cursor:pointer;font:600 28px/1 var(--display)}
+.lightbox-close{position:absolute;top:-6px;right:0;width:44px;height:44px;grid-column:3;grid-row:1;z-index:2}
+.lightbox-nav{width:48px;height:48px;border-radius:50%;display:grid;place-items:center}
+.lightbox-prev{grid-column:1;grid-row:2}
+.lightbox-next{grid-column:3;grid-row:2}
+.lightbox-count{grid-column:2;grid-row:3;margin:0;color:rgba(244,241,235,.75);font:10px var(--mono);letter-spacing:.12em}
+.lightbox-trigger{appearance:none;border:0;padding:0;margin:0;background:transparent;color:inherit;cursor:pointer;display:block;width:100%;position:relative;overflow:hidden}
+.lightbox-trigger img{width:100%;display:block}
+.lightbox-zoom{position:absolute;right:10px;bottom:10px;padding:7px 10px;background:var(--ink);color:var(--paper);font:9px var(--mono);letter-spacing:.12em;text-transform:uppercase;opacity:0;transform:translateY(4px);transition:opacity .18s ease,transform .18s ease}
+.lightbox-trigger:hover .lightbox-zoom,.lightbox-trigger:focus-visible .lightbox-zoom{opacity:1;transform:none}
+.case-shot .lightbox-trigger,.case-photo-sm .lightbox-trigger{background:transparent}
+.case-shot .lightbox-trigger img,.case-photo-sm .lightbox-trigger img{max-height:520px;object-fit:contain;background:transparent}
+.cover-image .lightbox-trigger{height:100%;aspect-ratio:2/3}
+.cover-image .lightbox-trigger img{width:100%;height:100%;object-fit:cover}
+.comic-gallery .lightbox-trigger img,.author-gallery .lightbox-trigger img{width:100%;aspect-ratio:1;object-fit:cover}
+@media(max-width:760px){
+  .lightbox{padding:16px}
+  .lightbox-panel{grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto auto;width:100%}
+  .lightbox-frame{grid-column:1 / -1;grid-row:2;max-height:68vh}
+  .lightbox-prev{grid-column:1;grid-row:3;justify-self:start}
+  .lightbox-next{grid-column:2;grid-row:3;justify-self:end}
+  .lightbox-count{grid-column:1 / -1;grid-row:4}
+  .lightbox-close{top:0;right:0}
+  .lightbox-zoom{opacity:1;transform:none}
+}
