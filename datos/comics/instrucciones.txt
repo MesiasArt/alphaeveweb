@@ -7,5 +7,5 @@ Géneros: uno o varios, separados por coma.
 Acción, Misterio, Gore +18, Slice of Life, Psicológico, Isekai, Kaiju, Ecchi +18, Fantasía, Cyberpunk, Comedia, Superhéroes, Crimen, Vampiros, Shonen, Aventura, Noir, Deportivo, Sobrenatural, Detective, Zombies, Shojo, Horror, Mecha, Histórico, Thriller, Artes Marciales, Steampunk, Seinen, Sci-Fi, Romance, Drama, Suspenso, Magia, Western, Josei
 
 Creadores: slug y función en ese título. Ejemplos: Escritor, Dibujante, Color, Portada, Lettering.
-Slugs: anderson-07, darkereve, froggynami, manuel_shoo, mesiasart, nattibie, nicodomo, ossy_jo, spencer_draw, xamurai_rd, yonsoncb, zukupow
+Slugs: anderson-07, darkereve, froggynami, heypachy, manuel_shoo, mesiasart, nattibie, nicodomo, ossy_jo, spencer_draw, tonypan, xamurai_rd, yonsoncb, zukupow
 Si anotas un creador, el título aparece en su perfil.

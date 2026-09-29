@@ -133,7 +133,9 @@ const authors = [
   { name: 'Nathalia Rivera', slug: 'nattibie', image: 'Nattibie.jpg', role: 'Nattibie', social: 'nattibie', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['comic-con-2025-gafetes'] },
   { name: 'Nicole Hernández', slug: 'nicodomo', image: 'Nicodomo.jpg', role: 'Nicodomo', social: 'nicodomo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'Osvaldo J. Flores', slug: 'ossy_jo', image: 'ossy_jo.jpg', role: 'Ossy Jo', social: 'ossy_jo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Patricia Almonte Brito', slug: 'heypachy', image: 'heypachy.jpg', role: 'HeyPachy', social: 'heypachy', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'Spencer Liriano Rafael', slug: 'spencer_draw', image: 'spencer_draw.jpg', role: 'Spencer_Draw', social: 'spencer_draw', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['comic-con-2025-gafetes'] },
+  { name: 'tonypan', slug: 'tonypan', image: 'tonypan.jpg', role: 'tonypan', social: 'tonypan', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'Máximo Montero', slug: 'xamurai_rd', image: 'xamurai_rd.jpg', role: 'XamuraiRD', social: 'xamurai_rd', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['un-tesoro-para-siempre', 'comic-con-2025-gafetes'] },
   {
     name: 'Yonson Carbonell',
