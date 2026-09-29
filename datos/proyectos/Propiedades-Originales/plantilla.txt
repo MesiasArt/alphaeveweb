@@ -1,5 +1,5 @@
 Tipo: PROPIEDADES ORIGINALES
-Carpeta de imágenes: projectos/Propiedades-Originales
+Carpeta de imágenes: datos/proyectos/Propiedades-Originales
 Título:
 Descripción:
 Imagen:

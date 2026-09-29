@@ -1,5 +1,5 @@
 Tipo: TRABAJOS PARA CLIENTES
-Carpeta de imágenes: projectos/Trabajos-para-clientes
+Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes
 Título:
 Descripción:
 Cliente:

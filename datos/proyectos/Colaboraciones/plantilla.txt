@@ -1,5 +1,5 @@
 Tipo: COLABORACIONES
-Carpeta de imágenes: projectos/Colaboraciones
+Carpeta de imágenes: datos/proyectos/Colaboraciones
 Título:
 Descripción:
 Con quién:

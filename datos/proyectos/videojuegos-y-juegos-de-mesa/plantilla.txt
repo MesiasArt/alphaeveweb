@@ -1,5 +1,5 @@
 Tipo: VIDEOJUEGOS Y JUEGOS DE MESA
-Carpeta de imágenes: projectos/videojuegos-y-juegos-de-mesa
+Carpeta de imágenes: datos/proyectos/videojuegos-y-juegos-de-mesa
 Título:
 Descripción:
 Tipo: videojuego / juego de mesa

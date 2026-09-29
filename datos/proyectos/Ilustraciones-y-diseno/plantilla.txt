@@ -1,5 +1,5 @@
 Tipo: ILUSTRACIÓN / DISEÑO
-Carpeta de imágenes: projectos/Ilustraciones-y-diseno
+Carpeta de imágenes: datos/proyectos/Ilustraciones-y-diseno
 Título:
 Descripción:
 Imagen:
