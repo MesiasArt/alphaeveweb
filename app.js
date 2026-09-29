@@ -426,6 +426,49 @@ const projects = [
       ],
     },
   },
+  {
+    title: 'Magikalea TCG',
+    slug: 'magikalea-tcg',
+    subtitle: 'Trading card game · Propiedad original de Alpha Eve',
+    client: 'Alpha Eve Studios',
+    type: 'Juego de cartas / TCG',
+    storyBy: null,
+    illustrationBy: 'Alpha Eve Studios',
+    themes: ['TCG', 'Fantasía', 'Juego de mesa', 'Propiedad original'],
+    category: 'VIDEOJUEGOS Y JUEGOS DE MESA',
+    categories: ['PROPIEDADES ORIGINALES', 'VIDEOJUEGOS Y JUEGOS DE MESA'],
+    partner: 'ALPHA EVE · PROPIEDAD ORIGINAL',
+    headline: 'MAGIKALEA<br>TCG',
+    assetDir: '/datos/proyectos/Magikalea%20TCG',
+    creatorSlugs: [],
+    logoAlt: 'Magikalea TCG',
+    storyCopy: [
+      'Magikalea TCG es un juego de cartas coleccionables original de Alpha Eve Studios.',
+      'Un universo propio de magia, duelos y personajes, diseñado para mesa y para expandirse en más formatos.',
+    ],
+    roleCopy: 'Desarrollo visual, ilustración de cartas, mundos y piezas de juego para una propiedad original Alpha Eve.',
+    purposeCopy: 'Propiedad intelectual original: Magikalea TCG.',
+    closeTitle: 'MUNDOS PARA<br>JUGAR',
+    closeLine: 'Propiedades originales pensadas para mesa, colección y expansión.',
+    assets: {
+      hero: 'Fondo_Inicio.jpg',
+      story: 'gameplay.png',
+      logo: 'logo.png',
+      gallery: [
+        { file: 'logo.png', caption: 'Logo' },
+        { file: 'Fondo_Inicio.jpg', caption: 'Inicio' },
+        { file: 'gameplay.png', caption: 'Gameplay' },
+        { file: 'arena.png', caption: 'Arena' },
+        { file: 'world-bg.png', caption: 'Mundo' },
+        { file: 'Maga - Sybil.jpg', caption: 'Maga · Sybil' },
+        { file: 'ELEMENTAL - AGUA copia.jpg', caption: 'Elemental · Agua' },
+        { file: 'Double Strike.jpg', caption: 'Double Strike' },
+        { file: 'Blood for Blood copia.jpg', caption: 'Blood for Blood' },
+        { file: 'Mirror.jpg', caption: 'Mirror' },
+        { file: 'Arcane Call.jpg', caption: 'Arcane Call' },
+      ],
+    },
+  },
 ];
 function projectAsset(project, file) {
   if (!file || !project?.assetDir) return '';
@@ -667,13 +710,24 @@ const projectCategories = [
 ];
 let activeProjectCategory = '';
 
+function projectBelongsToCategory(project, category) {
+  if (!project || !category) return false;
+  if (Array.isArray(project.categories) && project.categories.includes(category)) return true;
+  return project.category === category;
+}
+
 function projectsForCategory(category) {
-  return projects.filter(project => project.category === category);
+  return projects.filter(project => projectBelongsToCategory(project, category));
 }
 
 function projectCategoryBlurb(category) {
-  if (category === 'PROPIEDADES ORIGINALES' && comics.length) {
-    return `Cómics y mundos propios · ${comics.length} títulos. Pronto también videojuegos y más.`;
+  if (category === 'PROPIEDADES ORIGINALES') {
+    const originalProjects = projectsForCategory(category).length;
+    const parts = [];
+    if (comics.length) parts.push(`${comics.length} cómic${comics.length === 1 ? '' : 's'}`);
+    if (originalProjects) parts.push(`${originalProjects} proyecto${originalProjects === 1 ? '' : 's'}`);
+    if (parts.length) return `Mundos propios · ${parts.join(' · ')}.`;
+    return 'Cómics, juegos y mundos propios de Alpha Eve.';
   }
   const count = projectsForCategory(category).length;
   if (category === 'TRABAJOS PARA CLIENTES' && count) return 'Explora algunos de nuestros trabajos para clientes.';
@@ -687,8 +741,15 @@ function projectResultsMarkup() {
     return `<section class="directory-subsection" id="project-results"><p class="catalog-empty project-pick-hint">Elige una categoría para ver los proyectos.</p></section>`;
   }
   if (activeProjectCategory === 'PROPIEDADES ORIGINALES') {
-    const body = comics.length
+    const originals = projectsForCategory('PROPIEDADES ORIGINALES');
+    const comicsBlock = comics.length
       ? `<div class="project-originals-block"><p class="project-originals-label">Cómics</p><div class="project-originals-grid">${comics.map((comic, index) => comicCard(comic, index)).join('')}</div></div>`
+      : '';
+    const projectsBlock = originals.length
+      ? `<div class="project-originals-block"><p class="project-originals-label">Juegos y propiedades</p><div class="project-originals-grid">${originals.map((project, index) => projectCard(project, index)).join('')}</div></div>`
+      : '';
+    const body = comicsBlock || projectsBlock
+      ? `${projectsBlock}${comicsBlock}`
       : '<p class="catalog-empty">Todavía no hay propiedades originales en esta categoría.</p>';
     return `<section class="directory-subsection" id="project-results"><p class="eyebrow">PROPIEDADES ORIGINALES</p>${body}</section>`;
   }
