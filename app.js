@@ -79,8 +79,6 @@ const projects = [
     storyCopy: [
       'Tras una decisión imprudente, Liz es arrojada a un mundo de cuento donde escapar de su pasado significa abrazar su futuro.',
       'Antes de poder soñar con la redención, Liz tiene que sobrevivirse a sí misma…',
-      'Para fans de Fairy Tail, Alice in Borderland y El maravilloso mago de Oz. Liz es una veinteañera caótica y amargada… apenas manteniéndose a flote en un mundo tan autodestructivo como ella.',
-      'Pero el destino tiene sus propios planes. Mientras las malas decisiones de Liz se acumulan y su realidad empieza a quebrarse, se ve arrastrada a una aventura vertiginosa hacia un lugar que nunca creyó real… ni en sus sueños más salvajes.',
       'Liz emprende una aventura Great & Terrible por el camino de ladrillos rotos, con la esperanza de convertirse en una vida que valga la pena salvar.',
       '¿Y si El maravilloso mago de Oz de L. Frank Baum estuviera basado en una familia real, con problemas reales? ¿Y si la familia Gale formara parte de algo más grande?',
       'Liz ha crecido a la sombra de un cuento de hadas tejido con todos esos hilos sueltos, y apenas se sostiene. Este cómic de 30 páginas es un prólogo que explora la vida de Liz en Nueva York y nos da un vistazo de lo que es ser una chica a la que se le acaba el tiempo.',
