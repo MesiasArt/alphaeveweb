@@ -14,6 +14,8 @@ Campos:
 - `start` — fecha/hora de inicio para el calendario (`2026-10-24` o `2026-10-24T10:00:00-04:00`)
 - `end` — opcional; si es solo fecha, el último día inclusive
 
+Al pasar `end` (o `start` si no hay `end`), el evento deja de mostrarse solo. No hace falta borrarlo del JSON.
+
 Con `start` aparece el botón “Agregar a calendario” (Google Calendar + archivo .ics).
 
 La lista rota sola entre los eventos agregados.

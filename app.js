@@ -1019,6 +1019,23 @@ function eventIcsBlobUrl(event) {
   return URL.createObjectURL(new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' }));
 }
 
+function eventEndsAt(event) {
+  const endRaw = String(event?.end || event?.start || '').trim();
+  if (!endRaw) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(endRaw)) {
+    const [year, month, day] = endRaw.split('-').map(Number);
+    return new Date(year, month - 1, day, 23, 59, 59, 999).getTime();
+  }
+  const date = new Date(endRaw);
+  return Number.isNaN(date.getTime()) ? null : date.getTime();
+}
+
+function isEventUpcoming(event) {
+  const ends = eventEndsAt(event);
+  if (ends == null) return true;
+  return Date.now() <= ends;
+}
+
 function eventCalendarControls(event, index) {
   const google = googleCalendarUrl(event);
   if (!google) return '';
@@ -1063,7 +1080,7 @@ async function mountEvents() {
     if (response.ok) {
       const data = await response.json();
       if (Array.isArray(data)) {
-        eventsItems = data.filter(item => item && typeof item.title === 'string' && item.title.trim());
+        eventsItems = data.filter(item => item && typeof item.title === 'string' && item.title.trim() && isEventUpcoming(item));
       }
     }
   } catch { /* Empty state below. */ }
