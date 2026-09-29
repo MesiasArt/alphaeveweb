@@ -581,7 +581,7 @@ function authorPage(author) {
     <section class="detail-block"><p class="eyebrow">PROYECTOS Y COLABORACIONES</p><h2>Proyectos destacados</h2>${relatedProjects.length ? `<div class="project-originals-grid">${relatedProjects.map((project, index) => projectCard(project, index)).join('')}</div>` : '<div class="detail-empty">Los proyectos aparecerán aquí cuando se confirmen.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">CÓMICS</p><h2>Historias y series</h2>${related.length ? `<div class="comic-directory-grid">${related.map(comicCard).join('')}</div>` : '<div class="detail-empty">Todavía no hay cómics vinculados a este perfil.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">GALERÍA</p><h2>Arte y proceso</h2><div class="author-gallery" data-lightbox-group><figure class="gallery-tile">${lightboxTrigger({ src: `/artistas/${encodeURIComponent(author.image)}`, caption: `Ilustración de perfil · ${nick}`, alt: `Ilustración de perfil de ${nick}` })}</figure><div class="detail-empty">Aquí se agregarán más ilustraciones, bocetos y portadas.</div></div></section>
-    <section class="detail-block"><p class="eyebrow">CONTACTO</p><h2>Colabora con ${esc(author.name)}</h2><p>Para consultas profesionales, contacta a Alpha Eve Studios.</p><a class="button button-dark" href="#contact">Contactar a Alpha Eve <span>↗</span></a></section>
+    <section class="detail-block"><p class="eyebrow">CONTACTO</p><h2>Colabora con ${esc(nick)}</h2><p>Para consultas profesionales, contacta a Alpha Eve Studios.</p><a class="button button-dark" href="#contact">Contactar a Alpha Eve <span>↗</span></a></section>
   </section>`;
 }
 function comicPage(comic) {
@@ -1054,7 +1054,7 @@ function renderRoute() {
   if (path.startsWith('/authors/')) {
     const author = authors.find(entry => entry.slug === slug);
     app.innerHTML = author ? authorPage(author) : notFound();
-    document.title = author ? `${author.name} — Alpha Eve Studios` : 'Creador no encontrado — Alpha Eve Studios';
+    document.title = author ? `${author.role || author.name} — Alpha Eve Studios` : 'Creador no encontrado — Alpha Eve Studios';
     return;
   }
   if (path.startsWith('/comics/')) {
