@@ -353,7 +353,7 @@ const projects = [
     title: 'Drum Battle',
     slug: 'drum-battle',
     subtitle: 'Storyboard · Corto animado',
-    client: 'Marlon West',
+    client: 'Marlon West, Head of Effects Animation at Walt Disney Animation Studios.',
     type: 'Storyboard',
     storyBy: null,
     illustrationBy: 'Lápiz: Darwin Núñez · Color: Francisco Balbuena',
