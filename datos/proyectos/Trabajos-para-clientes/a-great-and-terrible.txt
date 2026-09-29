@@ -1,7 +1,7 @@
 Tipo: TRABAJOS PARA CLIENTES
 Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/a-great-and-terrible
 Título: A Great and Terrible #1
-Descripción: Cómic #1 para Band of Bards. Dibujo y tinta por Diego Colón. Color y lettering por Francisco Balbuena. Portada por Darwin Núñez. Artes promocionales por Francisco Balbuena.
+Descripción: Sigue el camino de ladrillos rotos. Tras una decisión imprudente, Liz es arrojada a un mundo de cuento donde escapar de su pasado significa abrazar su futuro. Este cómic de 30 páginas es un prólogo que explora la vida de Liz en Nueva York.
 
 Cliente: Band of Bards
 Imagen: A Great and Terrible 2 Promo.jpg
