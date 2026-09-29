@@ -16,6 +16,6 @@ Campos:
 
 Al pasar `end` (o `start` si no hay `end`), el evento deja de mostrarse solo. No hace falta borrarlo del JSON.
 
-Con `start` aparece el botón “Agregar a calendario” (Google Calendar + archivo .ics).
+Con `start` aparece el botón “Agregar a calendario” (Google Calendar).
 
 La lista rota sola entre los eventos agregados.

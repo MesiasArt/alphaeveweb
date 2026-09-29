@@ -991,34 +991,6 @@ function googleCalendarUrl(event) {
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-function eventIcsBlobUrl(event) {
-  const start = parseEventStamp(event.start);
-  if (!start) return '';
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
-  const summary = (event.title || 'Evento Alpha Eve').replace(/\n/g, ' ');
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Alpha Eve Studios//Eventos//ES',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    `UID:${stamp}-${encodeURIComponent(summary)}@alphaeve.net`,
-    `DTSTAMP:${stamp}`,
-  ];
-  if (start.allDay) {
-    const endExclusive = shiftAllDayEnd(event.start, event.end);
-    lines.push(`DTSTART;VALUE=DATE:${start.day}`, `DTEND;VALUE=DATE:${endExclusive}`);
-  } else {
-    const end = parseEventStamp(event.end) || start;
-    lines.push(`DTSTART:${start.stamp}`, `DTEND:${end.allDay ? start.stamp : end.stamp}`);
-  }
-  if (event.place) lines.push(`LOCATION:${event.place.replace(/\n/g, ' ')}`);
-  if (event.note) lines.push(`DESCRIPTION:${event.note.replace(/\n/g, ' ')}`);
-  lines.push(`SUMMARY:${summary}`, 'END:VEVENT', 'END:VCALENDAR');
-  return URL.createObjectURL(new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' }));
-}
-
 function eventEndsAt(event) {
   const endRaw = String(event?.end || event?.start || '').trim();
   if (!endRaw) return null;
@@ -1039,7 +1011,7 @@ function isEventUpcoming(event) {
 function eventCalendarControls(event, index) {
   const google = googleCalendarUrl(event);
   if (!google) return '';
-  return `<span class="events-item-cal-wrap"><a class="events-item-cal" href="${esc(google)}" target="_blank" rel="noopener noreferrer" data-add-calendar="${index}">Agregar a calendario</a><button type="button" class="events-item-cal" data-download-ics="${index}">Descargar .ics</button></span>`;
+  return `<a class="events-item-cal" href="${esc(google)}" target="_blank" rel="noopener noreferrer" data-add-calendar="${index}">Agregar a calendario</a>`;
 }
 
 function setActiveEvent(index, { hold = false } = {}) {
@@ -1372,24 +1344,6 @@ document.addEventListener('click', event => {
   }
   const eventItem = event.target.closest('[data-event-index]');
   if (eventItem) {
-    if (event.target.closest('[data-add-calendar], [data-download-ics]')) {
-      const icsButton = event.target.closest('[data-download-ics]');
-      if (icsButton) {
-        event.preventDefault();
-        const index = Number(icsButton.getAttribute('data-download-ics'));
-        const entry = eventsItems[index];
-        if (!entry) return;
-        const url = eventIcsBlobUrl(entry);
-        if (!url) return;
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${(entry.title || 'evento').replace(/[^\w\-]+/g, '-').toLowerCase()}.ics`;
-        link.click();
-        window.setTimeout(() => URL.revokeObjectURL(url), 2000);
-      }
-      setActiveEvent(Number(eventItem.getAttribute('data-event-index')), { hold: true });
-      return;
-    }
     setActiveEvent(Number(eventItem.getAttribute('data-event-index')), { hold: true });
     return;
   }
@@ -1427,7 +1381,7 @@ document.addEventListener('click', event => {
 document.addEventListener('mouseover', event => {
   const eventItem = event.target.closest('.events-item[data-event-index]');
   if (!eventItem || !eventItem.closest('#events-list')) return;
-  if (event.target.closest('[data-add-calendar], [data-download-ics]')) return;
+  if (event.target.closest('[data-add-calendar]')) return;
   setActiveEvent(Number(eventItem.getAttribute('data-event-index')), { hold: true });
 });
 document.addEventListener('keydown', event => {
