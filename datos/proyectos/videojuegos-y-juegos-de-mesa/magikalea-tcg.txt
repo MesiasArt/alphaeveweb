@@ -1,8 +1,13 @@
 Tipo: VIDEOJUEGOS Y JUEGOS DE MESA · PROPIEDADES ORIGINALES
 Carpeta de imágenes: datos/proyectos/Magikalea TCG
 Título: Magikalea TCG
-Descripción: Trading card game original de Alpha Eve Studios. Universo de magia, duelos y personajes para mesa y expansión a más formatos.
+Descripción: MAGIKALEA es un juego de cartas donde el azar, la estrategia y la lectura del rival se mezclan en partidas rápidas. Tu objetivo es descubrir el Mago escondido en la mano de tu oponente y golpearlo tres veces. Cada carta puede cambiar el rumbo de la partida: elementos para atacar, trampas para castigar y bendiciones para alterar las reglas.
+Nota: Hay ilustraciones de cartas de artistas de todo el mundo, pero principalmente de ilustradores dominicanos.
 Cliente: Alpha Eve Studios
 Tipo: Juego de cartas / TCG
 Imagen: Fondo_Inicio.jpg
 Creadores:
+- slug: mesiasart
+  función: Creador / Game Design
+- slug: yonsoncb
+  función: Artista principal

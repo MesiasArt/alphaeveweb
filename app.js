@@ -153,7 +153,7 @@ const authors = [
   { name: 'Herlyn Sánchez', slug: 'herlyn_sanchez', image: 'herlyn_sanchez.jpg', role: 'Herlyn Sánchez', social: 'herlyn_sanchez', bio: null, specialties: [], comicSlugs: ['mi-angelito-defectuoso', 'umbral-el-reino-de-lo-invisible'], projectSlugs: [] },
   { name: 'José Cruz', slug: 'jose_cruz', image: 'jose_cruz.jpg', role: 'José Cruz', social: 'jose_cruz', bio: null, specialties: [], comicSlugs: ['quimica-al-100'], projectSlugs: [] },
   { name: 'Manuel Shoo', slug: 'manuel_shoo', image: 'manuel_shoo.jpg', role: 'Manuel Shoo', social: 'manuelshoo', bio: null, specialties: [], comicSlugs: ['cuentos-del-magijara', 'la-armadura-de-mi-hermano'], projectSlugs: [] },
-  { name: 'Francisco Balbuena', slug: 'mesiasart', image: 'mesiasart.jpg', role: 'MesiasArt', social: 'mesiasart', bio: null, specialties: [], comicSlugs: ['la-guagua-voladora', 'ruptura', 'sangrienta', 'umbral-el-reino-de-lo-invisible'], projectSlugs: ['un-tesoro-para-siempre', 'comic-con-2025-gafetes', 'drum-battle', 'a-great-and-terrible'] },
+  { name: 'Francisco Balbuena', slug: 'mesiasart', image: 'mesiasart.jpg', role: 'MesiasArt', social: 'mesiasart', bio: null, specialties: [], comicSlugs: ['la-guagua-voladora', 'ruptura', 'sangrienta', 'umbral-el-reino-de-lo-invisible'], projectSlugs: ['un-tesoro-para-siempre', 'comic-con-2025-gafetes', 'drum-battle', 'a-great-and-terrible', 'magikalea-tcg'] },
   { name: 'Nathalia Rivera', slug: 'nattibie', image: 'Nattibie.jpg', role: 'Nattibie', social: 'nattibie', bio: null, specialties: [], comicSlugs: ['escondite'], projectSlugs: ['comic-con-2025-gafetes'] },
   { name: 'Nicole Hernández', slug: 'nicodomo', image: 'Nicodomo.jpg', role: 'Nicodomo', social: 'nicodomo', bio: null, specialties: [], comicSlugs: ['la-guagua-voladora', 'la-lu-interior', 'pantaleta'], projectSlugs: [] },
   { name: 'Osvaldo J. Flores', slug: 'ossy_jo', image: 'ossy_jo.jpg', role: 'Ossy Jo', social: 'ossy_jo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
@@ -170,7 +170,7 @@ const authors = [
     bio: 'Soy ilustrador y artista de cómics basado en República Dominicana. Mi trabajo nace del interés por el ambiente, la emoción y la historia. Ya sea a través de la tensión silenciosa de un panel de novela gráfica o de la energía vibrante de una ilustración comercial, uso un trazo firme, colores con textura y composiciones dinámicas para construir mundos que se sienten habitados y personajes que se sienten reales. Siempre estoy emocionado de embarcarme en nuevas aventuras visuales.\n\nHago trabajo freelance desde 2020 y he colaborado con compañías como Lexus, Chestnut Tree Games, Lifeline Comics, Plague Doctor Press, GoalCast, Ko-fi, la embajada de Estados Unidos y más.',
     specialties: ['Ilustración', 'Cómics', 'Narrativa visual'],
     comicSlugs: ['quimica-al-100', 'yanikeke'],
-    projectSlugs: ['tren-de-diversion', 'mision-genial', 'comic-con-2025-gafetes'],
+    projectSlugs: ['tren-de-diversion', 'mision-genial', 'comic-con-2025-gafetes', 'magikalea-tcg'],
   },
   { name: 'Diego Colón', slug: 'zukupow', image: 'zukupow.jpg', role: 'Zukupow', social: 'zukupow', bio: null, specialties: [], comicSlugs: ['cuentos-del-magijara'], projectSlugs: ['a-great-and-terrible'] },
 ];
@@ -432,22 +432,26 @@ const projects = [
     subtitle: 'Trading card game · Propiedad original de Alpha Eve',
     client: 'Alpha Eve Studios',
     type: 'Juego de cartas / TCG',
-    storyBy: null,
-    illustrationBy: 'Alpha Eve Studios',
+    storyLabel: 'Creador / Game Design',
+    storyBy: 'Francisco Balbuena',
+    illustrationLabel: 'Artista principal',
+    illustrationBy: 'Yonson Carbonell',
     themes: ['TCG', 'Fantasía', 'Juego de mesa', 'Propiedad original'],
     category: 'VIDEOJUEGOS Y JUEGOS DE MESA',
     categories: ['PROPIEDADES ORIGINALES', 'VIDEOJUEGOS Y JUEGOS DE MESA'],
     partner: 'ALPHA EVE · PROPIEDAD ORIGINAL',
     headline: 'MAGIKALEA<br>TCG',
     assetDir: '/datos/proyectos/Magikalea%20TCG',
-    creatorSlugs: [],
+    creatorSlugs: ['mesiasart', 'yonsoncb'],
     logoAlt: 'Magikalea TCG',
     storyCopy: [
-      'Magikalea TCG es un juego de cartas coleccionables original de Alpha Eve Studios.',
-      'Un universo propio de magia, duelos y personajes, diseñado para mesa y para expandirse en más formatos.',
+      'MAGIKALEA es un juego de cartas donde el azar, la estrategia y la lectura del rival se mezclan en partidas rápidas.',
+      'Tu objetivo es descubrir el Mago escondido en la mano de tu oponente y golpearlo tres veces. Cada carta puede cambiar el rumbo de la partida: elementos para atacar, trampas para castigar y bendiciones para alterar las reglas.',
     ],
-    roleCopy: 'Desarrollo visual, ilustración de cartas, mundos y piezas de juego para una propiedad original Alpha Eve.',
-    purposeCopy: 'Propiedad intelectual original: Magikalea TCG.',
+    roleCopy: 'Propiedad original de Alpha Eve Studios: diseño de juego, dirección de arte y desarrollo visual.',
+    purposeEyebrow: 'ILUSTRACIÓN',
+    purposeTitle: 'ARTISTAS DE<br>TODO EL MUNDO',
+    purposeCopy: 'Hay ilustraciones de cartas de artistas de todo el mundo, pero principalmente de ilustradores dominicanos.',
     closeTitle: 'MUNDOS PARA<br>JUGAR',
     closeLine: 'Propiedades originales pensadas para mesa, colección y expansión.',
     assets: {
@@ -821,8 +825,8 @@ function clientCasePage(project) {
           ${caseMetaRow('Client', project.client)}
           ${caseMetaRow('Project', project.title)}
           ${caseMetaRow('Type', project.type)}
-          ${caseMetaRow('Story', project.storyBy)}
-          ${caseMetaRow('Illustration', project.illustrationBy)}
+          ${caseMetaRow(project.storyLabel || 'Story', project.storyBy)}
+          ${caseMetaRow(project.illustrationLabel || 'Illustration', project.illustrationBy)}
           ${caseMetaRow('Themes', Array.isArray(project.themes) ? project.themes.join(' · ') : '')}
         </dl>
         ${logo ? `<figure class="case-logo-mark"><img src="${esc(logo)}" alt="${esc(project.logoAlt || project.client || project.title)}" loading="lazy"></figure>` : ''}
@@ -831,8 +835,8 @@ function clientCasePage(project) {
 
     ${project.purposeCopy ? `<section class="case-section case-purpose case-purpose-text">
       <div class="case-copy case-copy-wide">
-        <p class="eyebrow">04 — PURPOSE</p>
-        <h2>CON PROPÓSITO<span class="red">.</span></h2>
+        <p class="eyebrow">${esc(project.purposeEyebrow || '04 — PURPOSE')}</p>
+        <h2>${project.purposeTitle || 'CON PROPÓSITO'}<span class="red">.</span></h2>
         <p>${esc(project.purposeCopy)}</p>
       </div>
     </section>` : ''}
