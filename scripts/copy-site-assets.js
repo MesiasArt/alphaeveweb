@@ -14,3 +14,4 @@ for (const directory of ['artistas', 'series', 'clientes', 'historia', 'datos'])
 }
 
 copyFileSync(resolve(root, 'alpha eve logo.png'), resolve(output, 'alpha eve logo.png'));
+copyFileSync(resolve(root, 'banner.jpg'), resolve(output, 'banner.jpg'));
