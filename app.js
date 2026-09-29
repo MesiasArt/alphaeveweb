@@ -760,8 +760,9 @@ function projectResultsMarkup() {
 function projectCard(project, index = 0) {
   const cover = projectAsset(project, project.assets?.hero);
   const initials = (project.title || 'AE').split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
+  const badge = projectIsOriginal(project) ? 'PROPIEDAD ORIGINAL' : (project.client || 'CLIENTE');
   return `<a class="comic-card" href="/projects/${esc(project.slug)}" data-route>
-    <div class="comic-card-art"><span class="comic-edition">${esc(project.client || 'CLIENTE')} · ${String(index + 1).padStart(2, '0')}</span>${cover ? `<img src="${esc(cover)}" alt="${esc(project.title)}" loading="lazy" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()">` : ''}<strong>${esc(initials)}</strong><span class="comic-art-note">IMAGEN POR AGREGAR</span></div>
+    <div class="comic-card-art"><span class="comic-edition">${esc(badge)} · ${String(index + 1).padStart(2, '0')}</span>${cover ? `<img src="${esc(cover)}" alt="${esc(project.title)}" loading="lazy" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()">` : ''}<strong>${esc(initials)}</strong><span class="comic-art-note">IMAGEN POR AGREGAR</span></div>
     <div class="comic-card-copy"><h3>${esc(project.title)}</h3><p>${esc(project.type || project.category || 'Proyecto')} <span>·</span> ${esc(project.subtitle || project.client || 'Case study')}</p><span class="comic-card-arrow">↗</span></div>
   </a>`;
 }
@@ -769,6 +770,13 @@ function projectCard(project, index = 0) {
 function caseMetaRow(label, value) {
   if (!value) return '';
   return `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`;
+}
+
+function projectIsOriginal(project) {
+  if (!project) return false;
+  if (project.original === true) return true;
+  if (Array.isArray(project.categories) && project.categories.includes('PROPIEDADES ORIGINALES')) return true;
+  return project.category === 'PROPIEDADES ORIGINALES';
 }
 
 function clientCasePage(project) {
@@ -780,6 +788,7 @@ function clientCasePage(project) {
   const storyHtml = (project.storyCopy || []).map(paragraph => `<p>${esc(paragraph)}</p>`).join('');
   const partner = project.partner || `${project.client} × Alpha Eve`;
   const titleHtml = project.headline || esc(project.title);
+  const original = projectIsOriginal(project);
   return `<article class="case-study">
     <section class="case-hero${hero ? '' : ' case-hero-text'}">
       <div class="case-hero-copy">
@@ -815,7 +824,7 @@ function clientCasePage(project) {
       </div>
       <div class="case-details-body${logo ? '' : ' case-details-body-solo'}">
         <dl class="case-meta">
-          ${caseMetaRow('Client', project.client)}
+          ${original ? caseMetaRow('Origen', 'Propiedad original') : caseMetaRow('Client', project.client)}
           ${caseMetaRow('Project', project.title)}
           ${caseMetaRow('Type', project.type)}
           ${caseMetaRow(project.storyLabel || 'Story', project.storyBy)}
