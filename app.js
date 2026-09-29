@@ -134,6 +134,17 @@ if (quimica?.chapters?.length) {
     if (quimicaCovers[index]) chapter.cover = quimicaCovers[index];
   });
 }
+const magijara = comics.find(comic => comic.slug === 'cuentos-del-magijara');
+if (magijara?.chapters?.length) {
+  const magijaraCovers = {
+    1: '/series/cuentos-del-magijara/chapters/chapter-01/cover/Cuentos%20del%20Magijara%20%231%20Cover.jpg',
+    2: '/series/cuentos-del-magijara/chapters/chapter-02/cover/Magijara%202%20Portadas.jpg',
+    4: '/series/cuentos-del-magijara/chapters/chapter-04/cover/magijara%20portada%20copia%204.jpg',
+  };
+  magijara.chapters.forEach(chapter => {
+    if (magijaraCovers[chapter.number]) chapter.cover = magijaraCovers[chapter.number];
+  });
+}
 const originalIp = [];
 const authors = [
   { name: 'Anderson F. Encarnación', slug: 'anderson-07', image: 'anderson-07.jpg', role: 'Anderson-07', social: 'anderson07', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
