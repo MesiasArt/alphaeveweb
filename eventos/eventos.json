@@ -1,9 +1,11 @@
 [
   {
     "title": "Comic Con República Dominicana",
-    "date": "2025",
-    "place": "Santo Domingo",
+    "date": "24–25 oct 2026",
+    "place": "Puerto San Soucí, Santo Domingo",
     "note": "Stand y presencia Alpha Eve",
-    "banner": "comic-con-rd.jpg"
+    "banner": "comic-con-rd-2026.jpg",
+    "start": "2026-10-24",
+    "end": "2026-10-25"
   }
 ]
