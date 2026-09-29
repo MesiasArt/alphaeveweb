@@ -935,6 +935,86 @@ async function mountClientLogos() {
     if (track) track.innerHTML = html;
   });
 }
+
+let eventsIndex = 0;
+let eventsTimer = 0;
+let eventsHold = 0;
+let eventsItems = [];
+
+function stopEvents() {
+  if (eventsTimer) {
+    window.clearInterval(eventsTimer);
+    eventsTimer = 0;
+  }
+}
+
+function eventBannerSrc(file) {
+  if (!file || typeof file !== 'string' || /[\\/]/.test(file) || file.includes('..')) return '';
+  return `/eventos/banners/${encodeURIComponent(file)}`;
+}
+
+function setActiveEvent(index, { hold = false } = {}) {
+  const list = document.querySelector('#events-list');
+  const stage = document.querySelector('#events-banner');
+  if (!list || !stage || !eventsItems.length) return;
+  eventsIndex = ((index % eventsItems.length) + eventsItems.length) % eventsItems.length;
+  if (hold) eventsHold = Date.now() + 8000;
+  list.querySelectorAll('.events-item').forEach((button, i) => {
+    button.classList.toggle('is-active', i === eventsIndex);
+    button.setAttribute('aria-current', i === eventsIndex ? 'true' : 'false');
+  });
+  stage.querySelectorAll('[data-event-banner]').forEach((node, i) => {
+    node.classList.toggle('is-active', i === eventsIndex);
+  });
+}
+
+function startEvents() {
+  stopEvents();
+  if (eventsItems.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  eventsTimer = window.setInterval(() => {
+    if (Date.now() < eventsHold || document.hidden || !document.querySelector('#events-list')) return;
+    setActiveEvent(eventsIndex + 1);
+  }, 4000);
+}
+
+async function mountEvents() {
+  const list = document.querySelector('#events-list');
+  const stage = document.querySelector('#events-banner');
+  if (!list || !stage) {
+    stopEvents();
+    return;
+  }
+  stopEvents();
+  eventsItems = [];
+  try {
+    const response = await fetch('/eventos/eventos.json', { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        eventsItems = data.filter(item => item && typeof item.title === 'string' && item.title.trim());
+      }
+    }
+  } catch { /* Empty state below. */ }
+  if (!eventsItems.length) {
+    list.innerHTML = '<div class="detail-empty">Próximos eventos se anunciarán aquí.</div>';
+    stage.innerHTML = '<div class="events-stage-empty">AGENDA EN PREPARACIÓN</div>';
+    return;
+  }
+  list.innerHTML = eventsItems.map((event, index) => {
+    const meta = [event.place, event.note].filter(Boolean).map(part => esc(part)).join(' · ');
+    return `<button type="button" class="events-item${index === 0 ? ' is-active' : ''}" role="listitem" data-event-index="${index}" aria-current="${index === 0 ? 'true' : 'false'}"><span class="events-item-date">${esc(event.date || 'Pronto')}</span><span><span class="events-item-title">${esc(event.title)}</span>${meta ? `<p class="events-item-meta">${meta}</p>` : ''}</span></button>`;
+  }).join('');
+  stage.innerHTML = eventsItems.map((event, index) => {
+    const src = eventBannerSrc(event.banner);
+    if (!src) {
+      return `<div class="events-stage-fallback${index === 0 ? ' is-active' : ''}" data-event-banner>${esc(event.title)}<br>${esc(event.place || '')}</div>`;
+    }
+    return `<img data-event-banner class="${index === 0 ? 'is-active' : ''}" src="${esc(src)}" alt="${esc(event.title)}"${index === 0 ? '' : ' loading="lazy"'}>`;
+  }).join('');
+  eventsIndex = 0;
+  setActiveEvent(0);
+  startEvents();
+}
 function contactPage() {
   return `<section class="directory-page contact-page">
     <div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">CONSULTA DE PROYECTO</p><h1>EMPIEZA UN<br>PROYECTO<span class="red">.</span></h1><p>Cuéntanos tu proyecto y cómo Alpha Eve puede ayudar.</p></div>
@@ -1087,8 +1167,10 @@ function renderRoute() {
     renderOriginals();
     document.title = 'Alpha Eve Studios — Historias. Arte. Mundos.';
     mountClientLogos();
+    mountEvents();
     return;
   }
+  stopEvents();
   if (path === '/authors') { app.innerHTML = authorDirectory(); document.title = 'Creadores — Alpha Eve Studios'; return; }
   if (path === '/comics') {
     activeComicLetter = '';
@@ -1199,6 +1281,11 @@ document.addEventListener('click', event => {
     stepOriginals(Number(originalsStep.getAttribute('data-originals-step')));
     return;
   }
+  const eventItem = event.target.closest('[data-event-index]');
+  if (eventItem) {
+    setActiveEvent(Number(eventItem.getAttribute('data-event-index')), { hold: true });
+    return;
+  }
   const letterButton = event.target.closest('[data-comic-letter]');
   if (letterButton) {
     activeComicLetter = letterButton.getAttribute('data-comic-letter') || '';
@@ -1229,6 +1316,11 @@ document.addEventListener('click', event => {
   closeMenu();
   renderRoute();
   window.scrollTo(0, 0);
+});
+document.addEventListener('mouseover', event => {
+  const eventItem = event.target.closest('[data-event-index]');
+  if (!eventItem || !eventItem.closest('#events-list')) return;
+  setActiveEvent(Number(eventItem.getAttribute('data-event-index')), { hold: true });
 });
 document.addEventListener('keydown', event => {
   const root = document.getElementById('lightbox');

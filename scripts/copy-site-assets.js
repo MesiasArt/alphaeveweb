@@ -25,7 +25,7 @@ function writeArtistGalleryLists(artistsRoot) {
 
 writeArtistGalleryLists(resolve(root, 'artistas'));
 
-for (const directory of ['artistas', 'series', 'clientes', 'historia', 'datos']) {
+for (const directory of ['artistas', 'series', 'clientes', 'historia', 'datos', 'eventos']) {
   cpSync(resolve(root, directory), resolve(output, directory), {
     recursive: true,
     filter: source => basename(source).toLowerCase() !== 'readme.md',
