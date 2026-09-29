@@ -623,16 +623,16 @@ async function mountAuthorGallery(author) {
       const data = await response.json();
       if (Array.isArray(data)) files = data.filter(name => typeof name === 'string' && name && !/[\\/]/.test(name) && !name.includes('..'));
     }
-  } catch { /* The profile portrait still shows. */ }
-  const tiles = [
-    `<figure class="gallery-tile">${lightboxTrigger({ src: authorPortrait(author), caption: `Ilustración de perfil · ${nick}`, alt: `Ilustración de perfil de ${nick}` })}</figure>`,
-    ...files.map(file => {
-      const src = `/artistas/${encodeURIComponent(author.slug)}/galeria/${encodeURIComponent(file)}`;
-      const label = file.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
-      return `<figure class="gallery-tile">${lightboxTrigger({ src, caption: label, alt: `${nick} · ${label}` })}</figure>`;
-    }),
-  ];
-  gallery.innerHTML = `${tiles.join('')}${files.length ? '' : `<div class="detail-empty">Pon más ilustraciones en artistas/${esc(author.slug)}/galeria/</div>`}`;
+  } catch { /* Empty gallery if the list cannot be loaded. */ }
+  if (!files.length) {
+    gallery.innerHTML = `<div class="detail-empty">Pon ilustraciones en artistas/${esc(author.slug)}/galeria/</div>`;
+    return;
+  }
+  gallery.innerHTML = files.map(file => {
+    const src = `/artistas/${encodeURIComponent(author.slug)}/galeria/${encodeURIComponent(file)}`;
+    const label = file.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
+    return `<figure class="gallery-tile">${lightboxTrigger({ src, caption: label, alt: `${nick} · ${label}` })}</figure>`;
+  }).join('');
 }
 function comicPage(comic) {
   const linkedAuthors = creatorsFor(comic);
