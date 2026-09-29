@@ -127,7 +127,7 @@ const originalIp = [];
 const authors = [
   { name: 'Anderson F. Encarnación', slug: 'anderson-07', image: 'anderson-07.jpg', role: 'Anderson-07', social: 'anderson07', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'Darwin Núñez', slug: 'darkereve', image: 'darkereve.jpg', role: 'DarkerEve', social: 'darkereve', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['street-fighter-classic-vol-2', 'drum-battle', 'a-great-and-terrible'] },
-  { name: 'Laura Pérez', slug: 'froggynami', image: 'froggynami.jpg', role: 'froggynami', social: 'froggynami', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Laura Pérez', slug: 'froggynami', image: 'froggynami.jpg', role: 'Froggynami', social: 'froggynami', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'Manuel Shoo', slug: 'manuel_shoo', image: 'manuel_shoo.jpg', role: 'Manuel Shoo', social: 'manuelshoo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'Francisco Balbuena', slug: 'mesiasart', image: 'mesiasart.jpg', role: 'MesiasArt', social: 'mesiasart', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['un-tesoro-para-siempre', 'comic-con-2025-gafetes', 'drum-battle', 'a-great-and-terrible'] },
   { name: 'Nathalia Rivera', slug: 'nattibie', image: 'Nattibie.jpg', role: 'Nattibie', social: 'nattibie', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['comic-con-2025-gafetes'] },
@@ -135,7 +135,7 @@ const authors = [
   { name: 'Osvaldo J. Flores', slug: 'ossy_jo', image: 'ossy_jo.jpg', role: 'Ossy Jo', social: 'ossy_jo', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'Patricia Almonte Brito', slug: 'heypachy', image: 'heypachy.jpg', role: 'HeyPachy', social: 'heypachy', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'Spencer Liriano Rafael', slug: 'spencer_draw', image: 'spencer_draw.jpg', role: 'Spencer_Draw', social: 'spencer_draw', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['comic-con-2025-gafetes'] },
-  { name: 'tonypan', slug: 'tonypan', image: 'tonypan.jpg', role: 'tonypan', social: 'tonypan', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
+  { name: 'Tonypan', slug: 'tonypan', image: 'tonypan.jpg', role: 'Tonypan', social: 'tonypan', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
   { name: 'Máximo Montero', slug: 'xamurai_rd', image: 'xamurai_rd.jpg', role: 'XamuraiRD', social: 'xamurai_rd', bio: null, specialties: [], comicSlugs: [], projectSlugs: ['un-tesoro-para-siempre', 'comic-con-2025-gafetes'] },
   {
     name: 'Yonson Carbonell',

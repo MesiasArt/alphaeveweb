@@ -1,5 +1,5 @@
-Nombre: tonypan
+Nombre: Tonypan
 Slug: tonypan
-Función:tonypan
+Función:Tonypan
 Biografía:
 Especialidades:
