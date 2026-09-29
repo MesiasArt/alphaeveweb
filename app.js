@@ -217,10 +217,10 @@ const projects = [
     closeTitle: 'STORYBOARD CON<br>RITMO',
     closeLine: 'Narrativa visual para cortos animados y colaboraciones creativas.',
     assets: {
-      hero: 'panel a color p34.jpg',
+      hero: 'Drum Battle p34.jpg',
       story: '46.jpg',
       gallery: [
-        { file: 'panel a color p34.jpg', caption: 'Panel a color · Lápiz Darwin Núñez · Color Francisco Balbuena' },
+        { file: 'Drum Battle p34.jpg', caption: 'Panel a color · Lápiz Darwin Núñez · Color Francisco Balbuena' },
         { file: '46.jpg', caption: 'Storyboard' },
         { file: '47.jpg', caption: 'Storyboard' },
         { file: '48.jpg', caption: 'Storyboard' },
