@@ -454,6 +454,8 @@ const projects = [
     purposeCopy: 'Hay ilustraciones de cartas de artistas de todo el mundo, pero principalmente de ilustradores dominicanos.',
     closeTitle: 'MUNDOS PARA<br>JUGAR',
     closeLine: 'Propiedades originales pensadas para mesa, colección y expansión.',
+    externalUrl: 'https://magikalea.alphaeve.net/',
+    externalLabel: 'Visitar Magikalea',
     assets: {
       hero: 'Fondo_Inicio.jpg',
       story: 'gameplay.png',
@@ -796,6 +798,7 @@ function clientCasePage(project) {
         <p class="eyebrow">${esc(partner)}</p>
         <h1>${titleHtml}<span class="red">.</span></h1>
         <p class="case-hero-lede">${esc(project.subtitle || '')}</p>
+        ${project.externalUrl ? `<a class="button button-light" href="${esc(project.externalUrl)}" target="_blank" rel="noopener noreferrer">${esc(project.externalLabel || 'Visitar sitio')} <span>↗</span></a>` : ''}
       </div>
       ${hero ? `<figure class="case-hero-art"><img src="${esc(hero)}" alt="${esc(project.title)}"></figure>` : ''}
     </section>
@@ -860,7 +863,10 @@ function clientCasePage(project) {
       <p class="eyebrow">${esc(partner)}</p>
       <h2>${project.closeTitle || 'PROYECTOS CON<br>PROPÓSITO'}<span class="red">.</span></h2>
       <p>${esc(project.closeLine || 'Ilustración, narrativa y diseño para crear historias que conectan.')}</p>
-      <a class="button button-light" href="/projects" data-route>Ver más proyectos <span>↗</span></a>
+      <div class="case-close-actions">
+        ${project.externalUrl ? `<a class="button button-light" href="${esc(project.externalUrl)}" target="_blank" rel="noopener noreferrer">${esc(project.externalLabel || 'Visitar sitio')} <span>↗</span></a>` : ''}
+        <a class="button button-light" href="/projects" data-route>Ver más proyectos <span>↗</span></a>
+      </div>
     </section>
   </article>`;
 }
