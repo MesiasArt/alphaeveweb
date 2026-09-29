@@ -166,10 +166,10 @@ const projects = [
     storyBy: null,
     illustrationBy: 'Darwin Núñez',
     themes: ['Street Fighter', 'Portada oficial', 'Videojuegos'],
-    category: 'TRABAJOS PARA CLIENTES',
+    category: 'COLABORACIONES',
     partner: 'UDON Entertainment × Tora Edizioni',
     headline: 'STREET FIGHTER<br>CLASSIC',
-    assetDir: '/datos/proyectos/Trabajos-para-clientes/Street-Fighter-Classic-Cover',
+    assetDir: '/datos/proyectos/Colaboraciones/Street-Fighter-Classic-Cover',
     creatorSlugs: ['darkereve'],
     clientLogo: '/clientes/UDONLogo.webp',
     logoAlt: 'UDON Entertainment',
@@ -201,10 +201,10 @@ const projects = [
     storyBy: null,
     illustrationBy: 'Spencer Liriano Rafael · Nathalia Rivera · Francisco Balbuena · Yonson Carbonell · Máximo Montero',
     themes: ['Comic Con', 'Gafetes', 'Evento'],
-    category: 'TRABAJOS PARA CLIENTES',
+    category: 'COLABORACIONES',
     partner: 'Comic Con República Dominicana × Alpha Eve',
     headline: 'GAFETES<br>COMIC CON',
-    assetDir: '/datos/proyectos/Trabajos-para-clientes/comic-con-2025-gafetes',
+    assetDir: '/datos/proyectos/Colaboraciones/comic-con-2025-gafetes',
     creatorSlugs: ['spencer_draw', 'nattibie', 'mesiasart', 'yonsoncb', 'xamurai_rd'],
     clientLogo: '/clientes/comic-con-republica-dominicana-2026-logo-trans-blanco.png',
     logoAlt: 'Comic Con República Dominicana',
@@ -447,6 +447,7 @@ function projectCategoryBlurb(category) {
   }
   const count = projectsForCategory(category).length;
   if (category === 'TRABAJOS PARA CLIENTES' && count) return 'Explora algunos de nuestros trabajos para clientes.';
+  if (category === 'COLABORACIONES' && count) return 'Alianzas creativas y proyectos en conjunto.';
   if (count) return `${count} proyecto${count === 1 ? '' : 's'} en esta categoría.`;
   return 'Los detalles y el arte de los proyectos aparecerán aquí cuando estén disponibles.';
 }

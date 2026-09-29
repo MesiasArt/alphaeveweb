@@ -1,5 +1,5 @@
-Tipo: TRABAJOS PARA CLIENTES
-Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/Street-Fighter-Classic-Cover
+Tipo: COLABORACIONES
+Carpeta de imágenes: datos/proyectos/Colaboraciones/Street-Fighter-Classic-Cover
 Título: Street Fighter Classic — Vol. 2
 Descripción: Portada oficial para Street Fighter Classic, Vol. 2. Darwin Núñez reunió en una misma portada a Ken, Vega, Chun-Li, Sagat y Cammy para UDON Entertainment × Tora Edizioni.
 

@@ -1,5 +1,5 @@
-Tipo: TRABAJOS PARA CLIENTES
-Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/comic-con-2025-gafetes
+Tipo: COLABORACIONES
+Carpeta de imágenes: datos/proyectos/Colaboraciones/comic-con-2025-gafetes
 Título: Gafetes Comic Con 2025
 Descripción: Diseño de gafetes para Comic Con República Dominicana 2025. La edición 2024 se agregará cuando estén disponibles las imágenes.
 Cliente: Comic Con República Dominicana
