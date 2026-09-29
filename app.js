@@ -123,6 +123,17 @@ comics.forEach(comic => {
 });
 const pantaleta = comics.find(comic => comic.slug === 'pantaleta');
 if (pantaleta?.chapters[1]) pantaleta.chapters[1].cover = pantaleta.cover;
+const quimica = comics.find(comic => comic.slug === 'quimica-al-100');
+if (quimica?.chapters?.length) {
+  const quimicaCovers = [
+    '/series/quimica-al-100/chapters/chapter-01/cover/Quimica%20al%20100%20Chapter%201%20portada.jpg',
+    '/series/quimica-al-100/chapters/chapter-02/cover/Quimica%20al%20100%20Chapter%202%20portada.jpg',
+    '/series/quimica-al-100/chapters/chapter-03/cover/Quimica%20al%20100%20Chapter%203%20portada.jpg',
+  ];
+  quimica.chapters.forEach((chapter, index) => {
+    if (quimicaCovers[index]) chapter.cover = quimicaCovers[index];
+  });
+}
 const originalIp = [];
 const authors = [
   { name: 'Anderson F. Encarnación', slug: 'anderson-07', image: 'anderson-07.jpg', role: 'Anderson-07', social: 'anderson07', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
