@@ -1,0 +1,12 @@
+Tipo: COLABORACIONES
+Carpeta de imágenes: datos/proyectos/Colaboraciones/drum-battle
+Título: Drum Battle
+Descripción: Storyboard para corto animado Drum Battle.
+
+Cliente: Marlon West (Head of Effects Animation at Walt Disney Animation Studios)
+Imagen:
+Historia:
+Ilustración: Darwin Núñez (DarkerEve)
+Creadores:
+- slug: darkereve
+  función: Storyboard
