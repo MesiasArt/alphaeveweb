@@ -1,9 +1,10 @@
-Título: Sangrienta
+﻿Título: Sangrienta
 Slug: sangrienta
-Formato: Serie · 1 de 3 capítulos
+Formato: Serie · 3 capítulos
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: mesiasart
+  función: Portada
+Notas: Dibujo por Carlos Reyes del Rosario (colaborador externo).

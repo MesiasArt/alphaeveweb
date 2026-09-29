@@ -1,9 +1,9 @@
-Título: Jagua Tales
+﻿Título: Jagua Tales
 Slug: jagua-tales
 Formato:
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: darkereve
+  función: Obra

@@ -1,9 +1,16 @@
-Título: Cuentos del Magijara
+﻿Título: Cuentos del Magijara
 Slug: cuentos-del-magijara
 Formato: Serie · 5 capítulos
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: zukupow
+  función: Dibujo completo / Portada #4
+- slug: xamurai_rd
+  función: Portada #1 (dibujo) / Portada #2
+- slug: manuel_shoo
+  función: Portada #1 (color)
+- slug: darkereve
+  función: Portada #3
+Notas: Portada #5 por Enmanuel Everts (colaborador externo).

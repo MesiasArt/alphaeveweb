@@ -1,9 +1,13 @@
-Título: La Lu’ Interior
+﻿Título: La Lu' Interior
 Slug: la-lu-interior
 Formato: One-shot
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: nicodomo
+  función: Historia / dibujo
+- slug: heypachy
+  función: Tinta
+- slug: spencer_draw
+  función: Portada

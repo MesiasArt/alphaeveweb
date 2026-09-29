@@ -1,9 +1,9 @@
-Título: Bazuca - La heroína olvidada
+﻿Título: Bazuca - La heroína olvidada
 Slug: bazuca-la-heroina-olvidada
 Formato: One-shot
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: darkereve
+  función: Obra

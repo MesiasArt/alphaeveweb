@@ -1,9 +1,10 @@
-Título: Tomorrow Girl x Freakier Than Normal
+﻿Título: Tomorrow Girl x Freakier Than Normal
 Slug: tomorrow-girl-x-freakier-than-normal
 Formato: One-shot
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: spencer_draw
+  función: Dibujo completo (portada e interior)
+Notas: Escritor: C.J. Hudson.

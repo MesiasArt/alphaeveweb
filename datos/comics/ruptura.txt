@@ -1,9 +1,11 @@
-Título: Ruptura
+﻿Título: Ruptura
 Slug: ruptura
 Formato: One-shot
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: xamurai_rd
+  función: Dibujo
+- slug: mesiasart
+  función: Lettering

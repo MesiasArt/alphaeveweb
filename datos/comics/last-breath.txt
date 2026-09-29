@@ -1,9 +1,9 @@
-Título: Last Breath
+﻿Título: Last Breath
 Slug: last-breath
 Formato: One-shot
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: spencer_draw
+  función: Obra

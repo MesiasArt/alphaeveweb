@@ -1,9 +1,13 @@
-Título: Quimica al 100%
+﻿Título: Quimica al 100%
 Slug: quimica-al-100
 Formato: Serie · 3 capítulos
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: jose_cruz
+  función: Obra / Portadas
+- slug: yonsoncb
+  función: Color portada #1
+- slug: spencer_draw
+  función: Color portada #2

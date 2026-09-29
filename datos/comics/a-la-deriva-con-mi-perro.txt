@@ -1,9 +1,9 @@
-Título: A la deriva con mi perro
+﻿Título: A la deriva con mi perro
 Slug: a-la-deriva-con-mi-perro
 Formato: One-shot
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: tonypan
+  función: Obra completa

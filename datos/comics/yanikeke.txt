@@ -1,9 +1,11 @@
-Título: Yanikeke
+﻿Título: Yanikeke
 Slug: yanikeke
 Formato:
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: yonsoncb
+  función: Dibujo / Portada
+- slug: darkereve
+  función: Color

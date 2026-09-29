@@ -1,11 +1,11 @@
-Cada archivo de esta carpeta es un título. No cambies el slug.
+﻿Cada archivo de esta carpeta es un tÃ­tulo. No cambies el slug.
 
 Tipo: escribe uno exactamente.
 Comics, Manga, Cuentos Infantiles, Novelas, Artbooks, Otros
 
-Géneros: uno o varios, separados por coma.
-Acción, Misterio, Gore +18, Slice of Life, Psicológico, Isekai, Kaiju, Ecchi +18, Fantasía, Cyberpunk, Comedia, Superhéroes, Crimen, Vampiros, Shonen, Aventura, Noir, Deportivo, Sobrenatural, Detective, Zombies, Shojo, Horror, Mecha, Histórico, Thriller, Artes Marciales, Steampunk, Seinen, Sci-Fi, Romance, Drama, Suspenso, Magia, Western, Josei
+GÃ©neros: uno o varios, separados por coma.
+AcciÃ³n, Misterio, Gore +18, Slice of Life, PsicolÃ³gico, Isekai, Kaiju, Ecchi +18, FantasÃ­a, Cyberpunk, Comedia, SuperhÃ©roes, Crimen, Vampiros, Shonen, Aventura, Noir, Deportivo, Sobrenatural, Detective, Zombies, Shojo, Horror, Mecha, HistÃ³rico, Thriller, Artes Marciales, Steampunk, Seinen, Sci-Fi, Romance, Drama, Suspenso, Magia, Western, Josei
 
-Creadores: slug y función en ese título. Ejemplos: Escritor, Dibujante, Color, Portada, Lettering.
-Slugs: anderson-07, darkereve, froggynami, heypachy, manuel_shoo, mesiasart, nattibie, nicodomo, ossy_jo, spencer_draw, tonypan, xamurai_rd, yonsoncb, zukupow
-Si anotas un creador, el título aparece en su perfil.
+Creadores: slug y funciÃ³n en ese tÃ­tulo. Ejemplos: Escritor, Dibujante, Color, Portada, Lettering.
+Slugs: anderson-07, darkereve, froggynami, herlyn_sanchez, heypachy, jose_cruz, manuel_shoo, mesiasart, nattibie, nicodomo, ossy_jo, spencer_draw, tonypan, xamurai_rd, yonsoncb, zukupow
+Si anotas un creador, el tÃ­tulo aparece en su perfil.

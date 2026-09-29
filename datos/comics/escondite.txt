@@ -1,4 +1,4 @@
-Título: Escondite
+﻿Título: Escondite
 Slug: escondite
 Formato:
 Tipo:
@@ -6,4 +6,4 @@ Géneros:
 Sinopsis:
 Creadores:
 - slug: nattibie
-  función:
+  función: Obra

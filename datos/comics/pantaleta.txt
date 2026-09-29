@@ -1,9 +1,9 @@
-Título: Pantaleta
+﻿Título: Pantaleta
 Slug: pantaleta
 Formato: Serie · 2 capítulos
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: nicodomo
+  función: Obra

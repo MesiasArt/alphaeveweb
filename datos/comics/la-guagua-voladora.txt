@@ -1,9 +1,13 @@
-Título: La Guagua Voladora
+﻿Título: La Guagua Voladora
 Slug: la-guagua-voladora
 Formato: One-shot
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: nicodomo
+  función: Historia / dibujo
+- slug: mesiasart
+  función: Lettering / Color de portada
+- slug: darkereve
+  función: Dibujo de portada

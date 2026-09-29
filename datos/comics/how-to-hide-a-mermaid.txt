@@ -1,9 +1,9 @@
-Título: How to Hide a Mermaid
+﻿Título: How to Hide a Mermaid
 Slug: how-to-hide-a-mermaid
 Formato: Serie · 2 capítulos
 Tipo:
 Géneros:
 Sinopsis:
 Creadores:
-- slug:
-  función:
+- slug: froggynami
+  función: Obra
