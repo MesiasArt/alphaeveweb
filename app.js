@@ -440,12 +440,15 @@ const services = [
   ['Colaboración creativa', 'Proyectos editoriales, propiedades con licencia y alianzas creativas.'],
 ];
 
+function authorPortrait(author) {
+  return `/artistas/${encodeURIComponent(author.slug)}/perfil.jpg`;
+}
 function authorCard(author, options = {}) {
   const nick = author.role || author.name;
   const realName = author.name && author.name !== nick ? author.name : '';
   const credit = options.credit || '';
   return `<a class="creator-card" href="/authors/${author.slug}" data-route>
-    <div class="creator-image"><img src="/artistas/${encodeURIComponent(author.image)}" alt="Arte de ${esc(nick)}" loading="lazy"><span>VER PERFIL ↗</span></div>
+    <div class="creator-image"><img src="${authorPortrait(author)}" alt="Arte de ${esc(nick)}" loading="lazy"><span>VER PERFIL ↗</span></div>
     <div class="creator-name">${credit ? `<p class="creator-credit">${esc(credit)}</p>` : ''}<div class="creator-name-row"><h3>${esc(nick)}</h3>${realName ? `<span>${esc(realName)}</span>` : ''}</div></div>
     <p class="creator-descriptor">${esc(author.specialties.length ? author.specialties.join(' · ') : 'Portafolio creativo de Alpha Eve')}</p>
   </a>`;
@@ -600,14 +603,36 @@ function authorPage(author) {
   const realName = author.name && author.name !== nick ? author.name : '';
   return `<section class="detail-shell author-profile">
     <a class="detail-back" href="/authors" data-route>← Todos los creadores</a>
-    <div class="detail-hero author-hero"><div class="author-portrait"><img src="/artistas/${encodeURIComponent(author.image)}" alt="${esc(nick)}" /></div>
+    <div class="detail-hero author-hero"><div class="author-portrait"><img src="${authorPortrait(author)}" alt="${esc(nick)}" /></div>
       <div class="detail-copy"><p class="eyebrow">ALPHA EVE · PORTAFOLIO CREATIVO</p><h1>${esc(nick)}<span class="red">.</span></h1>${realName ? `<div class="detail-meta">${esc(realName)}</div>` : ''}${bioHtml || `<p>${esc('Portafolio y perfil creativo del artista. La biografía y sus especialidades se agregarán cuando se confirme la información.')}</p>`}${authorSocialsHtml(author)}<a class="button button-dark" href="#contact">Colabora con ${esc(nick)} <span>↗</span></a></div></div>
     <section class="detail-block"><p class="eyebrow">ACERCA DEL CREADOR</p><h2>Biografía y especialidades</h2>${bioHtml || specialties ? `${bioHtml}${specialties}` : '<div class="detail-empty">La biografía y las especialidades creativas aparecerán aquí.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">PROYECTOS Y COLABORACIONES</p><h2>Proyectos destacados</h2>${relatedProjects.length ? `<div class="project-originals-grid author-works-grid">${relatedProjects.map((project, index) => projectCard(project, index)).join('')}</div>` : '<div class="detail-empty">Los proyectos aparecerán aquí cuando se confirmen.</div>'}</section>
     <section class="detail-block"><p class="eyebrow">CÓMICS</p><h2>Historias y series</h2>${related.length ? `<div class="project-originals-grid author-works-grid">${related.map((comic, index) => comicCard(comic, index)).join('')}</div>` : '<div class="detail-empty">Todavía no hay cómics vinculados a este perfil.</div>'}</section>
-    <section class="detail-block"><p class="eyebrow">GALERÍA</p><h2>Arte y proceso</h2><div class="author-gallery" data-lightbox-group><figure class="gallery-tile">${lightboxTrigger({ src: `/artistas/${encodeURIComponent(author.image)}`, caption: `Ilustración de perfil · ${nick}`, alt: `Ilustración de perfil de ${nick}` })}</figure><div class="detail-empty">Aquí se agregarán más ilustraciones, bocetos y portadas.</div></div></section>
+    <section class="detail-block"><p class="eyebrow">GALERÍA</p><h2>Arte y proceso</h2><div class="author-gallery" id="author-gallery" data-lightbox-group></div></section>
     <section class="detail-block"><p class="eyebrow">CONTACTO</p><h2>Colabora con ${esc(nick)}</h2><p>Para consultas profesionales, contacta a Alpha Eve Studios.</p><a class="button button-dark" href="#contact">Contactar a Alpha Eve <span>↗</span></a></section>
   </section>`;
+}
+async function mountAuthorGallery(author) {
+  const gallery = document.querySelector('#author-gallery');
+  if (!gallery || !author) return;
+  const nick = author.role || author.name;
+  let files = [];
+  try {
+    const response = await fetch(`/artistas/${encodeURIComponent(author.slug)}/galeria.json`, { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data)) files = data.filter(name => typeof name === 'string' && name && !/[\\/]/.test(name) && !name.includes('..'));
+    }
+  } catch { /* The profile portrait still shows. */ }
+  const tiles = [
+    `<figure class="gallery-tile">${lightboxTrigger({ src: authorPortrait(author), caption: `Ilustración de perfil · ${nick}`, alt: `Ilustración de perfil de ${nick}` })}</figure>`,
+    ...files.map(file => {
+      const src = `/artistas/${encodeURIComponent(author.slug)}/galeria/${encodeURIComponent(file)}`;
+      const label = file.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
+      return `<figure class="gallery-tile">${lightboxTrigger({ src, caption: label, alt: `${nick} · ${label}` })}</figure>`;
+    }),
+  ];
+  gallery.innerHTML = `${tiles.join('')}${files.length ? '' : `<div class="detail-empty">Pon más ilustraciones en artistas/${esc(author.slug)}/galeria/</div>`}`;
 }
 function comicPage(comic) {
   const linkedAuthors = creatorsFor(comic);
@@ -1080,6 +1105,7 @@ function renderRoute() {
     const author = authors.find(entry => entry.slug === slug);
     app.innerHTML = author ? authorPage(author) : notFound();
     document.title = author ? `${author.role || author.name} — Alpha Eve Studios` : 'Creador no encontrado — Alpha Eve Studios';
+    if (author) mountAuthorGallery(author);
     return;
   }
   if (path.startsWith('/comics/')) {
