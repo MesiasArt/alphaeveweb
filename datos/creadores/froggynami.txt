@@ -1,5 +1,5 @@
-Nombre: froggynami
+Nombre: Laura Pérez
 Slug: froggynami
-Función:
+Función:froggynami
 Biografía:
 Especialidades:
