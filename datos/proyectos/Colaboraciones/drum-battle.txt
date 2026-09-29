@@ -1,12 +1,14 @@
 Tipo: COLABORACIONES
 Carpeta de imágenes: datos/proyectos/Colaboraciones/drum-battle
 Título: Drum Battle
-Descripción: Storyboard para corto animado Drum Battle.
+Descripción: Storyboard para corto animado Drum Battle. Panel a color de storyboard: lápiz por Darwin Núñez y color por Francisco Balbuena.
 
 Cliente: Marlon West (Head of Effects Animation at Walt Disney Animation Studios)
-Imagen:
+Imagen: panel a color p34.jpg
 Historia:
-Ilustración: Darwin Núñez (DarkerEve)
+Ilustración: Lápiz Darwin Núñez (DarkerEve) · Color Francisco Balbuena (MesiasArt)
 Creadores:
 - slug: darkereve
-  función: Storyboard
+  función: Storyboard / Lápiz
+- slug: mesiasart
+  función: Color
