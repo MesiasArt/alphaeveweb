@@ -5,3 +5,5 @@ dist/
 .env.*
 !.env.example
 .dev.vars
+*.tif
+*.tiff

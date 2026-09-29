@@ -1,0 +1,14 @@
+Tipo: TRABAJOS PARA CLIENTES
+Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/a-great-and-terrible
+Título: A Great and Terrible
+Descripción: Proyecto para Band of Bards. Creado y escrito por Chris Benamati. Lápices y tintas por Diego Colón. Color y lettering por Francisco Balbuena.
+
+Cliente: Band of Bards
+Imagen: A Great and Terrible 2 Promo.jpg
+Historia: Chris Benamati
+Ilustración: Diego Colón (lápices y tintas) · Francisco Balbuena (color y lettering)
+Creadores:
+- slug: zukupow
+  función: Lápices y tintas
+- slug: mesiasart
+  función: Color y lettering
