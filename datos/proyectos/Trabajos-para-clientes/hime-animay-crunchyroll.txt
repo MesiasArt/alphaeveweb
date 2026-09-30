@@ -1,0 +1,9 @@
+Tipo: TRABAJOS PARA CLIENTES
+Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/Hime #Animay Crunchyroll
+Título: Hime · #Animay
+Descripción: Ilustración de Hime para Crunchyroll como parte de #Animay, a cargo de Máximo Montero.
+Cliente: Crunchyroll
+Imagen: HIME-ANIMAY_V2_.jpg
+Creadores:
+- slug: xamurai_rd
+  función: Ilustración

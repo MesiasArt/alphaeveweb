@@ -3,7 +3,7 @@ Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/un-tesoro-para-siem
 Título: Un Tesoro para Siempre
 Descripción: Cuento infantil desarrollado para Banreservas alrededor de Jenny la Ballenita.
 Cliente: Banreservas
-Imagen: Banreservas_cuento_2d5-26 copia.jpg
+Imagen: un tesoro para siempre portada.jpg
 Historia: Evelin Cáceres Castellanos
 Ilustración: Francisco Balbuena (MesiasArt) · Máximo Montero (XamuraiRD)
 Creadores:

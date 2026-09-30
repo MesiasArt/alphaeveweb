@@ -1,8 +1,9 @@
 [
-  { "file": "logo-banreservas.webp", "name": "Banreservas" },
+  { "file": "logo-banreservas.png", "name": "Banreservas" },
   { "file": "logo-guerrafilms.png", "name": "Guerra Films" },
   { "file": "anya damiron.png", "name": "Anya Damirón" },
   { "file": "UDONLogo.webp", "name": "UDON Entertainment" },
   { "file": "comic-con-republica-dominicana-2026-logo-trans-blanco.png", "name": "Comic Con República Dominicana" },
-  { "file": "BOB-Logo.png", "name": "Band of Bards" }
+  { "file": "BOB-Logo.png", "name": "Band of Bards" },
+  { "file": "Crunchyroll-Logo.png", "name": "Crunchyroll" }
 ]

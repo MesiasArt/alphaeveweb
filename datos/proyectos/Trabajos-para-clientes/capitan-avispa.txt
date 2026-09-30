@@ -1,0 +1,13 @@
+Tipo: TRABAJOS PARA CLIENTES
+Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/capitan avispa
+Título: Capitán Avispa
+Descripción: Storyboards para la película animada Capitán Avispa, creada por Juan Luis Guerra. Departamento liderado por José Luigi Paredes Marte.
+Cliente: Capitán Avispa
+Imagen: capitan avispa poster.jpg
+Creadores:
+- slug: darkereve
+  función: Storyboard
+- slug: mesiasart
+  función: Storyboard
+- slug: anderson-07
+  función: Storyboard

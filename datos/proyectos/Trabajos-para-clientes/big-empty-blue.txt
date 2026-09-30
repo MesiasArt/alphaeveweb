@@ -1,0 +1,9 @@
+Tipo: TRABAJOS PARA CLIENTES
+Carpeta de imágenes: datos/proyectos/Trabajos-para-clientes/Big Empty Blue
+Título: Big Empty Blue
+Descripción: Big Empty Blue es una aventura de fantasía y ciencia ficción ambientada en Big Blue. Lettering a cargo de Francisco Balbuena para Morningtide Studios.
+Cliente: Morningtide Studios
+Imagen: bigemptyblue portada.jpg
+Creadores:
+- slug: mesiasart
+  función: Lettering
