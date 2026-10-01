@@ -68,6 +68,11 @@ test('admin authentication, draft visibility, publication validation, and relati
   assert.equal(privateData.authors.find(item => item.slug === 'ana-audit')?.comicSlugs.includes(draft.slug), true);
   assert.equal(publicData.authors.find(item => item.slug === 'ana-audit')?.comicSlugs.includes(draft.slug), false);
 
+  response = await api(env, '/api/cms/content', { method: 'PUT', cookie, body: { type: 'comics', slug: draft.slug, payload: { ...draft, status: 'archived' } } });
+  assert.equal(response.status, 200);
+  publicData = await (await api(env, '/api/content')).json();
+  assert.equal(publicData.comics.some(item => item.slug === draft.slug), false);
+
   response = await api(env, '/api/cms/content', { method: 'PUT', cookie, body: { type: 'comics', slug: draft.slug, payload: { ...draft, status: 'published' } } });
   assert.equal(response.status, 400);
   const published = { ...draft, title: 'Published from audit', cover: '/media/audit-cover.jpg', status: 'published' };
@@ -76,6 +81,10 @@ test('admin authentication, draft visibility, publication validation, and relati
   publicData = await (await api(env, '/api/content')).json();
   assert.equal(publicData.comics.some(item => item.slug === draft.slug), true);
   assert.equal(publicData.authors.find(item => item.slug === 'ana-audit')?.comicSlugs.includes(draft.slug), true);
+  response = await api(env, '/api/cms/content', { method: 'DELETE', cookie, body: { type: 'comics', slug: draft.slug } });
+  assert.equal(response.status, 200);
+  publicData = await (await api(env, '/api/content')).json();
+  assert.equal(publicData.comics.some(item => item.slug === draft.slug), false);
 });
 
 test('media upload validates image signature and serves uploaded bytes', async () => {
