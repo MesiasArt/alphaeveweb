@@ -28,7 +28,10 @@ export async function handleCms(request, env, url) {
   if (url.pathname === "/api/cms/content") {
     if (!await requireCms(request, env, url)) return json({ error: "No autorizado." }, 401);
     if (!env.CMS_DB) return json({ error: "Falta la vinculación D1 CMS_DB." }, 503);
-    if (request.method === "GET") return json(await getContent(env, { includeUnpublished: true }));
+    if (request.method === "GET") {
+      await ensureCreditModel(env);
+      return json(await getContent(env, { includeUnpublished: true }));
+    }
     if (request.method !== "PUT" && request.method !== "DELETE") return json({ error: "Método no permitido." }, 405);
     if (!sameOrigin(request, url)) return json({ error: "Origen no permitido." }, 403);
     return saveContent(request, env);
@@ -76,16 +79,109 @@ export async function getContent(env, { includeUnpublished = false } = {}) {
     if (index >= 0) list[index] = payload;
     else list.push(payload);
   }
+  const { results: creditRows = [] } = await env.CMS_DB.prepare("SELECT comic_slug, chapter_id, creator_slug, external_name, role, position FROM cms_credits ORDER BY comic_slug, chapter_id, position, credit_id").all();
+  applyNormalizedCredits(data, creditRows);
   if (!includeUnpublished) {
     for (const type of TYPES) data[type] = data[type].filter(record => !isUnpublished(record.status));
   }
   // The record that owns a relationship is the source of truth. Derive the
   // reverse links so editors never have to maintain duplicate slug arrays.
   for (const author of data.authors) {
-    author.comicSlugs = data.comics.filter(comic => (comic.creatorSlugs || []).includes(author.slug)).map(comic => comic.slug);
+    author.comicSlugs = data.comics.filter(comic => (comic.creatorSlugs || []).includes(author.slug) || (comic.chapters || []).some(chapter => (chapter.credits || []).some(credit => credit.creatorSlug === author.slug))).map(comic => comic.slug);
     author.projectSlugs = data.projects.filter(project => (project.creatorSlugs || []).includes(author.slug)).map(project => project.slug);
   }
   return data;
+}
+
+function applyNormalizedCredits(data, rows) {
+  if (!rows.length) return;
+  for (const comic of data.comics) {
+    const ownRows = rows.filter(row => row.comic_slug === comic.slug);
+    const seriesRows = ownRows.filter(row => row.chapter_id == null && row.creator_slug);
+    if (seriesRows.length) {
+      const grouped = groupCreatorCredits(seriesRows);
+      comic.creatorSlugs = grouped.map(item => item.creatorSlug);
+      comic.creatorCredits = Object.fromEntries(grouped.map(item => [item.creatorSlug, item.roles.join(' · ')]));
+    }
+    for (const [index, chapter] of (comic.chapters || []).entries()) {
+      chapter.id ||= stableChapterId(chapter, index);
+      const chapterRows = ownRows.filter(row => row.chapter_id === chapter.id);
+      const creatorRows = chapterRows.filter(row => row.creator_slug);
+      const externalRows = chapterRows.filter(row => row.external_name);
+      if (creatorRows.length) chapter.credits = groupCreatorCredits(creatorRows);
+      if (externalRows.length) chapter.externalCredits = groupExternalCredits(externalRows);
+    }
+  }
+}
+
+function groupCreatorCredits(rows) {
+  const grouped = new Map();
+  for (const row of rows) {
+    const item = grouped.get(row.creator_slug) || { creatorSlug: row.creator_slug, roles: [], order: Number(row.position) || 0 };
+    if (row.role && !item.roles.includes(row.role)) item.roles.push(row.role);
+    item.order = Math.min(item.order, Number(row.position) || 0);
+    grouped.set(row.creator_slug, item);
+  }
+  return [...grouped.values()].sort((a,b)=>a.order-b.order);
+}
+
+function groupExternalCredits(rows) {
+  const grouped = new Map();
+  for (const row of rows) {
+    const item = grouped.get(row.external_name) || { name: row.external_name, roles: [], order: Number(row.position) || 0 };
+    if (row.role && !item.roles.includes(row.role)) item.roles.push(row.role);
+    item.order = Math.min(item.order, Number(row.position) || 0);
+    grouped.set(row.external_name, item);
+  }
+  return [...grouped.values()].sort((a,b)=>a.order-b.order);
+}
+
+function stableChapterId(chapter, index) {
+  return String(chapter.id || `chapter-${Number(chapter.number) || index + 1}-${slugify(chapter.title) || 'untitled'}`);
+}
+
+function slugify(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+}
+
+async function ensureCreditModel(env) {
+  const { results = [] } = await env.CMS_DB.prepare("SELECT state_key FROM cms_migration_state WHERE state_key = 'credit_relationships_v1'").all();
+  if (results.length) return;
+  const data = await getContent(env, { includeUnpublished: true });
+  const statements = data.authors.map(author => env.CMS_DB.prepare("INSERT INTO cms_creators (slug, name) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET name=excluded.name, updated_at=CURRENT_TIMESTAMP").bind(author.slug, author.name || author.role || author.slug));
+  for (const comic of data.comics) statements.push(...comicCreditStatements(env, comic, data.authors, { ignore: true }));
+  statements.push(env.CMS_DB.prepare("INSERT OR IGNORE INTO cms_migration_state (state_key) VALUES ('credit_relationships_v1')"));
+  await env.CMS_DB.batch(statements);
+}
+
+function comicCreditStatements(env, comic, authors, { ignore = false } = {}) {
+  const insert = ignore ? 'INSERT OR IGNORE' : 'INSERT';
+  const statements = [
+    env.CMS_DB.prepare("INSERT INTO cms_comics (slug, title) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET title=excluded.title, updated_at=CURRENT_TIMESTAMP").bind(comic.slug, comic.title || ''),
+    ...authors.filter(author => (comic.creatorSlugs || []).includes(author.slug) || (comic.chapters || []).some(chapter => (chapter.credits || []).some(credit => credit.creatorSlug === author.slug))).map(author => env.CMS_DB.prepare("INSERT INTO cms_creators (slug, name) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET name=excluded.name, updated_at=CURRENT_TIMESTAMP").bind(author.slug, author.name || author.role || author.slug)),
+  ];
+  if (!ignore) {
+    statements.push(env.CMS_DB.prepare("DELETE FROM cms_credits WHERE comic_slug = ?").bind(comic.slug));
+    statements.push(env.CMS_DB.prepare("DELETE FROM cms_chapters WHERE comic_slug = ?").bind(comic.slug));
+  }
+  const chapters = comic.chapters || [];
+  chapters.forEach((chapter, index) => {
+    const chapterId = stableChapterId(chapter, index);
+    statements.push(env.CMS_DB.prepare(`${insert} INTO cms_chapters (comic_slug, chapter_id, chapter_number, title, position) VALUES (?, ?, ?, ?, ?)`).bind(comic.slug, chapterId, Number(chapter.number) || index + 1, chapter.title || '', index));
+  });
+  (comic.creatorSlugs || []).forEach((creatorSlug, index) => {
+    statements.push(env.CMS_DB.prepare(`${insert} INTO cms_credits (comic_slug, chapter_id, creator_slug, external_name, role, position) VALUES (?, NULL, ?, NULL, ?, ?)`).bind(comic.slug, creatorSlug, String(comic.creatorCredits?.[creatorSlug] || '').trim(), index));
+  });
+  chapters.forEach((chapter, chapterIndex) => {
+    const chapterId = stableChapterId(chapter, chapterIndex);
+    (chapter.credits || []).forEach((credit, position) => {
+      for (const role of credit.roles || []) statements.push(env.CMS_DB.prepare(`${insert} INTO cms_credits (comic_slug, chapter_id, creator_slug, external_name, role, position) VALUES (?, ?, ?, NULL, ?, ?)`).bind(comic.slug, chapterId, credit.creatorSlug, role, position));
+    });
+    (chapter.externalCredits || []).forEach((credit, position) => {
+      for (const role of credit.roles || []) statements.push(env.CMS_DB.prepare(`${insert} INTO cms_credits (comic_slug, chapter_id, creator_slug, external_name, role, position) VALUES (?, ?, NULL, ?, ?, ?)`).bind(comic.slug, chapterId, credit.name, role, position));
+    });
+  });
+  return statements;
 }
 
 function isUnpublished(status) {
@@ -101,12 +197,31 @@ export async function listOverrides(env) {
 
 async function saveContent(request, env) {
   if (!env.CMS_DB) return json({ error: "Falta la vinculación D1 CMS_DB." }, 503);
+  await ensureCreditModel(env);
   if (request.method === "DELETE") {
     let body;
     try { body = await request.json(); } catch { return json({ error: "JSON inválido." }, 400); }
     const { type, slug } = body || {};
     if (!TYPES.has(type) || !validSlug(slug)) return json({ error: "Tipo o slug inválido." }, 400);
-    await env.CMS_DB.prepare("DELETE FROM cms_content WHERE entity_type = ? AND slug = ?").bind(type, slug).run();
+    if (type === 'authors') {
+      const { results = [] } = await env.CMS_DB.prepare("SELECT comic_slug FROM cms_credits WHERE creator_slug = ? LIMIT 1").bind(slug).all();
+      if (results.length) return json({ error: 'Este creador tiene créditos asociados. Retira primero sus créditos antes de eliminar su perfil.' }, 409);
+    }
+    if (type === 'comics') {
+      await env.CMS_DB.batch([
+        env.CMS_DB.prepare("DELETE FROM cms_content WHERE entity_type = 'comics' AND slug = ?").bind(slug),
+        env.CMS_DB.prepare("DELETE FROM cms_credits WHERE comic_slug = ?").bind(slug),
+        env.CMS_DB.prepare("DELETE FROM cms_chapters WHERE comic_slug = ?").bind(slug),
+        env.CMS_DB.prepare("DELETE FROM cms_comics WHERE slug = ?").bind(slug),
+      ]);
+      const seedComic = seedComics.find(item => item.slug === slug);
+      if (seedComic) {
+        const data = await getContent(env, { includeUnpublished: true });
+        await env.CMS_DB.batch(comicCreditStatements(env, seedComic, data.authors));
+      }
+    } else {
+      await env.CMS_DB.prepare("DELETE FROM cms_content WHERE entity_type = ? AND slug = ?").bind(type, slug).run();
+    }
     return json({ ok: true, reset: seedList(type).some(item => item.slug === slug) });
   }
   const length = Number(request.headers.get("content-length") || 0);
@@ -116,6 +231,11 @@ async function saveContent(request, env) {
   const { type, slug, payload } = body || {};
   if (!TYPES.has(type) || !validSlug(slug) || !payload || typeof payload !== "object" || Array.isArray(payload)) return json({ error: "Tipo, slug o registro inválido." }, 400);
   if (payload.slug !== slug) return json({ error: "El slug del registro debe coincidir con la clave y no puede cambiarse." }, 400);
+  const currentContent = type === 'comics' ? await getContent(env, { includeUnpublished: true }) : null;
+  if (type === 'comics') {
+    const creditError = validateComicCredits(payload, currentContent.authors);
+    if (creditError) return json({ error: creditError }, 400);
+  }
   const visibility = String(payload.status || "draft").trim().toLowerCase();
   if (!isUnpublished(visibility)) {
     if (type === "comics" && (!String(payload.title || "").trim() || !String(payload.cover || "").trim())) return json({ error: "Para publicar un cómic, completa el título y agrega una portada." }, 400);
@@ -126,8 +246,43 @@ async function saveContent(request, env) {
   if (arrayFields.some(key => payload[key] !== undefined && !Array.isArray(payload[key]))) return json({ error: "Hay una lista de contenido con un formato incorrecto." }, 400);
   const jsonPayload = JSON.stringify(payload);
   if (encoder.encode(jsonPayload).byteLength > MAX_JSON_BYTES) return json({ error: "El registro supera el límite de tamaño." }, 413);
-  await env.CMS_DB.prepare("INSERT INTO cms_content (entity_type, slug, payload, is_deleted, updated_at) VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP) ON CONFLICT(entity_type, slug) DO UPDATE SET payload=excluded.payload, is_deleted=0, updated_at=CURRENT_TIMESTAMP").bind(type, slug, jsonPayload).run();
+  const contentStatement = env.CMS_DB.prepare("INSERT INTO cms_content (entity_type, slug, payload, is_deleted, updated_at) VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP) ON CONFLICT(entity_type, slug) DO UPDATE SET payload=excluded.payload, is_deleted=0, updated_at=CURRENT_TIMESTAMP").bind(type, slug, jsonPayload);
+  if (type === 'comics') {
+    await env.CMS_DB.batch([contentStatement, ...comicCreditStatements(env, payload, currentContent.authors)]);
+  } else if (type === 'authors') {
+    await env.CMS_DB.batch([contentStatement, env.CMS_DB.prepare("INSERT INTO cms_creators (slug, name) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET name=excluded.name, updated_at=CURRENT_TIMESTAMP").bind(slug, payload.name || payload.role || slug)]);
+  } else await contentStatement.run();
   return json({ ok: true, type, slug });
+}
+
+function validateComicCredits(comic, authors) {
+  if (comic.creatorSlugs !== undefined && (!Array.isArray(comic.creatorSlugs) || new Set(comic.creatorSlugs).size !== comic.creatorSlugs.length)) return 'Revisa la lista de creadores generales: no puede haber personas repetidas.';
+  const known = new Set(authors.map(author => author.slug));
+  if ((comic.creatorSlugs || []).some(slug => typeof slug !== 'string' || !known.has(slug))) return 'Selecciona creadores que existan en el catálogo.';
+  if (!Array.isArray(comic.chapters || [])) return 'La lista de capítulos no tiene un formato válido.';
+  const ids = new Set();
+  for (const chapter of comic.chapters || []) {
+    if (!chapter || typeof chapter !== 'object' || Array.isArray(chapter)) return 'Hay un capítulo con un formato incorrecto.';
+    const id = String(chapter.id || '');
+    if ((chapter.credits?.length || chapter.externalCredits?.length) && !id) return 'Cada capítulo con créditos necesita un identificador.';
+    if (id && (ids.has(id) || id.length > 120)) return 'Hay capítulos con identificadores repetidos o inválidos.';
+    if (id) ids.add(id);
+    if (chapter.credits !== undefined && !Array.isArray(chapter.credits)) return 'La lista de creadores del capítulo no tiene un formato válido.';
+    const seenCreators = new Set();
+    for (const credit of chapter.credits || []) {
+      if (!credit || typeof credit !== 'object' || !known.has(credit.creatorSlug) || seenCreators.has(credit.creatorSlug) || !Array.isArray(credit.roles) || !credit.roles.length || new Set(credit.roles).size !== credit.roles.length || credit.roles.some(role => typeof role !== 'string' || !role.trim() || role.length > 100)) return 'Cada creador del capítulo debe existir una sola vez en la lista y tener roles válidos.';
+      seenCreators.add(credit.creatorSlug);
+    }
+    if (chapter.externalCredits !== undefined && !Array.isArray(chapter.externalCredits)) return 'La lista de colaboradores externos no tiene un formato válido.';
+    const seenExternal = new Set();
+    for (const credit of chapter.externalCredits || []) {
+      if (typeof credit === 'string') continue; // Preserve legacy values until edited in the structured editor.
+      const externalName = String(credit?.name || '').trim().toLocaleLowerCase();
+      if (!credit || typeof credit !== 'object' || !externalName || seenExternal.has(externalName) || !Array.isArray(credit.roles) || !credit.roles.length || new Set(credit.roles).size !== credit.roles.length || credit.roles.some(role => typeof role !== 'string' || !role.trim() || role.length > 100)) return 'Cada colaborador externo necesita un nombre único y roles válidos.';
+      seenExternal.add(externalName);
+    }
+  }
+  return '';
 }
 
 async function uploadMedia(request, env) {

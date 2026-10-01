@@ -602,7 +602,13 @@ export function pageMetadata(pathname, origin, data = {}) {
   if (page.kind === 'creativework') {
     const authorData = data.authors || authors;
     const creators = page.comic ? (page.comic.creatorSlugs || []).map(slug => authorData.find(author => author.slug === slug)?.name).filter(Boolean) : (page.project.creatorSlugs || []).map(slug => authorData.find(author => author.slug === slug)?.name).filter(Boolean);
-    graph.push({ '@type': 'CreativeWork', name: page.comic?.title || page.project?.title, url: canonical, image, description: page.description, ...(creators.length ? { creator: creators.map(name => ({ '@type': 'Person', name })) } : {}) });
+    const hasPart = (page.comic?.chapters || []).filter(chapter => !['draft','borrador','archived','archivado'].includes(String(chapter.status || 'published').toLowerCase())).map(chapter => {
+      const chapterCreators = (chapter.credits || []).map(credit => authorData.find(author => author.slug === credit.creatorSlug)?.name).filter(Boolean);
+      const externalCreators = (chapter.externalCredits || []).filter(credit => typeof credit === 'object' && credit.name).map(credit => credit.name);
+      const chapterPeople = [...chapterCreators, ...externalCreators];
+      return { '@type': 'Chapter', name: chapter.title, position: chapter.number, ...(chapterPeople.length ? { creator: [...new Set(chapterPeople)].map(name => ({ '@type': 'Person', name })) } : {}) };
+    });
+    graph.push({ '@type': 'CreativeWork', name: page.comic?.title || page.project?.title, url: canonical, image, description: page.description, ...(creators.length ? { creator: creators.map(name => ({ '@type': 'Person', name })) } : {}), ...(hasPart.length ? { hasPart } : {}) });
   }
   if (breadcrumbs.length) graph.push({ '@type': 'BreadcrumbList', itemListElement: breadcrumbs });
   return { ...page, indexable: page.indexable !== false, canonical, image, ogType: page.kind === 'website' ? 'website' : 'article', schema: { '@context': 'https://schema.org', '@graph': graph } };

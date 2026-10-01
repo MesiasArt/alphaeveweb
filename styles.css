@@ -292,3 +292,4 @@ body.lightbox-open{overflow:hidden}
   .lightbox-close{top:0;right:0}
   .lightbox-zoom{opacity:1}
 }
+.chapter-public-credits{margin:12px 0;padding:10px 12px;background:#f2f0eb;border-left:2px solid #d52b32}.chapter-public-credits>strong{font-size:11px;letter-spacing:.06em;text-transform:uppercase}.chapter-public-credits ul{list-style:none;display:grid;gap:5px;margin:8px 0 0;padding:0}.chapter-public-credits li{display:flex;gap:8px;flex-wrap:wrap;font-size:12px}.chapter-public-credits small{color:#77736d}

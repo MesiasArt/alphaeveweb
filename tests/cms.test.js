@@ -2,28 +2,54 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getContent, handleCms, serveMedia } from '../worker/cms.js';
 import { pageMetadata, publicRoutes, resolvePage } from '../seo-data.js';
+import { comics as seedComics } from '../seo-data.js';
 
 function makeEnv() {
   const rows = new Map();
   const media = new Map();
+  const chapters = new Map();
+  const credits = [];
+  const creators = new Map();
+  const comics = new Map();
+  const migrationState = new Set();
   const db = {
     prepare(sql) {
       let values = [];
-      return {
+      const statement = {
+        sql,
         bind(...args) { values = args; return this; },
         async all() {
           if (sql.includes('FROM cms_content')) return { results: [...rows.values()] };
+          if (sql.includes('FROM cms_migration_state')) return { results: migrationState.has(values[0] || 'credit_relationships_v1') ? [{ state_key: 'credit_relationships_v1' }] : [] };
+          if (sql.includes('FROM cms_credits')) return { results: values.length ? credits.filter(row => row.creator_slug === values[0]).slice(0,1) : [...credits] };
           return { results: [] };
         },
         async run() {
           if (sql.includes('INSERT INTO cms_content')) {
             const [entity_type, slug, payload] = values;
             rows.set(`${entity_type}:${slug}`, { entity_type, slug, payload, is_deleted: 0 });
-          } else if (sql.includes('DELETE FROM cms_content')) rows.delete(`${values[0]}:${values[1]}`);
+          } else if (sql.includes('DELETE FROM cms_content')) rows.delete(`${values.length === 1 ? 'comics' : values[0]}:${values.at(-1)}`);
+          else if (sql.includes('INSERT INTO cms_comics')) comics.set(values[0], { slug: values[0], title: values[1] });
+          else if (sql.includes('INSERT INTO cms_creators')) creators.set(values[0], { slug: values[0], name: values[1] });
+          else if (sql.includes('DELETE FROM cms_credits')) { for (let index=credits.length-1;index>=0;index--) if(credits[index].comic_slug===values[0])credits.splice(index,1); }
+          else if (sql.includes('DELETE FROM cms_chapters')) { for (const [key,chapter] of chapters) if(chapter.comic_slug===values[0])chapters.delete(key); }
+          else if (sql.includes('DELETE FROM cms_comics')) comics.delete(values[0]);
+          else if (sql.includes('INSERT INTO cms_chapters')) { const [comic_slug,chapter_id,chapter_number,title,position]=values;chapters.set(`${comic_slug}:${chapter_id}`,{comic_slug,chapter_id,chapter_number,title,position}); }
+          else if (sql.includes('INSERT') && sql.includes('INTO cms_credits')) {
+            let row;
+            if (sql.includes('VALUES (?, NULL, ?, NULL, ?, ?)')) { const [comic_slug,creator_slug,role,position]=values;row={comic_slug,chapter_id:null,creator_slug,external_name:null,role,position}; }
+            else if (sql.includes('VALUES (?, ?, ?, NULL, ?, ?)')) { const [comic_slug,chapter_id,creator_slug,role,position]=values;row={comic_slug,chapter_id,creator_slug,external_name:null,role,position}; }
+            else { const [comic_slug,chapter_id,external_name,role,position]=values;row={comic_slug,chapter_id,creator_slug:null,external_name,role,position}; }
+            if (row.chapter_id && !chapters.has(`${row.comic_slug}:${row.chapter_id}`)) throw new Error('Missing chapter FK');
+            if (row.creator_slug && !creators.has(row.creator_slug)) throw new Error('Missing creator FK');
+            if (!credits.some(existing=>existing.comic_slug===row.comic_slug&&existing.chapter_id===row.chapter_id&&existing.creator_slug===row.creator_slug&&existing.external_name===row.external_name&&existing.role===row.role)) credits.push(row);
+          } else if (sql.includes('cms_migration_state')) migrationState.add(values[0] || 'credit_relationships_v1');
           return { success: true };
         },
       };
+      return statement;
     },
+    async batch(statements) { for (const statement of statements) await statement.run(); return []; },
   };
   return {
     CMS_DB: db,
@@ -130,6 +156,20 @@ test('public CMS content derives creator reverse-links from comic relationships'
   assert.ok(creator.comicSlugs.includes(comic.slug));
 });
 
+test('first authenticated editor load backfills existing series credits without inventing chapter credits', async () => {
+  const env = makeEnv();
+  const cookie = await signedIn(env);
+  const before = seedComics.find(comic=>comic.slug==='baka-el-mito-asesino');
+  await api(env, '/api/cms/content', { cookie });
+  const credits = (await env.CMS_DB.prepare('SELECT comic_slug, chapter_id, creator_slug, role FROM cms_credits').all()).results;
+  const migrated = credits.filter(credit=>credit.comic_slug===before.slug);
+  assert.deepEqual(migrated.filter(credit=>credit.chapter_id===null).map(credit=>credit.creator_slug),before.creatorSlugs);
+  assert.equal(migrated.some(credit=>credit.chapter_id!==null),false);
+  const after = (await getContent(env)).comics.find(comic=>comic.slug===before.slug);
+  assert.deepEqual(after.creatorSlugs,before.creatorSlugs);
+  assert.deepEqual(after.creatorCredits,before.creatorCredits);
+});
+
 test('SEO uses editor overrides and keeps published routes while omitting drafts', async () => {
   const env = makeEnv();
   const cookie = await signedIn(env);
@@ -141,4 +181,57 @@ test('SEO uses editor overrides and keeps published routes while omitting drafts
   assert.equal(metadata.description, payload.seoDescription);
   assert.ok(publicRoutes(content).includes(`/comics/${payload.slug}`));
   assert.equal(resolvePage('/comics/nonexistent-audit-slug', 'https://alphaeve.example', content), null);
+});
+
+test('series creators and chapter credits stay separate in D1, API, and chapter JSON-LD', async () => {
+  const env = makeEnv();
+  const cookie = await signedIn(env);
+  const people = [
+    { slug: 'francisco-test', name: 'Francisco', status: 'published' },
+    { slug: 'darwin-test', name: 'Darwin', status: 'published' },
+    { slug: 'carlos-test', name: 'Carlos', status: 'published' },
+    { slug: 'gisell-test', name: 'Gisell', status: 'published' },
+  ];
+  for (const person of people) assert.equal((await api(env, '/api/cms/content', { method: 'PUT', cookie, body: { type: 'authors', slug: person.slug, payload: person } })).status, 200);
+  const series = {
+    slug: 'credits-test-series', title: 'Test Series', cover: '/banner.jpg', status: 'published',
+    creatorSlugs: ['francisco-test','darwin-test'],
+    creatorCredits: { 'francisco-test': 'Guion', 'darwin-test': 'Portada' },
+    chapters: [
+      { id:'chapter-1', number:1, title:'Capítulo 1', status:'published', credits:[{creatorSlug:'francisco-test',roles:['Guion']},{creatorSlug:'darwin-test',roles:['Portada']}] },
+      { id:'chapter-2', number:2, title:'Capítulo 2', status:'published', credits:[{creatorSlug:'francisco-test',roles:['Guion']},{creatorSlug:'carlos-test',roles:['Arte']}], externalCredits:[{name:'Luz externa',roles:['Lettering']}] },
+    ],
+  };
+  let response = await api(env, '/api/cms/content', { method: 'PUT', cookie, body: { type: 'comics', slug: series.slug, payload: series } });
+  assert.equal(response.status, 200);
+  let content = await getContent(env);
+  let stored = content.comics.find(comic=>comic.slug===series.slug);
+  assert.deepEqual(stored.creatorSlugs,['francisco-test','darwin-test']);
+  assert.deepEqual(stored.chapters[0].credits.map(credit=>credit.creatorSlug),['francisco-test','darwin-test']);
+  assert.deepEqual(stored.chapters[1].credits.map(credit=>credit.creatorSlug),['francisco-test','carlos-test']);
+  assert.deepEqual(stored.chapters[1].externalCredits,[{name:'Luz externa',roles:['Lettering'],order:0}]);
+  assert.equal(stored.chapters[1].credits.some(credit=>credit.creatorSlug==='darwin-test'),false);
+  assert.equal(content.authors.filter(author=>author.slug==='francisco-test').length,1);
+  assert.ok(content.authors.find(author=>author.slug==='carlos-test').comicSlugs.includes(series.slug));
+
+  const chapterEdit = { ...stored, chapters: stored.chapters.map((chapter,index)=>index===0?{...chapter,credits:[{creatorSlug:'francisco-test',roles:['Guion','Arte']},{creatorSlug:'darwin-test',roles:['Portada']}]}:chapter) };
+  response = await api(env, '/api/cms/content', { method: 'PUT', cookie, body: { type: 'comics', slug: series.slug, payload: chapterEdit } });
+  assert.equal(response.status, 200);
+  content = await getContent(env);
+  stored = content.comics.find(comic=>comic.slug===series.slug);
+  assert.deepEqual(stored.creatorSlugs,['francisco-test','darwin-test']);
+  assert.deepEqual(stored.chapters[0].credits[0].roles,['Guion','Arte']);
+
+  const seriesEdit = { ...stored, creatorSlugs:['francisco-test','darwin-test','gisell-test'], creatorCredits:{...stored.creatorCredits,'gisell-test':'Color'} };
+  response = await api(env, '/api/cms/content', { method: 'PUT', cookie, body: { type: 'comics', slug: series.slug, payload: seriesEdit } });
+  assert.equal(response.status, 200);
+  content = await getContent(env);
+  stored = content.comics.find(comic=>comic.slug===series.slug);
+  assert.deepEqual(stored.creatorSlugs,['francisco-test','darwin-test','gisell-test']);
+  assert.deepEqual(stored.chapters[0].credits[0].roles,['Guion','Arte']);
+  assert.deepEqual(stored.chapters[1].credits.map(credit=>credit.creatorSlug),['francisco-test','carlos-test']);
+  const metadata = pageMetadata(`/comics/${series.slug}`,'https://alphaeve.example',content);
+  const work = metadata.schema['@graph'].find(node=>node['@type']==='CreativeWork');
+  assert.deepEqual(work.hasPart[1].creator.map(person=>person.name),['Francisco','Carlos','Luz externa']);
+  assert.equal(work.hasPart[1].creator.some(person=>person.name==='Darwin'),false);
 });
