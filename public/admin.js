@@ -303,7 +303,7 @@ function catalogCard(type, record) {
   const photo = isComic ? record.cover : isCreator ? imageUrl(record.image, 'authors', record) : projectImage(record);
   const personNames = creatorNames(record.creatorSlugs || []);
   const chapterCount = (record.chapters || []).length;
-  const meta = isComic ? [record.catalogType || record.medium || 'Tipo por agregar', record.format === 'One-shot' ? 'Tomo único' : record.format === 'Series' ? 'Serie' : 'Formato por agregar', `${chapterCount} capítulos`] : isCreator ? [record.role || 'Rol por agregar', `${(record.comicSlugs || []).length} cómics`, `${(record.projectSlugs || []).length} proyectos`] : [record.category || 'Categoría por agregar', record.client || 'Proyecto del estudio'];
+  const meta = isComic ? [record.catalogType || record.medium || 'Tipo por agregar', ...(record.format === 'One-shot' ? ['Tomo único'] : [record.format === 'Series' ? 'Serie' : 'Formato por agregar', `${chapterCount} capítulos`])] : isCreator ? [record.role || 'Rol por agregar', `${(record.comicSlugs || []).length} cómics`, `${(record.projectSlugs || []).length} proyectos`] : [record.category || 'Categoría por agregar', record.client || 'Proyecto del estudio'];
   return `<button class="record-card" type="button" data-slug="${esc(record.slug)}">
     <span class="record-image">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" onerror="this.remove()">` : 'AE'}</span>
     <span class="record-info"><span>${statusBadge(record.status)}</span><h3>${esc(displayName(record))}</h3><span class="record-meta">${meta.map(esc).join(' · ')}</span>${personNames.length ? `<span class="record-creators">${esc(personNames.join(' · '))}</span>` : ''}</span>
