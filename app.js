@@ -126,6 +126,17 @@ function comicCard(comic, index = 0) {
     <div class="comic-card-copy"><h3>${esc(comic.title)}</h3><p>${esc(comic.genres?.length ? comic.genres.join(' · ') : 'Géneros por agregar')} <span>·</span> ${esc(comicCatalogType(comic) || 'Tipo por confirmar')} <span>·</span> ${esc(comic.format === 'One-shot' ? 'Tomo único (oneshot)' : comic.format === 'Series' ? `Serie · ${comic.availableChapters || 0}${comic.chapterCount && comic.chapterCount !== comic.availableChapters ? ` de ${comic.chapterCount}` : ''} capítulos` : 'Formato por confirmar')}</p><span class="comic-card-arrow">↗</span></div>
   </a>`;
 }
+function shuffledComicsWithCovers(excludeSlug = '') {
+  const shuffled = comics.filter(comic => comic.cover && comic.slug !== excludeSlug);
+  for (let index = shuffled.length - 1; index > 0; index--) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+  return shuffled.slice(0, 4);
+}
+function packitoGalleryCards(items) {
+  return items.map(comic => `<a class="packito-cover" href="/comics/${comic.slug}" data-route><img src="${esc(comic.cover)}" alt="Portada de ${esc(comic.title)}" loading="lazy"><span>${esc(comic.title)}</span></a>`).join('');
+}
 function ipCard(item) {
   const href = `/comics/${item.slug}`;
   return `<a class="ip-card" href="${href}" data-route><div class="ip-art"><small>ALPHA EVE ORIGINAL</small><span class="ip-initial">${esc(item.initials)}</span></div><div class="ip-info"><h3>${esc(item.title)}</h3><span>↗</span></div></a>`;
@@ -352,7 +363,7 @@ function comicPage(comic) {
     ${charSection}
     ${gallery}
     ${linkedWorkAuthors.length || linkedCollaborators.length || comic.externalCredits?.length ? `<section class="detail-block"><p class="eyebrow">CRÉDITOS DE LA OBRA</p><h2>Autoría y colaboradores</h2>${linkedWorkAuthors.length ? `<h3 class="credit-group-title">Autoría de la obra</h3><div class="creator-grid comic-creators">${linkedWorkAuthors.map(author => authorCard(author, { credit: 'Autor' })).join('')}</div>` : ''}${linkedCollaborators.length ? `<h3 class="credit-group-title">Colaboradores</h3><div class="creator-grid comic-creators">${linkedCollaborators.map(author => authorCard(author, { credit: comic.creatorCredits?.[author.slug] || 'Colaborador' })).join('')}</div>` : ''}${comic.externalCredits?.length ? `<div class="comic-credits"><strong>Colaboradores externos</strong>${comic.externalCredits.map(line => `<p>${esc(line)}</p>`).join('')}</div>` : ''}</section>` : ''}
-    ${comics.some(entry => entry.slug !== comic.slug) ? `<section class="detail-block"><p class="eyebrow">DESCUBRE MÁS</p><h2>Más de Alpha Eve</h2><div class="comic-directory-grid">${comics.filter(entry => entry.slug !== comic.slug).map(comicCard).join('')}</div></section>` : ''}
+    ${comics.some(entry => entry.cover && entry.slug !== comic.slug) ? `<section class="detail-block"><p class="eyebrow">DESCUBRE MÁS</p><h2>Más de Alpha Eve</h2><div class="packito-gallery" aria-label="Cuatro cómics recomendados">${packitoGalleryCards(shuffledComicsWithCovers(comic.slug))}</div></section>` : ''}
   </section>`;
 }
 const projectCategories = [
@@ -942,12 +953,7 @@ function simpleDirectory(path) {
   }
   if (path === '/about') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ACERCA DE ALPHA EVE STUDIOS</p><h1>ESPÍRITU<br>INDEPENDIENTE. <span class="red">IMAGINACIÓN</span><br>SIN LÍMITES.</h1></div><div class="about-page-copy"><p>Alpha Eve Studios es un estudio creativo y editorial de República Dominicana. Desarrollamos propiedades intelectuales originales y ofrecemos servicios creativos de cómics, manga, ilustración, diseño y desarrollo visual.</p><p>Construimos mundos propios y colaboramos con aliados creativos de todo el mundo.</p><a class="button button-dark" href="/authors" data-route>Conoce a nuestros creadores <span>↗</span></a><a class="text-link" href="/historia" data-route>Nuestra historia · 2006—2026 ↗</a></div></section>`;
   if (path === '/packito') {
-    const packitoComics = comics.filter(comic => comic.cover);
-    for (let index = packitoComics.length - 1; index > 0; index--) {
-      const randomIndex = Math.floor(Math.random() * (index + 1));
-      [packitoComics[index], packitoComics[randomIndex]] = [packitoComics[randomIndex], packitoComics[index]];
-    }
-    const packitoGallery = packitoComics.slice(0, 4).map(comic => `<a class="packito-cover" href="/comics/${comic.slug}" data-route><img src="${esc(comic.cover)}" alt="Portada de ${esc(comic.title)}" loading="lazy"><span>${esc(comic.title)}</span></a>`).join('');
+    const packitoGallery = packitoGalleryCards(shuffledComicsWithCovers());
     return `<section class="directory-page packito-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">UNA PLATAFORMA DE ALPHA EVE</p><h1>PACK<span class="red">ITO.</span></h1></div><div class="packito-description"><p>Packito es una biblioteca digital de cómics y manga donde los lectores pueden descubrir, comprar y coleccionar historias independientes de todo el mundo. Trabajamos directamente con creadores para ofrecer un catálogo seleccionado de obras originales, ayudando a que nuevas voces encuentren su audiencia.</p><p>Los creadores conservan la propiedad de sus obras. Nuestro objetivo es proporcionar visibilidad, herramientas y oportunidades que permitan a autores independientes crecer, llegar a nuevos lectores y desarrollar sus proyectos a largo plazo.</p><p>Packito es más que una tienda digital. Estamos construyendo un espacio donde las historias puedan crecer a través de publicaciones digitales, ediciones físicas, campañas de crowdfunding, proyectos editoriales colaborativos y programas dedicados a descubrir y apoyar nuevos talentos.</p><a class="button button-dark" href="https://packito.net/" target="_blank" rel="noopener noreferrer">Visita Packito.net <span>↗</span></a></div><p class="packito-gallery-label">DISPONIBLES EN PACKITO.NET</p><div class="packito-gallery" aria-label="Cuatro portadas de cómics del catálogo">${packitoGallery}</div></section>`;
   }
   if (path === '/shop') return `<section class="directory-page"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS</p><h1>LA TIENDA<span class="red">.</span></h1><p>Cómics impresos y digitales, láminas y productos.</p></div><div class="detail-empty">El enlace de la tienda oficial se agregará cuando esté disponible.</div></section>`;
