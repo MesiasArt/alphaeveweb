@@ -3,6 +3,8 @@ import { authors as seedAuthors, comics as seedComics, projects as seedProjects 
 const TYPES = new Set(["comics", "authors", "projects"]);
 const MAX_JSON_BYTES = 1_000_000;
 const MAX_MEDIA_BYTES = 10 * 1024 * 1024;
+// Cloudflare Workers currently rejects PBKDF2 requests above 100,000 iterations.
+const PASSWORD_HASH_ITERATIONS = 100_000;
 const ALLOWED_MEDIA = new Map([
   ["image/jpeg", "jpg"], ["image/png", "png"], ["image/webp", "webp"],
   ["image/gif", "gif"], ["image/avif", "avif"],
@@ -411,7 +413,7 @@ function randomToken(bytes = 16) {
 async function hashPassword(password, salt) {
   const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
   const encodedSalt = salt.replace(/-/g, '+').replace(/_/g, '/');
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: Uint8Array.from(atob(encodedSalt.padEnd(Math.ceil(encodedSalt.length / 4) * 4, '=')), c => c.charCodeAt(0)), iterations: 120000 }, key, 256);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: Uint8Array.from(atob(encodedSalt.padEnd(Math.ceil(encodedSalt.length / 4) * 4, '=')), c => c.charCodeAt(0)), iterations: PASSWORD_HASH_ITERATIONS }, key, 256);
   return btoa(String.fromCharCode(...new Uint8Array(bits))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
