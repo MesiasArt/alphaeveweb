@@ -69,6 +69,7 @@ function logoutLocal() {
   loginView.hidden = false;
   state.content = null;
   state.user = null;
+  $('#session-status').textContent = 'Desconectado';
   applyRoleNavigation();
   closeEditor();
 }
@@ -107,8 +108,10 @@ function applyRoleNavigation() {
 async function openCms(user) {
   loginView.hidden = true;
   cmsView.hidden = false;
+  $('#session-status').textContent = `Conectado como ${user?.role === 'admin' ? 'administrador' : (user?.username || 'autor')}`;
   try {
     state.user = user || (await api('/api/cms/session')).user;
+    $('#session-status').textContent = `Conectado como ${state.user?.role === 'admin' ? 'administrador' : (state.user?.username || 'autor')}`;
     if (state.user?.mustChangePassword) { state.content = null; applyRoleNavigation(); renderPasswordChange(true); return; }
     state.content = await api('/api/cms/content');
     applyRoleNavigation();
@@ -118,9 +121,12 @@ async function openCms(user) {
     }
     await routeFromLocation(false);
   } catch (error) {
-    loginView.hidden = false;
-    cmsView.hidden = true;
-    $('#login-message').textContent = error.message;
+    root.innerHTML = `<section class="editor-section session-error"><p class="eyebrow">SESIÓN ACTIVA</p><h2>No se pudo cargar el contenido</h2><p>${esc(error.message)}</p><button class="button primary" type="button" data-retry-content>Reintentar</button></section>`;
+    $('[data-retry-content]', root).addEventListener('click', async () => {
+      root.innerHTML = '<p class="loading">Cargando contenido…</p>';
+      try { await refreshContent(); applyRoleNavigation(); await routeFromLocation(false); }
+      catch (retryError) { root.innerHTML = `<section class="editor-section session-error"><p class="eyebrow">SESIÓN ACTIVA</p><h2>No se pudo cargar el contenido</h2><p>${esc(retryError.message)}</p><button class="button primary" type="button" data-retry-content>Reintentar</button></section>`; $('[data-retry-content]', root).addEventListener('click', () => openCms(state.user)); }
+    });
   }
 }
 async function refreshContent() { state.content = await api('/api/cms/content'); }

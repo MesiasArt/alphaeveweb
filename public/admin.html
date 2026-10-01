@@ -33,11 +33,11 @@
           <a href="/admin/creators" data-route="creators"><span class="nav-icon">◉</span>Creadores</a>
           <a href="/admin/projects" data-route="projects"><span class="nav-icon">▧</span>Proyectos</a>
           <a href="/admin/users" data-route="users" data-admin-only hidden><span class="nav-icon">♙</span>Cuentas de autores</a>
-          <a href="/admin/password" data-route="password"><span class="nav-icon">•</span>Contraseña</a>
         </nav>
-        <div class="sidebar-bottom"><p>Contenido ordenado,<br>historias bien contadas.</p><button id="logout" class="link-button" type="button">Cerrar sesión</button></div>
+        <div class="sidebar-bottom"><p>Contenido ordenado,<br>historias bien contadas.</p></div>
       </aside>
       <div class="workspace">
+        <div class="session-bar"><span class="session-dot" aria-hidden="true"></span><span id="session-status" role="status">Conectado</span><button id="logout" class="button secondary" type="button">Desconectarme</button></div>
         <div id="page-content" class="page-content" tabindex="-1"></div>
       </div>
     </section>
