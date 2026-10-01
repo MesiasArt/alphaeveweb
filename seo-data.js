@@ -535,50 +535,58 @@ function normalizePath(pathname) {
   return path === '/index.html' ? '/' : path;
 }
 
-export function resolvePage(pathname, origin) {
+export function resolvePage(pathname, origin, data = {}) {
+  const comicData = data.comics || comics;
+  const authorData = data.authors || authors;
+  const projectData = data.projects || projects;
   const path = normalizePath(pathname);
   const homeImage = '/banner.jpg';
   if (STATIC_PAGES[path]) return { ...STATIC_PAGES[path], path, image: homeImage, kind: 'website' };
   let match = path.match(/^\/comics\/([^/]+)$/);
   if (match) {
-    const comic = comics.find(item => item.slug === match[1]);
+    const comic = comicData.find(item => item.slug === match[1]);
     if (!comic) return null;
-    const creators = (comic.creatorSlugs || []).map(slug => authors.find(author => author.slug === slug)?.name).filter(Boolean);
+    const creators = (comic.creatorSlugs || []).map(slug => authorData.find(author => author.slug === slug)?.name).filter(Boolean);
     const description = comic.synopsis || `${comic.title}: consulta la portada y los créditos${creators.length ? ` de ${creators.join(', ')}` : ''} en el catálogo de Alpha Eve Studios.`;
     return { path, kind: 'creativework', title: `${comic.title} — ${SITE_NAME}`, description: truncate(description), image: comic.cover || homeImage, comic };
   }
   match = path.match(/^\/authors\/([^/]+)$/);
   if (match) {
-    const author = authors.find(item => item.slug === match[1]);
+    const author = authorData.find(item => item.slug === match[1]);
     if (!author) return null;
-    const linkedComics = (author.comicSlugs || []).map(slug => comics.find(comic => comic.slug === slug)?.title).filter(Boolean);
-    const linkedProjects = (author.projectSlugs || []).map(slug => projects.find(project => project.slug === slug)?.title).filter(Boolean);
+    const linkedComics = (author.comicSlugs || []).map(slug => comicData.find(comic => comic.slug === slug)?.title).filter(Boolean);
+    const linkedProjects = (author.projectSlugs || []).map(slug => projectData.find(project => project.slug === slug)?.title).filter(Boolean);
     const fallback = [linkedComics.length ? `Cómics: ${linkedComics.join(', ')}.` : '', linkedProjects.length ? `Proyectos: ${linkedProjects.join(', ')}.` : ''].filter(Boolean).join(' ');
     const description = author.bio || (fallback ? `${author.name} es creador de Alpha Eve Studios. ${fallback}` : `Perfil de ${author.name} en el directorio de creadores de Alpha Eve Studios.`);
-    return { path, kind: 'person', title: `${author.name} — ${SITE_NAME}`, description: truncate(description), image: `/artistas/${encodeURIComponent(author.slug)}/perfil.jpg`, author };
+    const authorImage = author.image && (/^(?:https?:)?\/\//i.test(author.image) || author.image.startsWith('/')) ? author.image : `/artistas/${encodeURIComponent(author.slug)}/perfil.jpg`;
+    return { path, kind: 'person', title: `${author.name} — ${SITE_NAME}`, description: truncate(description), image: authorImage, author };
   }
   match = path.match(/^\/projects\/([^/]+)$/);
   if (match) {
-    const project = projects.find(item => item.slug === match[1]);
+    const project = projectData.find(item => item.slug === match[1]);
     if (!project) return null;
     const description = project.description || project.subtitle || project.storyCopy?.[0] || project.purposeCopy || `${project.title}${project.type ? ` · ${project.type}` : ''}${project.client ? ` · Proyecto para ${project.client}` : ''}.`;
-    const projectImage = project.assets?.hero ? `${project.assetDir}/${encodeURIComponent(project.assets.hero)}` : homeImage;
+    const hero = project.assets?.hero;
+    const projectImage = hero ? (/^(?:https?:)?\/\//i.test(hero) || hero.startsWith('/') ? hero : `${project.assetDir}/${encodeURIComponent(hero)}`) : homeImage;
     return { path, kind: 'creativework', title: `${project.title} — ${SITE_NAME}`, description: truncate(description), image: projectImage, project };
   }
   return null;
 }
 
-export function publicRoutes() {
+export function publicRoutes(data = {}) {
+  const comicData = data.comics || comics;
+  const authorData = data.authors || authors;
+  const projectData = data.projects || projects;
   return [
     ...Object.entries(STATIC_PAGES).filter(([, page]) => page.indexable !== false).map(([path]) => path),
-    ...comics.map(item => `/comics/${item.slug}`),
-    ...authors.map(item => `/authors/${item.slug}`),
-    ...projects.map(item => `/projects/${item.slug}`),
+    ...comicData.map(item => `/comics/${item.slug}`),
+    ...authorData.map(item => `/authors/${item.slug}`),
+    ...projectData.map(item => `/projects/${item.slug}`),
   ];
 }
 
-export function pageMetadata(pathname, origin) {
-  const page = resolvePage(pathname, origin);
+export function pageMetadata(pathname, origin, data = {}) {
+  const page = resolvePage(pathname, origin, data);
   if (!page) return null;
   const canonical = new URL(page.path, origin).href;
   const image = absoluteAsset(origin, page.image);
@@ -592,7 +600,8 @@ export function pageMetadata(pathname, origin) {
   ];
   if (page.kind === 'person') graph.push({ '@type': 'Person', name: page.author.name, image: absoluteAsset(origin, page.image), url: canonical, worksFor: { '@id': `${origin}/#organization` }, ...(page.author.bio ? { description: truncate(page.author.bio) } : {}) });
   if (page.kind === 'creativework') {
-    const creators = page.comic ? (page.comic.creatorSlugs || []).map(slug => authors.find(author => author.slug === slug)?.name).filter(Boolean) : (page.project.creatorSlugs || []).map(slug => authors.find(author => author.slug === slug)?.name).filter(Boolean);
+    const authorData = data.authors || authors;
+    const creators = page.comic ? (page.comic.creatorSlugs || []).map(slug => authorData.find(author => author.slug === slug)?.name).filter(Boolean) : (page.project.creatorSlugs || []).map(slug => authorData.find(author => author.slug === slug)?.name).filter(Boolean);
     graph.push({ '@type': 'CreativeWork', name: page.comic?.title || page.project?.title, url: canonical, image, description: page.description, ...(creators.length ? { creator: creators.map(name => ({ '@type': 'Person', name })) } : {}) });
   }
   if (breadcrumbs.length) graph.push({ '@type': 'BreadcrumbList', itemListElement: breadcrumbs });

@@ -91,7 +91,9 @@ function collectLightboxItems(group) {
 
 import { comics, authors, projects, originalIp, pageMetadata } from './seo-data.js';
 function projectAsset(project, file) {
-  if (!file || !project?.assetDir) return '';
+  if (!file) return '';
+  if (/^(?:https?:)?\/\//i.test(file) || file.startsWith('/')) return file;
+  if (!project?.assetDir) return '';
   return `${project.assetDir}/${encodeURIComponent(file)}`;
 }
 const services = [
@@ -104,6 +106,7 @@ const services = [
 ];
 
 function authorPortrait(author) {
+  if (author.image?.startsWith('/') || /^https?:\/\//i.test(author.image || '')) return author.image;
   return `/artistas/${encodeURIComponent(author.slug)}/perfil.jpg`;
 }
 function authorCard(author, options = {}) {
@@ -1154,6 +1157,22 @@ document.addEventListener('change', event => {
   activeComicGenres = [...document.querySelectorAll('[data-comic-genre]:checked')].map(input => input.value);
   renderComicCatalog();
 });
+async function hydrateCmsContent() {
+  try {
+    const response = await fetch('/api/content', { cache: 'no-store' });
+    if (!response.ok) return;
+    const content = await response.json();
+    for (const [key, target] of [['comics', comics], ['authors', authors], ['projects', projects]]) {
+      if (Array.isArray(content[key])) target.splice(0, target.length, ...content[key]);
+    }
+    renderRoute();
+    if ((location.pathname === '/' || location.pathname === '/index.html') && homeCreators) {
+      homeCreators.innerHTML = featuredCreatorSlugs.map(slug => authors.find(author => author.slug === slug)).filter(Boolean).map(authorCard).join('');
+      renderOriginals();
+    }
+  } catch { /* Keep the bundled content available when CMS is unreachable. */ }
+}
+hydrateCmsContent();
 window.addEventListener('popstate', () => {
   closeLightbox();
   renderRoute();

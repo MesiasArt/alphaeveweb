@@ -1,2 +1,4 @@
 CONTACT_TO=studio@yourdomain.com
 CONTACT_FROM=inquiries@yourdomain.com
+CMS_ADMIN_PASSWORD=replace-with-a-strong-local-password
+CMS_SESSION_SECRET=replace-with-a-random-secret-of-at-least-32-characters

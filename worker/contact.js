@@ -1,5 +1,6 @@
 import { EmailMessage } from "cloudflare:email";
 import { pageMetadata, publicRoutes, resolvePage } from "../seo-data.js";
+import { getContent, handleCms, serveMedia } from "./cms.js";
 
 const SERVICES = [
   "Ilustración",
@@ -20,14 +21,21 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/api/contact") return handleContact(request, env);
+    if (url.pathname.startsWith("/api/cms/") || url.pathname === "/api/content") return handleCms(request, env, url);
+    if (url.pathname.startsWith("/media/")) return serveMedia(request, env, url);
     if (url.pathname === "/robots.txt") return robotsResponse(url, request.method);
-    if (url.pathname === "/sitemap.xml") return sitemapResponse(url, request.method);
+    if (url.pathname === "/sitemap.xml") return sitemapResponse(url, request, env);
+
+    if (url.pathname === "/admin" || url.pathname === "/admin/") {
+      return env.ASSETS.fetch(new Request(new URL("/admin.html", url), request));
+    }
 
     const pathname = normalizePath(url.pathname);
     if (/\.[a-z\d]{2,8}$/i.test(url.pathname) && !["/index.html"].includes(url.pathname)) {
       return env.ASSETS.fetch(request);
     }
-    const page = resolvePage(pathname, url.origin);
+    const content = await getContent(env);
+    const page = resolvePage(pathname, url.origin, content);
     if (!page) {
       const notFoundUrl = new URL("/index.html", url);
       const notFoundRequest = new Request(notFoundUrl, request);
@@ -44,7 +52,7 @@ export default {
 
     const documentRequest = new Request(new URL("/index.html", url), request);
     const response = await env.ASSETS.fetch(documentRequest);
-    return withSeoHead(response, pageMetadata(pathname, url.origin), response.status, request.method);
+    return withSeoHead(response, pageMetadata(pathname, url.origin, content), response.status, request.method);
   },
 };
 
@@ -62,10 +70,11 @@ function robotsResponse(url, method) {
   });
 }
 
-function sitemapResponse(url, method) {
-  const entries = publicRoutes().map(path => `  <url><loc>${xmlEscape(new URL(path, url.origin).href)}</loc></url>`).join("\n");
+async function sitemapResponse(url, request, env) {
+  const content = await getContent(env);
+  const entries = publicRoutes(content).map(path => `  <url><loc>${xmlEscape(new URL(path, url.origin).href)}</loc></url>`).join("\n");
   const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
-  return new Response(method === "HEAD" ? null : body, {
+  return new Response(request.method === "HEAD" ? null : body, {
     headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" },
   });
 }
