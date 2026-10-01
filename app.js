@@ -345,7 +345,7 @@ function comicPage(comic) {
   return `<section class="detail-shell comic-detail">
     <a class="detail-back" href="/comics" data-route>← Todos los cómics</a>
     <div class="series-hero-banner">${cover}<div class="series-hero-shade"></div><div class="series-hero-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE · ${esc(comic.medium || 'CÓMIC / MANGA')}</p><h1>${esc(comic.title)}<span class="red">.</span></h1><div class="series-badges">${formatBadge}<span class="series-badge">GÉNERO · ${genreText}</span></div><a class="button button-light" href="#reading">Leer o comprar <span>↘</span></a></div></div>
-    ${String(comic.synopsis || '').trim() ? `<section class="detail-block synopsis-block"><p class="eyebrow">LA HISTORIA</p><h2>Sinopsis</h2><p class="series-synopsis">${esc(comic.synopsis)}</p></section>` : ''}
+    <section class="detail-block synopsis-block"><p class="eyebrow">LA HISTORIA</p><h2>Sinopsis</h2>${String(comic.synopsis || '').trim() ? `<p class="series-synopsis">${esc(comic.synopsis)}</p>` : ''}</section>
     ${readingSection}
     ${coverGallery}
     ${charSection}
