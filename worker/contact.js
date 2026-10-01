@@ -26,7 +26,7 @@ export default {
     if (url.pathname === "/robots.txt") return robotsResponse(url, request.method);
     if (url.pathname === "/sitemap.xml") return sitemapResponse(url, request, env);
 
-    if (url.pathname === "/admin" || url.pathname === "/admin/") {
+    if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname.startsWith("/admin/")) {
       return env.ASSETS.fetch(new Request(new URL("/admin.html", url), request));
     }
 

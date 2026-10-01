@@ -1,149 +1,590 @@
-const $ = selector => document.querySelector(selector);
-const loginPanel = $('#login-panel');
-const cmsPanel = $('#cms-panel');
-const typeSelect = $('#type');
-const entriesRoot = $('#entries');
-const editor = $('#editor');
-const state = { content: {}, selected: null, filter: '' };
-const labels = { comics: 'Cómic', authors: 'Autor', projects: 'Proyecto' };
-const templates = {
-  comics: { title: 'Nuevo cómic', slug: 'nuevo-comic', initials: 'NUEVO', format: null, genres: [], status: null, synopsis: null, cover: '', creatorSlugs: [], creatorCredits: {}, chapters: [], characters: [], gallery: [] },
-  authors: { name: 'Nuevo autor', slug: 'nuevo-autor', image: '', role: '', social: '', bio: null, specialties: [], comicSlugs: [], projectSlugs: [] },
-  projects: { title: 'Nuevo proyecto', slug: 'nuevo-proyecto', category: '', categories: [], client: '', type: '', creatorSlugs: [], assetDir: '', assets: { gallery: [] } },
-};
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+const root = $('#page-content');
+const loginView = $('#login-view');
+const cmsView = $('#cms-view');
+const state = { content: null, route: 'dashboard', filter: '', statusFilter: 'all', genreFilter: 'all', formatFilter: 'all', editing: null, toastTimer: null };
+const genres = ['Acción', 'Aventura', 'Comedia', 'Drama', 'Fantasía', 'Horror', 'Romance', 'Ciencia ficción', 'Misterio', 'Terror'];
+const creditRoles = ['Obra', 'Obra completa', 'Guion', 'Historia', 'Dibujo', 'Tinta', 'Color', 'Lettering', 'Portada', 'Diseño', 'Edición'];
+const entityForRoute = { comics: 'comics', creators: 'authors', projects: 'projects' };
+const labels = { comics: 'cómic', authors: 'creador', projects: 'proyecto' };
+
+function esc(value = '') { return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+function slugify(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90);
+}
+function normStatus(value) {
+  const key = String(value || 'published').trim().toLowerCase();
+  if (['draft', 'borrador'].includes(key)) return 'draft';
+  if (['archived', 'archivado'].includes(key)) return 'archived';
+  return 'published';
+}
+function statusLabel(value) { return ({ draft: 'Borrador', published: 'Publicado', archived: 'Archivado' })[normStatus(value)]; }
+function statusBadge(value) { const status = normStatus(value); return `<span class="badge ${status}">${statusLabel(status)}</span>`; }
+function displayName(record) { return record?.title || record?.name || 'Sin título'; }
+function allRecords(type) { return state.content?.[type] || []; }
+function findRecord(type, slug) { return allRecords(type).find(item => item.slug === slug); }
+function imageUrl(value, type, record) {
+  if (!value) return '';
+  if (value.startsWith('/') || /^https?:\/\//i.test(value)) return value;
+  return type === 'authors' ? `/artistas/${encodeURIComponent(record.slug)}/perfil.jpg` : value;
+}
+function projectImage(project, value = project.assets?.hero) {
+  if (!value) return '';
+  if (value.startsWith('/') || /^https?:\/\//i.test(value)) return value;
+  const dir = String(project.assetDir || '').replace(/\/$/, '');
+  return dir ? `${dir}/${encodeURIComponent(value)}` : '';
+}
+function creatorNames(slugs = []) { return slugs.map(slug => findRecord('authors', slug)?.name).filter(Boolean); }
 
 async function api(path, options = {}) {
-  const response = await fetch(path, { cache: 'no-store', ...options });
+  const response = await fetch(path, { cache: 'no-store', credentials: 'same-origin', ...options });
   const result = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(result.error || `Error ${response.status}`);
+  if (response.status === 401) {
+    logoutLocal();
+    throw new Error('Tu sesión venció. Vuelve a iniciar sesión.');
+  }
+  if (!response.ok) {
+    console.error('CMS request failed', path, response.status, result);
+    throw new Error(response.status >= 500 ? 'No se pudo completar la solicitud. Inténtalo de nuevo en un momento.' : (result.error || 'Revisa la información e inténtalo de nuevo.'));
+  }
   return result;
 }
-function status(message, isError = false) {
-  const node = $('#cms-status');
+function toast(message, isError = false) {
+  const node = $('#toast');
   node.textContent = message;
-  node.style.color = isError ? '#9d2328' : '#365f42';
+  node.classList.toggle('error', isError);
+  node.classList.add('show');
+  clearTimeout(state.toastTimer);
+  state.toastTimer = setTimeout(() => node.classList.remove('show'), 3600);
 }
-function keyOf(record) { return `${typeSelect.value}:${record.slug}`; }
-function displayName(record) { return record.title || record.name || record.slug; }
-function isNew(record) { return record.__new === true; }
-
-async function loadContent() {
-  state.content = await api('/api/content');
-  renderEntries();
-  if (state.selected) {
-    const [, slug] = state.selected.split(':');
-    const record = (state.content[typeSelect.value] || []).find(item => item.slug === slug);
-    if (record) selectRecord(record);
-    else clearEditor();
-  }
-}
-function renderEntries() {
-  const list = state.content[typeSelect.value] || [];
-  const query = state.filter.trim().toLocaleLowerCase();
-  const visible = list.filter(item => `${displayName(item)} ${item.slug}`.toLocaleLowerCase().includes(query));
-  entriesRoot.replaceChildren();
-  if (!visible.length) {
-    const empty = document.createElement('p');
-    empty.className = 'muted'; empty.textContent = 'No hay registros que coincidan.';
-    entriesRoot.append(empty); return;
-  }
-  for (const record of visible) {
-    const button = document.createElement('button');
-    button.type = 'button'; button.className = `entry${state.selected === keyOf(record) ? ' active' : ''}`;
-    const title = document.createElement('span'); title.textContent = displayName(record);
-    const slug = document.createElement('small'); slug.textContent = record.slug;
-    button.append(title, slug); button.addEventListener('click', () => selectRecord(record));
-    entriesRoot.append(button);
-  }
-}
-function selectRecord(record) {
-  state.selected = keyOf(record);
-  $('#record-title').textContent = displayName(record);
-  $('#record-slug').textContent = `/${typeSelect.value}/${record.slug} · slug fijo`;
-  editor.value = JSON.stringify(Object.fromEntries(Object.entries(record).filter(([key]) => key !== '__new')), null, 2);
-  editor.disabled = false; $('#save').disabled = false; $('#reset').disabled = false;
-  $('#reset').textContent = isNew(record) ? 'Eliminar registro nuevo' : 'Restaurar datos originales';
-  $('#media-url').textContent = ''; $('#copy-url').classList.add('hidden');
-  status(''); renderEntries();
-}
-function clearEditor() {
-  state.selected = null;
-  $('#record-title').textContent = 'Selecciona un registro'; $('#record-slug').textContent = '';
-  editor.value = ''; editor.disabled = true; $('#save').disabled = true; $('#reset').disabled = true;
-  renderEntries();
+function logoutLocal() {
+  cmsView.hidden = true;
+  loginView.hidden = false;
+  state.content = null;
+  closeEditor();
 }
 
 $('#login-form').addEventListener('submit', async event => {
   event.preventDefault();
-  const button = event.currentTarget.querySelector('button'); button.disabled = true;
-  $('#login-status').textContent = 'Verificando…';
+  const form = event.currentTarget;
+  const button = $('button[type="submit"]', form);
+  const message = $('#login-message');
+  button.disabled = true;
+  message.textContent = 'Comprobando acceso…';
   try {
-    await api('/api/cms/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: new FormData(event.currentTarget).get('password') }) });
+    await api('/api/cms/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: new FormData(form).get('password') }) });
+    form.reset();
     await openCms();
-  } catch (error) { $('#login-status').textContent = error.message; }
-  finally { button.disabled = false; }
-});
-
-async function openCms() {
-  const session = await api('/api/cms/session');
-  if (!session.authenticated) return;
-  loginPanel.classList.add('hidden'); cmsPanel.classList.remove('hidden');
-  await loadContent();
-}
-
-typeSelect.addEventListener('change', () => { state.selected = null; clearEditor(); loadContent().catch(error => status(error.message, true)); });
-$('#search').addEventListener('input', event => { state.filter = event.target.value; renderEntries(); });
-$('#new').addEventListener('click', () => {
-  const type = typeSelect.value;
-  let index = 1;
-  let slug = templates[type].slug;
-  const known = new Set((state.content[type] || []).map(record => record.slug));
-  while (known.has(slug)) { index++; slug = `${templates[type].slug}-${index}`; }
-  const record = { ...structuredClone(templates[type]), slug, ...(type === 'comics' ? { title: `Nuevo cómic ${index}` } : type === 'authors' ? { name: `Nuevo autor ${index}` } : { title: `Nuevo proyecto ${index}` }), __new: true };
-  (state.content[type] ||= []).unshift(record); selectRecord(record);
-});
-$('#save').addEventListener('click', async () => {
-  try {
-    const payload = JSON.parse(editor.value);
-    const selectedSlug = state.selected?.split(':').slice(1).join(':');
-    if (payload.slug !== selectedSlug) throw new Error('El slug debe conservarse y coincidir con el registro seleccionado.');
-    if (typeSelect.value === 'authors' ? !payload.name : !payload.title) throw new Error('Completa el nombre o título antes de guardar.');
-    const button = $('#save'); button.disabled = true; status('Guardando…');
-    await api('/api/cms/content', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: typeSelect.value, slug: payload.slug, payload }) });
-    await loadContent(); status('Guardado en D1. El sitio público ya puede leer los cambios.');
-  } catch (error) { status(error.message, true); }
-  finally { $('#save').disabled = !state.selected; }
-});
-$('#reset').addEventListener('click', async () => {
-  const selectedSlug = state.selected?.split(':').slice(1).join(':');
-  if (!selectedSlug) return;
-  const existing = (state.content[typeSelect.value] || []).find(item => item.slug === selectedSlug);
-  const prompt = isNew(existing) ? `¿Eliminar el registro nuevo “${displayName(existing)}”?` : `¿Restaurar “${displayName(existing)}” a su versión original?`;
-  if (!confirm(prompt)) return;
-  try {
-    await api('/api/cms/content', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: typeSelect.value, slug: selectedSlug }) });
-    clearEditor(); await loadContent(); status('Listo.');
-  } catch (error) { status(error.message, true); }
+  } catch (error) {
+    message.textContent = error.message === 'Contraseña incorrecta.' ? 'La contraseña no coincide. Inténtalo otra vez.' : error.message;
+  } finally { button.disabled = false; }
 });
 $('#logout').addEventListener('click', async () => {
   await api('/api/cms/logout', { method: 'POST' }).catch(() => {});
-  location.reload();
-});
-$('#upload').addEventListener('click', async () => {
-  const file = $('#media-file').files?.[0];
-  if (!file) { status('Selecciona primero una imagen.', true); return; }
-  const button = $('#upload'); button.disabled = true; status('Subiendo imagen a R2…');
-  try {
-    const form = new FormData(); form.append('file', file);
-    const result = await api('/api/cms/media', { method: 'POST', body: form });
-    $('#media-url').textContent = result.url; $('#copy-url').classList.remove('hidden');
-    status(`Imagen guardada en R2 (${Math.ceil(result.size / 1024)} KB). Pega ${result.url} en el campo de imagen del JSON.`);
-  } catch (error) { status(error.message, true); }
-  finally { button.disabled = false; }
-});
-$('#copy-url').addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText($('#media-url').textContent); status('URL copiada. Pégala en el campo de imagen correspondiente.'); }
-  catch { status('Copia manualmente la URL mostrada.', true); }
+  logoutLocal();
+  history.replaceState({}, '', '/admin');
+  toast('Sesión cerrada.');
 });
 
-api('/api/cms/session').then(session => session.authenticated ? openCms() : null).catch(() => {});
+async function openCms() {
+  loginView.hidden = true;
+  cmsView.hidden = false;
+  try {
+    state.content = await api('/api/cms/content');
+    await routeFromLocation(false);
+  } catch (error) {
+    loginView.hidden = false;
+    cmsView.hidden = true;
+    $('#login-message').textContent = error.message;
+  }
+}
+async function refreshContent() { state.content = await api('/api/cms/content'); }
+function routeFromLocation(focus = true) {
+  const parts = location.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+  const next = parts[1] === 'comics' ? 'comics' : parts[1] === 'creators' ? 'creators' : parts[1] === 'projects' ? 'projects' : 'dashboard';
+  state.route = next;
+  if (parts[2]) {
+    const type = entityForRoute[next];
+    const record = findRecord(type, decodeURIComponent(parts[2]));
+    if (record) openEditor(type, record, false);
+  } else if (state.editing) closeEditor();
+  renderRoute();
+  if (focus) root.focus({ preventScroll: true });
+}
+function navigate(path, replace = false) {
+  history[replace ? 'replaceState' : 'pushState']({}, '', path);
+  state.filter = '';
+  state.statusFilter = 'all'; state.genreFilter = 'all'; state.formatFilter = 'all';
+  routeFromLocation();
+}
+window.addEventListener('popstate', () => routeFromLocation());
+document.addEventListener('click', event => {
+  const routeLink = event.target.closest('[data-route]');
+  if (routeLink) {
+    event.preventDefault();
+    const route = routeLink.dataset.route;
+    navigate(route === 'dashboard' ? '/admin' : `/admin/${route}`);
+    return;
+  }
+  const editButton = event.target.closest('[data-edit-type]');
+  if (editButton) {
+    const record = findRecord(editButton.dataset.editType, editButton.dataset.editSlug);
+    if (record) openEditor(editButton.dataset.editType, record, false);
+  }
+});
+
+function renderRoute() {
+  $$('.main-nav a').forEach(link => link.classList.toggle('active', link.dataset.route === state.route));
+  if (state.route === 'dashboard') renderDashboard();
+  else renderCatalog(entityForRoute[state.route]);
+}
+function countState() {
+  const records = Object.entries(entityForRoute).flatMap(([route, type]) => allRecords(type).map(record => ({ ...record, _type: type, _route: route })));
+  return {
+    comics: allRecords('comics').length, authors: allRecords('authors').length, projects: allRecords('projects').length,
+    drafts: records.filter(item => normStatus(item.status) === 'draft').length,
+    published: records.filter(item => normStatus(item.status) === 'published').length,
+  };
+}
+function issueGroups() {
+  const comics = allRecords('comics'); const authors = allRecords('authors'); const projects = allRecords('projects');
+  return [
+    { title: 'Cómics sin sinopsis', type: 'comics', items: comics.filter(item => !String(item.synopsis || '').trim()) },
+    { title: 'Cómics sin género', type: 'comics', items: comics.filter(item => !item.genres?.length) },
+    { title: 'Creadores sin foto', type: 'authors', items: authors.filter(item => !item.image) },
+    { title: 'Proyectos sin descripción', type: 'projects', items: projects.filter(item => !projectDescription(item).trim()) },
+  ].filter(group => group.items.length);
+}
+function projectDescription(project) {
+  const value = project.storyCopy || project.purposeCopy || project.roleCopy || project.subtitle || '';
+  return Array.isArray(value) ? value.join('\n') : String(value);
+}
+function renderDashboard() {
+  const stats = countState(); const issues = issueGroups();
+  root.innerHTML = `
+    <div class="page-heading"><div><p class="eyebrow">TU ESPACIO EDITORIAL</p><h1>Resumen</h1><p>Una vista rápida del contenido del estudio.</p></div><button class="button accent" data-create="comics" type="button">+ Nuevo cómic</button></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Cómics</div><div class="stat-value">${stats.comics}</div></div>
+      <div class="stat-card"><div class="stat-label">Creadores</div><div class="stat-value">${stats.authors}</div></div>
+      <div class="stat-card"><div class="stat-label">Proyectos</div><div class="stat-value">${stats.projects}</div></div>
+      <div class="stat-card draft"><div class="stat-label">Borradores</div><div class="stat-value">${stats.drafts}</div></div>
+      <div class="stat-card published"><div class="stat-label">Publicaciones</div><div class="stat-value">${stats.published}</div></div>
+    </div>
+    <div class="dashboard-grid">
+      <section><div class="section-heading"><div><h2>Contenido pendiente</h2><p>Completa estos detalles cuando tengas la información.</p></div></div>
+        <div class="surface">${issues.length ? `<div class="pending-list">${issues.map(group => `<div class="pending-item"><div><strong>${esc(group.title)}</strong><small>${group.items.slice(0,3).map(item => esc(displayName(item))).join(' · ')}${group.items.length > 3 ? ` · y ${group.items.length - 3} más` : ''}</small></div><span class="pending-count">${group.items.length}</span><button class="button quiet small" type="button" data-open-group="${group.type}" data-open-slug="${esc(group.items[0].slug)}">Revisar</button></div>`).join('')}</div>` : '<div class="surface-pad muted">Todo el contenido tiene la información mínima registrada.</div>'}</div>
+      </section>
+      <section><div class="section-heading"><div><h2>Accesos rápidos</h2><p>Ve directo a lo que necesitas gestionar.</p></div></div>
+        <div class="quick-links"><a class="quick-link" href="/admin/comics" data-route="comics">Administrar cómics <span>↗</span></a><a class="quick-link" href="/admin/creators" data-route="creators">Administrar creadores <span>↗</span></a><a class="quick-link" href="/admin/projects" data-route="projects">Administrar proyectos <span>↗</span></a></div>
+      </section>
+    </div>`;
+  $('[data-create]', root).addEventListener('click', () => createRecord('comics'));
+  $$('[data-open-group]', root).forEach(button => button.addEventListener('click', () => {
+    const record = findRecord(button.dataset.openGroup, button.dataset.openSlug);
+    if (record) { navigate(`/admin/${button.dataset.openGroup === 'authors' ? 'creators' : button.dataset.openGroup}`); openEditor(button.dataset.openGroup, record, false); }
+  }));
+}
+
+function renderCatalog(type) {
+  const route = type === 'authors' ? 'creators' : type;
+  const isComic = type === 'comics'; const isCreator = type === 'authors';
+  const title = isComic ? 'Cómics' : isCreator ? 'Creadores' : 'Proyectos';
+  const subtitle = isComic ? 'Organiza tus historias, portadas y capítulos.' : isCreator ? 'Gestiona perfiles y relaciones creativas.' : 'Mantén al día el trabajo del estudio.';
+  let records = allRecords(type).filter(record => {
+    const text = [displayName(record), record.client, record.category, ...(record.creatorSlugs || []).map(slug => findRecord('authors', slug)?.name || '')].join(' ').toLocaleLowerCase();
+    return text.includes(state.filter.toLocaleLowerCase())
+      && (state.statusFilter === 'all' || normStatus(record.status) === state.statusFilter)
+      && (!isComic || state.genreFilter === 'all' || (record.genres || []).includes(state.genreFilter))
+      && (!isComic || state.formatFilter === 'all' || record.format === state.formatFilter);
+  });
+  const sortRecords = [...records].sort((a,b) => displayName(a).localeCompare(displayName(b), 'es'));
+  const genreOptions = [...new Set(allRecords('comics').flatMap(item => item.genres || []))].sort((a,b) => a.localeCompare(b, 'es'));
+  root.innerHTML = `
+    <div class="page-heading"><div><p class="eyebrow">CATÁLOGO EDITORIAL</p><h1>${title}</h1><p>${subtitle}</p></div><button class="button accent" data-create="${type}" type="button">+ Nuevo ${isComic ? 'cómic' : isCreator ? 'creador' : 'proyecto'}</button></div>
+    <div class="catalog-toolbar">
+      <label class="field search-field"><span class="screen-reader">Buscar ${title.toLowerCase()}</span><input type="search" id="catalog-search" placeholder="Buscar por nombre o cliente" value="${esc(state.filter)}"></label>
+      <label class="field"><span class="screen-reader">Filtrar por estado</span><select id="status-filter"><option value="all">Todos los estados</option><option value="published">Publicados</option><option value="draft">Borradores</option><option value="archived">Archivados</option></select></label>
+      ${isComic ? `<label class="field"><span class="screen-reader">Filtrar por género</span><select id="genre-filter"><option value="all">Todos los géneros</option>${genreOptions.map(item => `<option value="${esc(item)}">${esc(item)}</option>`).join('')}</select></label><label class="field"><span class="screen-reader">Filtrar por formato</span><select id="format-filter"><option value="all">Todos los formatos</option>${['One-shot','Series'].map(item => `<option value="${item}">${item === 'One-shot' ? 'Tomo único' : 'Serie'}</option>`).join('')}</select></label>` : ''}
+    </div>
+    <div class="section-heading"><div><h2>${sortRecords.length} ${title.toLocaleLowerCase()}</h2><p>Selecciona una tarjeta para editar su información.</p></div></div>
+    ${sortRecords.length ? `<div class="catalog-grid">${sortRecords.map(record => catalogCard(type, record)).join('')}</div>` : `<div class="empty-state"><h3>No encontramos contenido con esos filtros.</h3><p>Prueba con otra búsqueda o crea un registro nuevo.</p><button class="button secondary" data-create="${type}" type="button">Crear ${isComic ? 'cómic' : isCreator ? 'creador' : 'proyecto'}</button></div>`}`;
+  $('#catalog-search', root).addEventListener('input', event => { state.filter = event.target.value; renderCatalog(type); const input = $('#catalog-search', root); input.focus(); input.setSelectionRange(input.value.length, input.value.length); });
+  $('#status-filter', root).value = state.statusFilter;
+  $('#status-filter', root).addEventListener('change', event => { state.statusFilter = event.target.value; renderCatalog(type); });
+  if (isComic) {
+    $('#genre-filter', root).value = state.genreFilter;
+    $('#genre-filter', root).addEventListener('change', event => { state.genreFilter = event.target.value; renderCatalog(type); });
+    $('#format-filter', root).value = state.formatFilter;
+    $('#format-filter', root).addEventListener('change', event => { state.formatFilter = event.target.value; renderCatalog(type); });
+  }
+  $('[data-create]', root).addEventListener('click', event => createRecord(event.currentTarget.dataset.create));
+  $$('.record-card', root).forEach(card => card.addEventListener('click', () => {
+    const record = findRecord(type, card.dataset.slug);
+    if (record) openEditor(type, record, false);
+  }));
+}
+function catalogCard(type, record) {
+  const isCreator = type === 'authors'; const isComic = type === 'comics';
+  const photo = isComic ? record.cover : isCreator ? imageUrl(record.image, 'authors', record) : projectImage(record);
+  const personNames = creatorNames(record.creatorSlugs || []);
+  const chapterCount = (record.chapters || []).length;
+  const meta = isComic ? [record.format === 'One-shot' ? 'Tomo único' : record.format === 'Series' ? 'Serie' : 'Formato por agregar', record.medium || 'Cómic / manga', `${chapterCount} capítulos`] : isCreator ? [record.role || 'Rol por agregar', `${(record.comicSlugs || []).length} cómics`, `${(record.projectSlugs || []).length} proyectos`] : [record.category || 'Categoría por agregar', record.client || 'Proyecto del estudio'];
+  return `<button class="record-card" type="button" data-slug="${esc(record.slug)}">
+    <span class="record-image">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" onerror="this.remove()">` : 'AE'}</span>
+    <span class="record-info"><span>${statusBadge(record.status)}</span><h3>${esc(displayName(record))}</h3><span class="record-meta">${meta.map(esc).join(' · ')}</span>${personNames.length ? `<span class="record-creators">${esc(personNames.join(' · '))}</span>` : ''}</span>
+  </button>`;
+}
+
+function createRecord(type) {
+  const template = type === 'comics'
+    ? { title: '', slug: '', initials: '', medium: 'Cómic', format: 'Series', language: 'Español', status: 'draft', genres: [], synopsis: '', cover: '', backCover: '', creatorSlugs: [], creatorCredits: {}, externalCredits: [], chapters: [], characters: [], gallery: [] }
+    : type === 'authors'
+      ? { name: '', slug: '', role: '', image: '', bio: '', specialties: [], social: '', instagram: '', twitter: '', website: '', comicSlugs: [], projectSlugs: [] }
+      : { title: '', slug: '', category: '', categories: [], client: '', type: '', subtitle: '', storyCopy: [], assetDir: '', creatorSlugs: [], creatorCredits: {}, externalCredits: [], assets: { gallery: [] } };
+  openEditor(type, template, true);
+}
+function openEditor(type, record, isNew) {
+  state.editing = { type, original: structuredClone(record), isNew, autoSlug: isNew, tempStatus: normStatus(record.status) };
+  const route = type === 'authors' ? 'creators' : type;
+  history.pushState({}, '', `/admin/${route}/${encodeURIComponent(record.slug || 'nuevo')}`);
+  renderEditor();
+}
+function closeEditor() {
+  $('.modal-backdrop')?.remove();
+  state.editing = null;
+  if (cmsView.hidden) return;
+  history.replaceState({}, '', state.route === 'dashboard' ? '/admin' : `/admin/${state.route}`);
+}
+
+function field(label, name, value = '', options = {}) {
+  const { type = 'text', placeholder = '', hint = '', full = false, required = false, rows = 4, step = '', maxlength = '' } = options;
+  const cls = `field${full ? ' full' : ''}`;
+  const req = required ? ' required' : '';
+  const hints = hint ? `<span class="field-hint">${esc(hint)}</span>` : '';
+  if (type === 'textarea') return `<label class="${cls}">${esc(label)}${hints}<textarea name="${esc(name)}" rows="${rows}" placeholder="${esc(placeholder)}"${maxlength ? ` maxlength="${maxlength}"` : ''}${req}>${esc(value)}</textarea></label>`;
+  return `<label class="${cls}">${esc(label)}${hints}<input name="${esc(name)}" type="${type}" value="${esc(value)}" placeholder="${esc(placeholder)}"${step ? ` step="${step}"` : ''}${maxlength ? ` maxlength="${maxlength}"` : ''}${req}></label>`;
+}
+function selectField(label, name, value, choices, options = {}) {
+  return `<label class="field${options.full ? ' full' : ''}">${esc(label)}${options.hint ? `<span class="field-hint">${esc(options.hint)}</span>` : ''}<select name="${esc(name)}">${choices.map(item => `<option value="${esc(item.value)}"${String(item.value) === String(value ?? '') ? ' selected' : ''}>${esc(item.label)}</option>`).join('')}</select></label>`;
+}
+function mediaField(label, key, value, options = {}) {
+  const ratio = options.ratio === 'landscape' ? ' landscape' : '';
+  const url = value || '';
+  const preview = options.preview || url;
+  return `<div class="cover-upload" data-media-container="${esc(key)}">
+    <div class="cover-preview${ratio}">${preview ? `<img src="${esc(preview)}" alt="Vista previa de ${esc(label)}">` : '<span>Sin imagen</span>'}</div>
+    <div class="cover-info"><strong>${esc(label)}</strong><small>${url ? 'Imagen lista' : 'Puedes agregarla ahora o más tarde.'}</small>
+      <input type="hidden" data-media-value value="${esc(url)}">
+      <div class="cover-actions"><label class="button secondary" for="${esc(keyId(key))}">${url ? 'Cambiar imagen' : 'Subir imagen'}<input id="${esc(keyId(key))}" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" data-media-input></label><button class="button quiet small" type="button" data-clear-media${url ? '' : ' disabled'}>Quitar</button></div>
+    </div>
+  </div>`;
+}
+function keyId(key) { return `media-${key.replace(/[^a-z0-9]+/gi, '-')}`; }
+function section(title, help, body) { return `<section class="editor-section"><h3>${title}</h3>${help ? `<p class="section-help">${help}</p>` : ''}${body}</section>`; }
+function creatorSection(record, type) {
+  const chosen = Array.isArray(record.creatorSlugs) ? record.creatorSlugs : [];
+  const roles = record.creatorCredits || {};
+  const people = chosen.map(slug => findRecord('authors', slug)).filter(Boolean);
+  const choices = allRecords('authors').filter(author => !chosen.includes(author.slug)).sort((a,b) => a.name.localeCompare(b.name, 'es'));
+  return section('Creadores', 'Busca personas del equipo y asigna el crédito de cada una.', `
+    <div class="inline-add"><label class="field">Buscar creador<input type="search" data-creator-search placeholder="Escribe un nombre"></label>
+      <label class="field">Seleccionar<select data-creator-choice><option value="">Elige una persona</option>${choices.map(author => `<option value="${esc(author.slug)}">${esc(author.name)}</option>`).join('')}</select></label>
+      <button class="button secondary" type="button" data-add-creator>Agregar</button></div>
+    <div class="selected-list" data-creators-list>${people.length ? people.map(person => `<div class="selected-person" data-person="${esc(person.slug)}"><div><strong>${esc(person.name)}</strong><small>${esc(person.role || 'Creador')}</small></div><input data-person-credit value="${esc(roles[person.slug] || '')}" aria-label="Crédito de ${esc(person.name)}" placeholder="Rol o crédito"><button class="button quiet small" type="button" data-remove-person="${esc(person.slug)}" aria-label="Quitar a ${esc(person.name)}">Quitar</button></div>`).join('') : '<p class="muted">Aún no hay creadores vinculados.</p>'}</div>`);
+}
+function externalCreditsSection(record) {
+  const credits = (record.externalCredits || []).map(value => typeof value === 'string' ? parseExternalCredit(value) : value);
+  return section('Colaboradores externos', 'Añade créditos de personas que no tienen perfil en el catálogo.', `<div data-external-list>${credits.map((item,index) => externalCreditRow(item, index)).join('')}</div><div class="button-row"><button class="button secondary small" type="button" data-add-external>+ Agregar colaborador</button></div>`);
+}
+function parseExternalCredit(value) {
+  const match = String(value || '').match(/^\s*([^:]+):\s*(.*)$/);
+  return match ? { role: match[1].trim(), name: match[2].trim() } : { role: '', name: String(value || '').trim() };
+}
+function externalCreditRow(item = {}, index = 0) {
+  return `<div class="credit-card form-grid" data-external-credit="${index}">${field('Nombre', 'external-name', item.name || '', { placeholder: 'Nombre de la persona' })}${field('Trabajo', 'external-role', item.role || '', { placeholder: 'Portada, color, traducción…' })}<div class="field full button-row"><button class="button quiet small" type="button" data-remove-external>Quitar colaborador</button></div></div>`;
+}
+function genreSection(selected = []) {
+  const all = [...new Set([...genres, ...selected])];
+  return section('Géneros', 'Selecciona uno o varios. Puedes añadir otro si hace falta.', `<div class="choice-list" data-genre-list>${all.map(value => `<label class="choice-chip"><input type="checkbox" value="${esc(value)}"${selected.includes(value) ? ' checked' : ''}><span>${esc(value)}</span></label>`).join('')}</div>
+    <div class="custom-choice"><input type="text" data-new-genre placeholder="Añadir otro género" aria-label="Nuevo género"><button class="button secondary small" type="button" data-add-genre>Agregar</button></div>`);
+}
+function statusField(record) {
+  const current = normStatus(record.status);
+  return selectField('Estado', 'status', current, [
+    { value: 'draft', label: 'Borrador' }, { value: 'published', label: 'Publicado' }, { value: 'archived', label: 'Archivado' },
+  ], { hint: 'Los borradores y archivados no aparecen en el sitio público.' });
+}
+function slugField(record, isNew, entityName) {
+  const slug = record.slug || '';
+  return `<details class="advanced"><summary>Enlace del contenido</summary><label class="field">Dirección automática<span class="field-hint">Se crea a partir del título; cambiarla puede alterar la URL pública.</span><div class="slug-row"><input name="slug" value="${esc(slug)}"${isNew ? '' : ' readonly'}></div><span class="slug-value">/${entityName}/<span data-slug-preview>${esc(slug || 'se-genera-al-escribir')}</span></span></label></details>`;
+}
+function chapterSection(record) {
+  const chapters = record.chapters || [];
+  return section('Capítulos', chapters.length ? 'Edita cada capítulo sin cambiar sus campos por separado.' : 'Este cómic todavía no tiene capítulos.', `<div data-chapter-list>${chapters.length ? chapters.map((chapter,index) => chapterEditor(chapter,index)).join('') : '<p class="muted">Este cómic todavía no tiene capítulos.</p>'}</div><button class="button secondary small" type="button" data-add-chapter>+ Agregar capítulo</button>`);
+}
+function chapterEditor(chapter, index, originalIndex = index) {
+  return `<article class="chapter-card" data-chapter-index="${index}" data-original-index="${originalIndex ?? ''}"><div class="chapter-head"><strong>Capítulo ${String(chapter.number ?? index + 1).padStart(2,'0')}</strong><button class="button quiet small" type="button" data-remove-chapter>Quitar</button></div>
+    <div class="form-grid">${field('Número', 'chapter-number', chapter.number ?? index + 1, { type:'number', step:'1' })}${field('Título', 'chapter-title', chapter.title || '', { placeholder:'Título del capítulo' })}${field('Sinopsis', 'chapter-synopsis', chapter.synopsis || '', { type:'textarea', full:true, rows:3 })}
+    ${selectField('Estado del capítulo', 'chapter-status', normStatus(chapter.status || 'published'), [{value:'draft',label:'Borrador'},{value:'published',label:'Publicado'},{value:'archived',label:'Archivado'}])}
+    ${field('Enlace de lectura (opcional)', 'chapter-digital', chapter.digitalUrl || '', { placeholder:'https://…' })}${field('Enlace de compra (opcional)', 'chapter-physical', chapter.physicalUrl || '', { placeholder:'https://…' })}</div>
+    ${mediaField('Portada del capítulo', `chapter-${index}-cover`, chapter.cover || '', { ratio:'landscape' })}</article>`;
+}
+function gallerySection(record, type) {
+  const images = type === 'comics' ? (record.gallery || []) : (record.assets?.gallery || []);
+  const list = images.map((image,index) => typeof image === 'string' ? { src:image, alt:'' } : image);
+  return section('Galería', 'Agrega imágenes complementarias para mostrar el proceso y otras vistas.', `<div class="gallery-grid" data-gallery-list data-gallery-type="${type}">${list.length ? list.map((image,index) => galleryCard(image,index,type)).join('') : '<p class="muted">Todavía no hay imágenes en la galería.</p>'}</div><div class="button-row"><label class="button secondary small">+ Subir imágenes<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" data-add-gallery-files multiple hidden></label></div>`);
+}
+function galleryCard(image,index,type) {
+  const value = type === 'comics' ? image.src || '' : image.file || image.src || '';
+  const caption = type === 'comics' ? image.alt || '' : image.caption || '';
+  return `<article class="gallery-card" data-gallery-card data-gallery-index="${index}"><div class="gallery-preview">${value ? `<img src="${esc(type === 'projects' ? projectImage(state.editing.original, value) : value)}" alt="">` : 'Sin imagen'}</div><input type="hidden" data-gallery-url value="${esc(value)}">${field('Descripción', 'gallery-caption', caption, { placeholder:'Texto corto para la imagen' })}<button class="button quiet small" type="button" data-remove-gallery>Quitar de la galería</button></article>`;
+}
+function renderEditor() {
+  $('.modal-backdrop')?.remove();
+  const editing = state.editing;
+  if (!editing) return;
+  const { type, original, isNew } = editing;
+  const isComic = type === 'comics'; const isCreator = type === 'authors';
+  const title = displayName(original);
+  const entityName = isComic ? 'comics' : isCreator ? 'authors' : 'projects';
+  const basic = isComic
+    ? section('Información básica', 'Empieza con el título. El enlace se genera automáticamente.', `<div class="form-grid">${field('Título', 'title', original.title, { placeholder:'Ej. La Armadura de mi Hermano', full:true })}${selectField('Tipo o medio', 'medium', original.medium || 'Cómic', ['Cómic','Manga','Novela gráfica','Webcómic','Ilustración','Otro'].map(value=>({value,label:value})))}${selectField('Formato', 'format', original.format || '', [{value:'',label:'Seleccionar formato'},{value:'One-shot',label:'Tomo único'},{value:'Series',label:'Serie'},{value:'Novela gráfica',label:'Novela gráfica'},{value:'Otro',label:'Otro'}])}${selectField('Idioma', 'language', original.language || 'Español', ['Español','Inglés','Bilingüe','Otro'].map(value=>({value,label:value})))}${field('Iniciales para portada', 'initials', original.initials || '', { placeholder:'Ej. ARMADURA', hint:'Se usan si todavía no hay portada.' })}${statusField(original)}</div>${slugField(original,isNew,'comics')}`)
+    : isCreator
+      ? section('Información básica', 'Nombre, perfil y formas de contacto del creador.', `<div class="form-grid">${field('Nombre', 'name', original.name, { placeholder:'Nombre y apellido', full:true })}${field('Nombre público o seudónimo', 'role', original.role || '', { placeholder:'Nombre artístico' })}${field('Rol principal', 'primaryRole', original.primaryRole || '', { placeholder:'Ilustrador, guionista…' })}${field('Instagram', 'instagram', original.instagram || original.social || '', { placeholder:'@usuario o enlace' })}${field('X / Twitter', 'twitter', original.twitter || original.social || '', { placeholder:'@usuario o enlace' })}${field('Sitio web', 'website', original.website || '', { placeholder:'https://…' })}${field('Biografía', 'bio', original.bio || '', { type:'textarea', full:true, rows:5 })}${statusField(original)}</div>${slugField(original,isNew,'authors')}`)
+      : section('Información del proyecto', 'Conserva la categoría y los datos existentes; completa solo lo que tengas.', `<div class="form-grid">${field('Título', 'title', original.title, { placeholder:'Nombre del proyecto', full:true })}${selectField('Categoría', 'category', original.category || '', projectCategoryChoices(original.category))}${field('Cliente', 'client', original.client || '', { placeholder:'Nombre del cliente (opcional)' })}${field('Tipo de trabajo', 'type', original.type || '', { placeholder:'Ilustración editorial, cómic…' })}${field('Subtítulo', 'subtitle', original.subtitle || '', { full:true, placeholder:'Frase corta para presentar el proyecto' })}${field('Descripción', 'description', projectDescription(original), { type:'textarea', full:true, rows:6, hint:'Separa cada párrafo con una línea en blanco.' })}${field('Sitio web', 'website', original.externalUrl || '', { placeholder:'https://…' })}${statusField(original)}</div>${slugField(original,isNew,'projects')}`);
+
+  let sections = basic;
+  if (isComic) {
+    sections += section('Sinopsis', 'Cuenta de qué trata la historia.', field('Sinopsis', 'synopsis', original.synopsis || '', { type:'textarea', full:true, rows:6, placeholder:'Escribe aquí la sinopsis…' }));
+    sections += section('Portadas', 'Sube imágenes desde tu equipo. El CMS guarda y coloca los enlaces por ti.', mediaField('Portada principal','comic-cover',original.cover || '') + mediaField('Contraportada','comic-back-cover',original.backCover || '',{ratio:'landscape'}));
+    sections += genreSection(original.genres || []);
+    sections += creatorSection(original,type) + externalCreditsSection(original) + chapterSection(original) + gallerySection(original,type);
+  } else if (isCreator) {
+    sections += section('Foto de perfil', 'Usa una imagen clara del creador. Puedes dejarla pendiente.', mediaField('Foto del creador','creator-image',original.image || '',{preview:imageUrl(original.image,'authors',original)}));
+    sections += section('Especialidades', 'Selecciona o agrega las áreas en las que trabaja.', chipSection(original.specialties || [], ['Ilustración','Cómic','Diseño','Color','Guion','Lettering','Concept art','Animación'], 'specialties'));
+  } else {
+    sections += section('Imagen principal', 'La imagen que aparecerá en el catálogo del sitio.', mediaField('Imagen del proyecto','project-hero',original.assets?.hero || '',{ratio:'landscape',preview:projectImage(original)}));
+    sections += creatorSection(original,type) + externalCreditsSection(original) + gallerySection(original,type);
+    sections += section('Créditos editoriales', 'Agrega aquí la descripción de créditos que ya utiliza la página del proyecto.', `<div class="form-grid">${field('Créditos', 'roleCopy', original.roleCopy || '', { type:'textarea', full:true, rows:4, placeholder:'Ilustración: … · Color: …' })}${field('Quién escribió la historia', 'storyBy', original.storyBy || '', { placeholder:'Nombre (opcional)' })}${field('Quién hizo la ilustración', 'illustrationBy', original.illustrationBy || '', { placeholder:'Nombre o créditos' })}</div>`);
+  }
+  sections += section('Vista previa en buscadores', 'Opcional. Si lo dejas vacío, el sitio usará el título y la descripción normales.', `<div class="form-grid">${field('Título SEO', 'seoTitle', original.seoTitle || '', { full:true, maxlength:70, hint:'Recomendado: menos de 60 caracteres.' })}${field('Descripción SEO', 'seoDescription', original.seoDescription || '', { type:'textarea', full:true, rows:3, maxlength:180, hint:'Recomendado: 120–160 caracteres.' })}</div>`);
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-backdrop'; overlay.innerHTML = `<section class="editor-drawer" role="dialog" aria-modal="true" aria-labelledby="editor-title"><header class="drawer-header"><div><p class="eyebrow">${isNew ? 'NUEVO CONTENIDO' : 'EDITAR CONTENIDO'}</p><h2 id="editor-title">${esc(isNew ? `Nuevo ${labels[type]}` : title)}</h2></div><div class="button-row"><button class="button secondary small" type="button" data-preview>Vista previa</button><button class="button quiet" type="button" data-close-editor aria-label="Cerrar editor">Cerrar</button></div></header><form data-editor-form novalidate><div class="drawer-body">${sections}<p class="muted">Las direcciones actuales del sitio se conservan. Los campos que dejes vacíos pueden completarse después.</p></div><footer class="drawer-footer"><button class="button quiet" type="button" data-close-editor>Cancelar</button><div class="button-row"><button class="button secondary save-draft" type="button" data-save-status="draft">Guardar borrador</button><button class="button primary" type="button" data-save-status="current">Guardar cambios</button><button class="button accent" type="button" data-save-status="published">Publicar</button></div></footer></form></section>`;
+  document.body.append(overlay);
+  bindEditor(overlay);
+  $('.editor-drawer', overlay).scrollTop = 0;
+}
+function projectCategoryChoices(current) {
+  const known = [...new Set(['PROPIEDADES ORIGINALES','TRABAJOS PARA CLIENTES','COLABORACIONES','VIDEOJUEGOS Y JUEGOS DE MESA','ILUSTRACIÓN / DISEÑO', ...allRecords('projects').flatMap(item => [item.category, ...(item.categories || [])]).filter(Boolean)])];
+  if (current && !known.includes(current)) known.unshift(current);
+  return [{value:'',label:'Seleccionar categoría'}, ...known.map(value=>({value,label:value}))];
+}
+function chipSection(selected, options, name) {
+  const choices = [...new Set([...options, ...selected])];
+  return `<div class="choice-list" data-chip-list="${name}">${choices.map(value=>`<label class="choice-chip"><input type="checkbox" value="${esc(value)}"${selected.includes(value)?' checked':''}><span>${esc(value)}</span></label>`).join('')}</div><div class="custom-choice"><input type="text" data-new-chip="${name}" placeholder="Añadir especialidad"><button class="button secondary small" type="button" data-add-chip="${name}">Agregar</button></div>`;
+}
+
+function bindEditor(overlay) {
+  $('[data-editor-form]',overlay).addEventListener('submit',event=>event.preventDefault());
+  overlay.addEventListener('click', async event => {
+    if (event.target === overlay || event.target.closest('[data-close-editor]')) { closeEditor(); return; }
+    const action = event.target.closest('[data-action]')?.dataset.action;
+    if (event.target.closest('[data-add-creator]')) addCreator(overlay);
+    if (event.target.closest('[data-remove-person]')) { event.target.closest('.selected-person').remove(); }
+    if (event.target.closest('[data-add-external]')) { $('[data-external-list]', overlay).insertAdjacentHTML('beforeend', externalCreditRow({}, $$('[data-external-credit]',overlay).length)); }
+    if (event.target.closest('[data-remove-external]')) event.target.closest('[data-external-credit]').remove();
+    if (event.target.closest('[data-add-genre]')) addChip(overlay,'genre');
+    if (event.target.closest('[data-add-chip]')) addChip(overlay,event.target.closest('[data-add-chip]').dataset.addChip);
+    if (event.target.closest('[data-add-chapter]')) { const list = $('[data-chapter-list]',overlay); list.insertAdjacentHTML('beforeend',chapterEditor({},$$('[data-chapter-index]',list).length,null)); renumberChapters(list); }
+    if (event.target.closest('[data-remove-chapter]')) { event.target.closest('[data-chapter-index]').remove(); renumberChapters($('[data-chapter-list]',overlay)); }
+    if (event.target.closest('[data-remove-gallery]')) event.target.closest('[data-gallery-card]').remove();
+    if (event.target.closest('[data-clear-media]')) clearMedia(event.target.closest('[data-media-container]'));
+    const saveButton = event.target.closest('[data-save-status]');
+    if (saveButton) await saveEditor(saveButton.dataset.saveStatus, overlay, saveButton);
+    const previewButton = event.target.closest('[data-preview]');
+    if (previewButton) showPreview(overlay);
+  });
+  overlay.addEventListener('input', event => {
+    if (event.target.matches('[data-creator-search]')) filterCreatorChoices(overlay,event.target.value);
+    if (event.target.name === 'title' || event.target.name === 'name') updateSlugPreview(overlay,event.target.value);
+    if (event.target.matches('[data-new-genre]') && event.key === 'Enter') { event.preventDefault(); addChip(overlay,'genre'); }
+  });
+  overlay.addEventListener('keydown',event=>{
+    if(event.key==='Escape'){if($('.preview-layer'))$('.preview-layer').remove();else closeEditor();}
+    if(event.key==='Enter' && event.target.matches('[data-new-genre],[data-new-chip]')){event.preventDefault();addChip(overlay,event.target.matches('[data-new-genre]')?'genre':event.target.dataset.newChip);}
+  });
+  overlay.addEventListener('change', async event => {
+    if (event.target.matches('[data-media-input]') && event.target.files?.[0]) await uploadMedia(event.target.files[0],event.target.closest('[data-media-container]'));
+    if (event.target.matches('[data-add-gallery-files]') && event.target.files?.length) await uploadGalleryFiles(event.target.files,overlay);
+    if (event.target.name === 'status') state.editing.tempStatus = event.target.value;
+  });
+  overlay.addEventListener('dragover', event => { if (event.target.closest('[data-media-container]')) { event.preventDefault(); event.target.closest('[data-media-container]').classList.add('dragging'); } });
+  overlay.addEventListener('dragleave', event => event.target.closest('[data-media-container]')?.classList.remove('dragging'));
+  overlay.addEventListener('drop', async event => {
+    const container = event.target.closest('[data-media-container]');
+    if (!container || !event.dataTransfer.files?.length) return;
+    event.preventDefault(); container.classList.remove('dragging'); await uploadMedia(event.dataTransfer.files[0],container);
+  });
+}
+function filterCreatorChoices(overlay,query) {
+  const select = $('[data-creator-choice]',overlay); const needle = query.toLocaleLowerCase();
+  for (const option of [...select.options].slice(1)) option.hidden = !option.text.toLocaleLowerCase().includes(needle);
+  if (select.selectedOptions[0]?.hidden) select.value = '';
+}
+function addCreator(overlay) {
+  const select = $('[data-creator-choice]',overlay); const slug = select.value; if (!slug) return;
+  const author = findRecord('authors',slug); if (!author || $(`[data-person="${CSS.escape(slug)}"]`,overlay)) return;
+  const node = $('[data-creators-list]',overlay); node.querySelector('.muted')?.remove();
+  node.insertAdjacentHTML('beforeend',`<div class="selected-person" data-person="${esc(slug)}"><div><strong>${esc(author.name)}</strong><small>${esc(author.role || 'Creador')}</small></div><input data-person-credit value="" aria-label="Crédito de ${esc(author.name)}" placeholder="Rol o crédito"><button class="button quiet small" type="button" data-remove-person="${esc(slug)}">Quitar</button></div>`);
+  select.querySelector(`option[value="${CSS.escape(slug)}"]`)?.remove(); select.value=''; $('[data-creator-search]',overlay).value=''; filterCreatorChoices(overlay,'');
+}
+function addChip(overlay,name) {
+  const input = $(`[data-new-${name === 'genre' ? 'genre' : 'chip'}="${name}"]`,overlay); if (!input) return;
+  const value = input.value.trim(); if (!value) return;
+  const list = name === 'genre' ? $('[data-genre-list]',overlay) : $(`[data-chip-list="${name}"]`,overlay);
+  if ([...list.querySelectorAll('input')].some(item=>item.value.toLocaleLowerCase()===value.toLocaleLowerCase())) { input.value=''; return; }
+  list.insertAdjacentHTML('beforeend',`<label class="choice-chip"><input type="checkbox" value="${esc(value)}" checked><span>${esc(value)}</span></label>`); input.value='';
+}
+function updateSlugPreview(overlay,title) {
+  if (!state.editing?.isNew || !state.editing.autoSlug) return;
+  const input = $('[name="slug"]',overlay); const type = state.editing.type;
+  const base = slugify(title) || `borrador-${type === 'authors' ? 'creador' : type === 'comics' ? 'comic' : 'proyecto'}`;
+  const slug = uniqueSlug(type,base);
+  input.value = slug;
+  $('[data-slug-preview]',overlay).textContent = slug;
+  $('#editor-title',overlay).textContent=title.trim() || `Nuevo ${labels[state.editing.type]}`;
+  if (type === 'comics' && !$('[name="initials"]',overlay).value) $('[name="initials"]',overlay).value = String(title).trim().split(/\s+/).slice(0,2).join(' ').toLocaleUpperCase();
+}
+function uniqueSlug(type,base) {
+  const known = new Set(allRecords(type).map(item=>item.slug));
+  const originalSlug = state.editing?.original?.slug;
+  if (originalSlug) known.delete(originalSlug);
+  let candidate=base, suffix=2;
+  while (known.has(candidate)) candidate=`${base}-${suffix++}`;
+  return candidate;
+}
+function renumberChapters(list) {
+  if (!list) return;
+  $$('.chapter-card',list).forEach((card,index)=>{card.dataset.chapterIndex=index; $('.chapter-head strong',card).textContent=`Capítulo ${String(card.querySelector('[name="chapter-number"]')?.value || index+1).padStart(2,'0')}`;});
+}
+function clearMedia(container) {
+  if (!container) return;
+  $('[data-media-value]',container).value='';
+  $('.cover-preview',container).innerHTML='<span>Sin imagen</span>';
+  $('.cover-info small',container).textContent='Puedes agregarla ahora o más tarde.';
+  $('[data-clear-media]',container).disabled=true;
+}
+async function uploadMedia(file,container) {
+  if (!container) return;
+  if (!['image/jpeg','image/png','image/webp','image/gif','image/avif'].includes(file.type) || file.size > 10*1024*1024) { toast('Elige una imagen JPG, PNG, WebP, GIF o AVIF de hasta 10 MB.',true); return; }
+  const button = $('[data-media-input]',container)?.closest('label'); if (button) button.classList.add('uploading');
+  try {
+    const form = new FormData(); form.append('file',file);
+    const result = await api('/api/cms/media',{method:'POST',body:form});
+    $('[data-media-value]',container).value=result.url;
+    $('.cover-preview',container).innerHTML=`<img src="${esc(result.url)}" alt="Vista previa">`;
+    $('.cover-info small',container).textContent='Imagen lista para guardar.';
+    $('[data-clear-media]',container).disabled=false;
+    toast('Imagen subida. Guarda el contenido para aplicar el cambio.');
+  } catch (error) { toast(error.message,true); }
+  finally { if (button) button.classList.remove('uploading'); const input=$('[data-media-input]',container); if(input) input.value=''; }
+}
+async function uploadGalleryFiles(files,overlay) {
+  const list=$('[data-gallery-list]',overlay); if (!list) return;
+  for (const file of files) {
+    const temp=document.createElement('div');
+    temp.innerHTML=galleryCard({file:'',src:'',caption:''},$$('[data-gallery-card]',list).length,state.editing.type);
+    const card=temp.firstElementChild; list.append(card);
+    const hidden=$('[data-gallery-url]',card); const preview=$('.gallery-preview',card);
+    try {
+      if (!['image/jpeg','image/png','image/webp','image/gif','image/avif'].includes(file.type) || file.size>10*1024*1024) throw new Error('Elige una imagen compatible de hasta 10 MB.');
+      const form=new FormData();form.append('file',file);const result=await api('/api/cms/media',{method:'POST',body:form});
+      hidden.value=result.url; preview.innerHTML=`<img src="${esc(result.url)}" alt="">`;
+      toast('Imagen subida. Guarda el contenido para aplicar el cambio.');
+    } catch(error) { card.remove(); toast(error.message,true); }
+  }
+}
+function formValue(form,name) { return $('[name="'+name+'"]',form)?.value?.trim() || ''; }
+function collectChips(rootNode,selector) { return $$(selector,rootNode).filter(input=>input.checked).map(input=>input.value); }
+function serializeChapters(overlay,originalChapters=[]) {
+  return $$('[data-chapter-index]',overlay).map((card,index)=>{
+    const originalIndex=card.dataset.originalIndex;
+    const prior=originalIndex === '' ? {} : (originalChapters[Number(originalIndex)] || {});
+    return {...prior,number:Number($('[name="chapter-number"]',card).value)||index+1,title:formValue(card,'chapter-title'),synopsis:formValue(card,'chapter-synopsis'),cover:$('[data-media-value]',card)?.value||'',status:formValue(card,'chapter-status')||'draft',digitalUrl:formValue(card,'chapter-digital'),physicalUrl:formValue(card,'chapter-physical')};
+  }).filter(item=>item.title || item.cover || item.synopsis).sort((a,b)=>a.number-b.number);
+}
+function serializeExternalCredits(overlay) {
+  return $$('[data-external-credit]',overlay).map(card=>({name:formValue(card,'external-name'),role:formValue(card,'external-role')})).filter(item=>item.name||item.role).map(item=>item.role?`${item.role}: ${item.name}`:item.name);
+}
+function serializeCreators(overlay) {
+  const creatorSlugs=[];const creatorCredits={};
+  $$('[data-person]',overlay).forEach(item=>{const slug=item.dataset.person;creatorSlugs.push(slug);const credit=$('[data-person-credit]',item).value.trim();if(credit)creatorCredits[slug]=credit;});
+  return {creatorSlugs,creatorCredits};
+}
+function serializeGallery(overlay,type) {
+  return $$('[data-gallery-card]',overlay).map(card=>{
+    const src=$('[data-gallery-url]',card)?.value || '';const caption=card.querySelector('[name="gallery-caption"]')?.value.trim() || '';
+    return type==='comics'?{src,alt:caption}:{file:src,caption};
+  }).filter(item=>type==='comics'?item.src:item.file);
+}
+function buildPayload(overlay,status) {
+  const editing=state.editing; const {type,original,isNew}=editing; const form=$('[data-editor-form]',overlay);
+  const payload=structuredClone(original); const normalizedStatus=status==='current'?formValue(form,'status'):status;
+  payload.status=normalizedStatus || 'draft';
+  if(type==='comics') {
+    payload.title=formValue(form,'title');payload.slug=formValue(form,'slug')||uniqueSlug(type,slugify(payload.title)||'borrador-comic');payload.initials=formValue(form,'initials')||payload.title.slice(0,18).toLocaleUpperCase();
+    payload.medium=formValue(form,'medium');payload.format=formValue(form,'format');payload.language=formValue(form,'language');payload.synopsis=formValue(form,'synopsis');payload.cover=$('[data-media-container="comic-cover"] [data-media-value]',overlay)?.value||'';payload.backCover=$('[data-media-container="comic-back-cover"] [data-media-value]',overlay)?.value||'';
+    payload.genres=collectChips(overlay,'[data-genre-list] input');Object.assign(payload,serializeCreators(overlay));payload.externalCredits=serializeExternalCredits(overlay);payload.chapters=serializeChapters(overlay,original.chapters||[]);payload.gallery=serializeGallery(overlay,'comics');
+    if(payload.chapters.length){payload.chapterCount=Math.max(...payload.chapters.map(ch=>ch.number));payload.availableChapters=payload.chapters.filter(ch=>normStatus(ch.status)==='published').length;}
+  } else if(type==='authors') {
+    payload.name=formValue(form,'name');payload.slug=formValue(form,'slug')||uniqueSlug(type,slugify(payload.name)||'borrador-creador');payload.role=formValue(form,'role');payload.primaryRole=formValue(form,'primaryRole');payload.image=$('[data-media-container="creator-image"] [data-media-value]',overlay)?.value||'';payload.bio=formValue(form,'bio');payload.specialties=collectChips(overlay,'[data-chip-list="specialties"] input');payload.social=formValue(form,'instagram')||formValue(form,'twitter')||'';payload.instagram=formValue(form,'instagram');payload.twitter=formValue(form,'twitter');payload.website=formValue(form,'website');
+  } else {
+    payload.title=formValue(form,'title');payload.slug=formValue(form,'slug')||uniqueSlug(type,slugify(payload.title)||'borrador-proyecto');payload.category=formValue(form,'category');payload.categories=[...new Set([...(original.categories||[]).filter(value=>value!==original.category),payload.category].filter(Boolean))];payload.client=formValue(form,'client');payload.type=formValue(form,'type');payload.subtitle=formValue(form,'subtitle');payload.storyCopy=formValue(form,'description').split(/\n\s*\n/).map(part=>part.trim()).filter(Boolean);payload.externalUrl=formValue(form,'website');payload.roleCopy=formValue(form,'roleCopy');payload.storyBy=formValue(form,'storyBy');payload.illustrationBy=formValue(form,'illustrationBy');
+    Object.assign(payload,serializeCreators(overlay));payload.externalCredits=serializeExternalCredits(overlay);payload.assets={...(payload.assets||{}),hero:$('[data-media-container="project-hero"] [data-media-value]',overlay)?.value||'',gallery:serializeGallery(overlay,'projects')};
+  }
+  payload.seoTitle=formValue(form,'seoTitle');payload.seoDescription=formValue(form,'seoDescription');
+  if(isNew && !payload.slug) payload.slug=`borrador-${type}-${Date.now()}`;
+  return payload;
+}
+function publishRequirements(type,payload) {
+  if(type==='comics' && (!payload.title || !payload.cover)) return 'Para publicar un cómic, completa el título y agrega una portada.';
+  if(type==='authors' && !payload.name) return 'Para publicar un perfil, escribe el nombre del creador.';
+  if(type==='projects' && (!payload.title || !payload.category)) return 'Para publicar un proyecto, completa el título y la categoría.';
+  return '';
+}
+async function saveEditor(intent,overlay,button) {
+  const status=intent==='current'?'current':intent;
+  const payload=buildPayload(overlay,status);
+  const realStatus=status==='current'?(formValue($('[data-editor-form]',overlay),'status')||'draft'):status;
+  if(realStatus==='published') { const problem=publishRequirements(state.editing.type,payload);if(problem){toast(problem,true);return;} }
+  const form=$('[data-editor-form]',overlay);const titleInput=form.querySelector('[name="title"], [name="name"]');
+  if(!payload.slug) payload.slug=uniqueSlug(state.editing.type,slugify(titleInput?.value)||`borrador-${Date.now()}`);
+  const buttons=$$('[data-save-status]',overlay);buttons.forEach(item=>item.disabled=true);
+  const oldLabel=button.textContent;button.textContent='Guardando…';
+  try {
+    await api('/api/cms/content',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({type:state.editing.type,slug:payload.slug,payload})});
+    await refreshContent();
+    const wasNew=state.editing.isNew;state.editing={type:state.editing.type,original:payload,isNew:false,autoSlug:false};
+    if(wasNew) history.replaceState({},'',`/admin/${state.editing.type==='authors'?'creators':state.editing.type}/${encodeURIComponent(payload.slug)}`);
+    const route=state.route;renderRoute();renderEditor();
+    toast(payload.status==='published'?'Contenido publicado correctamente.':payload.status==='archived'?'Contenido archivado.':'Borrador guardado correctamente.');
+  } catch(error) { console.error(error);toast(error.message||'No se pudo guardar el contenido. Revisa los campos e inténtalo de nuevo.',true); }
+  finally { if(document.body.contains(button)){buttons.forEach(item=>item.disabled=false);button.textContent=oldLabel;} }
+}
+
+function showPreview(overlay) {
+  const payload=buildPayload(overlay,'current');const type=state.editing.type;
+  const image=type==='comics'?payload.cover:type==='authors'?payload.image:payload.assets?.hero;
+  const description=type==='comics'?payload.synopsis:type==='authors'?payload.bio:projectDescription(payload);
+  const detail=type==='comics'?`${payload.format||'Formato por agregar'} · ${(payload.genres||[]).join(' · ')||'Géneros por agregar'}`:type==='authors'?(payload.role||'Perfil creativo'):([payload.client,payload.category].filter(Boolean).join(' · '));
+  const preview=document.createElement('div');preview.className='preview-layer';preview.innerHTML=`<div class="preview-card" role="dialog" aria-modal="true"><div class="preview-header"><strong>Vista previa</strong><button class="button quiet small" type="button" data-close-preview>Cerrar</button></div>${image?`<img class="preview-image" src="${esc(type==='projects'?projectImage(payload,image):image)}" alt="">`:''}<div class="preview-copy"><p class="eyebrow">${esc(detail)}</p><h2>${esc(displayName(payload)||'Borrador sin título')}</h2><p>${esc(description||'La descripción aparecerá aquí cuando la agregues.')}</p>${payload.creatorSlugs?.length?`<p class="muted">Creado por ${esc(creatorNames(payload.creatorSlugs).join(' · '))}</p>`:''}</div></div>`;
+  document.body.append(preview);preview.addEventListener('click',event=>{if(event.target===preview||event.target.closest('[data-close-preview]'))preview.remove();});
+}
+
+async function checkSession() {
+  try { const session=await api('/api/cms/session'); if(session.authenticated) await openCms(); }
+  catch { /* Keep the sign-in form available if the session endpoint is temporarily unavailable. */ }
+}
+checkSession();

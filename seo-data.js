@@ -548,7 +548,7 @@ export function resolvePage(pathname, origin, data = {}) {
     if (!comic) return null;
     const creators = (comic.creatorSlugs || []).map(slug => authorData.find(author => author.slug === slug)?.name).filter(Boolean);
     const description = comic.synopsis || `${comic.title}: consulta la portada y los créditos${creators.length ? ` de ${creators.join(', ')}` : ''} en el catálogo de Alpha Eve Studios.`;
-    return { path, kind: 'creativework', title: `${comic.title} — ${SITE_NAME}`, description: truncate(description), image: comic.cover || homeImage, comic };
+    return { path, kind: 'creativework', title: comic.seoTitle || `${comic.title} — ${SITE_NAME}`, description: truncate(comic.seoDescription || description), image: comic.cover || homeImage, comic };
   }
   match = path.match(/^\/authors\/([^/]+)$/);
   if (match) {
@@ -559,7 +559,7 @@ export function resolvePage(pathname, origin, data = {}) {
     const fallback = [linkedComics.length ? `Cómics: ${linkedComics.join(', ')}.` : '', linkedProjects.length ? `Proyectos: ${linkedProjects.join(', ')}.` : ''].filter(Boolean).join(' ');
     const description = author.bio || (fallback ? `${author.name} es creador de Alpha Eve Studios. ${fallback}` : `Perfil de ${author.name} en el directorio de creadores de Alpha Eve Studios.`);
     const authorImage = author.image && (/^(?:https?:)?\/\//i.test(author.image) || author.image.startsWith('/')) ? author.image : `/artistas/${encodeURIComponent(author.slug)}/perfil.jpg`;
-    return { path, kind: 'person', title: `${author.name} — ${SITE_NAME}`, description: truncate(description), image: authorImage, author };
+    return { path, kind: 'person', title: author.seoTitle || `${author.name} — ${SITE_NAME}`, description: truncate(author.seoDescription || description), image: authorImage, author };
   }
   match = path.match(/^\/projects\/([^/]+)$/);
   if (match) {
@@ -568,7 +568,7 @@ export function resolvePage(pathname, origin, data = {}) {
     const description = project.description || project.subtitle || project.storyCopy?.[0] || project.purposeCopy || `${project.title}${project.type ? ` · ${project.type}` : ''}${project.client ? ` · Proyecto para ${project.client}` : ''}.`;
     const hero = project.assets?.hero;
     const projectImage = hero ? (/^(?:https?:)?\/\//i.test(hero) || hero.startsWith('/') ? hero : `${project.assetDir}/${encodeURIComponent(hero)}`) : homeImage;
-    return { path, kind: 'creativework', title: `${project.title} — ${SITE_NAME}`, description: truncate(description), image: projectImage, project };
+    return { path, kind: 'creativework', title: project.seoTitle || `${project.title} — ${SITE_NAME}`, description: truncate(project.seoDescription || description), image: projectImage, project };
   }
   return null;
 }

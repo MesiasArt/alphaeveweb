@@ -28,7 +28,7 @@ export async function handleCms(request, env, url) {
   if (url.pathname === "/api/cms/content") {
     if (!await requireCms(request, env, url)) return json({ error: "No autorizado." }, 401);
     if (!env.CMS_DB) return json({ error: "Falta la vinculación D1 CMS_DB." }, 503);
-    if (request.method === "GET") return json(await listOverrides(env));
+    if (request.method === "GET") return json(await getContent(env, { includeUnpublished: true }));
     if (request.method !== "PUT" && request.method !== "DELETE") return json({ error: "Método no permitido." }, 405);
     if (!sameOrigin(request, url)) return json({ error: "Origen no permitido." }, 403);
     return saveContent(request, env);
@@ -55,7 +55,7 @@ export async function serveMedia(request, env, url) {
   return new Response(request.method === "HEAD" ? null : object.body, { headers });
 }
 
-export async function getContent(env) {
+export async function getContent(env, { includeUnpublished = false } = {}) {
   const data = {
     comics: structuredClone(seedComics),
     authors: structuredClone(seedAuthors),
@@ -76,7 +76,21 @@ export async function getContent(env) {
     if (index >= 0) list[index] = payload;
     else list.push(payload);
   }
+  if (!includeUnpublished) {
+    for (const type of TYPES) data[type] = data[type].filter(record => !isUnpublished(record.status));
+  }
+  // The record that owns a relationship is the source of truth. Derive the
+  // reverse links so editors never have to maintain duplicate slug arrays.
+  for (const author of data.authors) {
+    author.comicSlugs = data.comics.filter(comic => (comic.creatorSlugs || []).includes(author.slug)).map(comic => comic.slug);
+    author.projectSlugs = data.projects.filter(project => (project.creatorSlugs || []).includes(author.slug)).map(project => project.slug);
+  }
   return data;
+}
+
+function isUnpublished(status) {
+  const value = String(status || "published").trim().toLowerCase();
+  return ["draft", "borrador", "archived", "archivado"].includes(value);
 }
 
 export async function listOverrides(env) {
@@ -102,6 +116,14 @@ async function saveContent(request, env) {
   const { type, slug, payload } = body || {};
   if (!TYPES.has(type) || !validSlug(slug) || !payload || typeof payload !== "object" || Array.isArray(payload)) return json({ error: "Tipo, slug o registro inválido." }, 400);
   if (payload.slug !== slug) return json({ error: "El slug del registro debe coincidir con la clave y no puede cambiarse." }, 400);
+  const visibility = String(payload.status || "draft").trim().toLowerCase();
+  if (!isUnpublished(visibility)) {
+    if (type === "comics" && (!String(payload.title || "").trim() || !String(payload.cover || "").trim())) return json({ error: "Para publicar un cómic, completa el título y agrega una portada." }, 400);
+    if (type === "authors" && !String(payload.name || "").trim()) return json({ error: "Para publicar un perfil, escribe el nombre del creador." }, 400);
+    if (type === "projects" && (!String(payload.title || "").trim() || !String(payload.category || "").trim())) return json({ error: "Para publicar un proyecto, completa el título y la categoría." }, 400);
+  }
+  const arrayFields = type === "comics" ? ["genres", "creatorSlugs", "chapters", "gallery"] : type === "authors" ? ["specialties"] : ["categories", "creatorSlugs"];
+  if (arrayFields.some(key => payload[key] !== undefined && !Array.isArray(payload[key]))) return json({ error: "Hay una lista de contenido con un formato incorrecto." }, 400);
   const jsonPayload = JSON.stringify(payload);
   if (encoder.encode(jsonPayload).byteLength > MAX_JSON_BYTES) return json({ error: "El registro supera el límite de tamaño." }, 413);
   await env.CMS_DB.prepare("INSERT INTO cms_content (entity_type, slug, payload, is_deleted, updated_at) VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP) ON CONFLICT(entity_type, slug) DO UPDATE SET payload=excluded.payload, is_deleted=0, updated_at=CURRENT_TIMESTAMP").bind(type, slug, jsonPayload).run();

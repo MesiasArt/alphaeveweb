@@ -7,8 +7,9 @@
     "dev": "vite",
     "build": "vite build && node scripts/copy-site-assets.js",
     "preview": "vite preview",
-    "cf:dev": "npm run build && wrangler dev",
-    "deploy": "npm run build && wrangler deploy"
+    "test": "node --test",
+    "cf:dev": "pnpm run build && pnpm dlx wrangler dev",
+    "deploy": "pnpm run build && pnpm dlx wrangler deploy"
   },
   "devDependencies": {
     "vite": "^6.4.1"

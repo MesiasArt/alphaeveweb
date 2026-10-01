@@ -90,6 +90,7 @@ function collectLightboxItems(group) {
 }
 
 import { comics, authors, projects, originalIp, pageMetadata } from './seo-data.js';
+let liveCmsContent = {};
 function projectAsset(project, file) {
   if (!file) return '';
   if (/^(?:https?:)?\/\//i.test(file) || file.startsWith('/')) return file;
@@ -252,12 +253,20 @@ function authorBioHtml(author) {
 }
 
 function authorSocialsHtml(author) {
-  const handle = (author.social || author.role || author.slug || '').replace(/\s+/g, '').replace(/^@/, '');
-  if (!handle) return '';
-  const label = `@${handle}`;
+  const legacyHandle = (author.social || author.role || author.slug || '').replace(/\s+/g, '').replace(/^@/, '');
+  const socialHref = (value, base) => {
+    if (!value) return '';
+    if (/^https?:\/\//i.test(value)) return value;
+    return `${base}/${encodeURIComponent(String(value).replace(/^@/, '').replace(/\s+/g, ''))}`;
+  };
+  const instagram = author.instagram || legacyHandle;
+  const twitter = author.twitter || legacyHandle;
+  const website = /^https?:\/\//i.test(author.website || '') ? author.website : (author.website ? `https://${author.website}` : '');
+  if (!instagram && !twitter && !website) return '';
   const igIcon = '<svg class="social-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor"/></svg>';
   const xIcon = '<svg class="social-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 4h3.4l4.3 5.8L16.8 4H20l-6.1 7.1L20.4 20h-3.4l-4.7-6.3L7.2 20H4l6.5-7.6L4 4z"/></svg>';
-  return `<div class="author-socials"><p class="eyebrow">REDES</p><div class="author-social-links"><a class="author-social" href="https://instagram.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener noreferrer" aria-label="Instagram ${esc(label)}">${igIcon}<span>${esc(label)}</span></a><a class="author-social" href="https://x.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener noreferrer" aria-label="X ${esc(label)}">${xIcon}<span>${esc(label)}</span></a></div></div>`;
+  const links = [instagram ? `<a class="author-social" href="${esc(socialHref(instagram,'https://instagram.com'))}" target="_blank" rel="noopener noreferrer" aria-label="Instagram de ${esc(author.name)}">${igIcon}<span>Instagram</span></a>` : '', twitter ? `<a class="author-social" href="${esc(socialHref(twitter,'https://x.com'))}" target="_blank" rel="noopener noreferrer" aria-label="X de ${esc(author.name)}">${xIcon}<span>X</span></a>` : '', website ? `<a class="author-social" href="${esc(website)}" target="_blank" rel="noopener noreferrer">Sitio web ↗</a>` : ''].filter(Boolean).join('');
+  return `<div class="author-socials"><p class="eyebrow">REDES</p><div class="author-social-links">${links}</div></div>`;
 }
 
 function authorPage(author) {
@@ -302,19 +311,20 @@ async function mountAuthorGallery(author) {
 }
 function comicPage(comic) {
   const linkedAuthors = creatorsFor(comic);
-  const chapterSection = comic.chapters.length ? `<div class="chapter-grid">${comic.chapters.map(chapter => `<article class="chapter-card"><div class="chapter-art"><img src="${esc(chapter.cover)}" alt="${esc(comic.title)} — portada del ${esc(chapter.title)}" onerror="this.remove()"><span>PORTADA DEL CAPÍTULO POR AGREGAR</span></div><div><b>CAPÍTULO ${String(chapter.number).padStart(2, '0')}</b><h3>${esc(chapter.title)}</h3>${chapter.synopsis ? `<p>${esc(chapter.synopsis)}</p>` : ''}<p>${esc(chapter.status || 'Detalles por confirmar')}</p>${chapter.digitalUrl ? `<a href="${esc(chapter.digitalUrl)}">COMPRAR EDICIÓN DIGITAL ↗</a>` : ''}${chapter.physicalUrl ? `<a href="${esc(chapter.physicalUrl)}">COMPRAR EDICIÓN IMPRESA ↗</a>` : '<span class="purchase-unavailable">Enlace de compra por agregar</span>'}</div></article>`).join('')}</div>` : comic.format === 'One-shot' ? '<div class="detail-empty">Este oneshot se presenta como una obra única. Los enlaces de lectura y compra se agregarán cuando estén disponibles.</div>' : '<div class="detail-empty">Todavía no se ha agregado información de los capítulos.</div>';
+  const publicChapters = (comic.chapters || []).filter(chapter => !['draft','borrador','archived','archivado'].includes(String(chapter.status || 'published').toLowerCase()));
+  const chapterSection = publicChapters.length ? `<div class="chapter-grid">${publicChapters.map(chapter => `<article class="chapter-card"><div class="chapter-art"><img src="${esc(chapter.cover)}" alt="${esc(comic.title)} — portada del ${esc(chapter.title)}" onerror="this.remove()"><span>PORTADA DEL CAPÍTULO POR AGREGAR</span></div><div><b>CAPÍTULO ${String(chapter.number).padStart(2, '0')}</b><h3>${esc(chapter.title)}</h3>${chapter.synopsis ? `<p>${esc(chapter.synopsis)}</p>` : ''}${chapter.digitalUrl ? `<a href="${esc(chapter.digitalUrl)}">COMPRAR EDICIÓN DIGITAL ↗</a>` : ''}${chapter.physicalUrl ? `<a href="${esc(chapter.physicalUrl)}">COMPRAR EDICIÓN IMPRESA ↗</a>` : '<span class="purchase-unavailable">Enlace de compra por agregar</span>'}</div></article>`).join('')}</div>` : comic.format === 'One-shot' ? '<div class="detail-empty">Este oneshot se presenta como una obra única. Los enlaces de lectura y compra se agregarán cuando estén disponibles.</div>' : '<div class="detail-empty">Todavía no se ha agregado información de los capítulos.</div>';
   const charSection = comic.characters.length ? `<div class="character-grid">${comic.characters.map(character => `<article class="character-card"><div class="character-art">${character.image ? `<img src="${esc(character.image)}" alt="${esc(character.name)}">` : 'ILUSTRACIÓN POR AGREGAR'}</div><h3>${esc(character.name)}</h3></article>`).join('')}</div>` : '<div class="detail-empty">Los nombres e ilustraciones de los personajes se agregarán aquí.</div>';
   const gallery = comic.gallery.length
     ? `<div class="comic-gallery" data-lightbox-group>${comic.gallery.map(image => `<figure class="gallery-tile">${lightboxTrigger({ src: image.src, caption: image.alt || comic.title, alt: image.alt || comic.title })}</figure>`).join('')}</div>`
     : '<div class="detail-empty">Aquí se agregarán arte promocional, bocetos y páginas interiores.</div>';
   const heroBanner = `/series/hero-banners/${comic.slug}.jpg`;
   const cover = `<div class="comic-key-art"><img src="${esc(heroBanner)}" alt="Banner de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src='${esc(comic.cover)}'}else{this.remove()}"><small>ORIGINAL DE ALPHA EVE</small><strong>${esc(comic.initials)}</strong><span>ARTE CLAVE POR AGREGAR</span></div>`;
-  const coverGallery = `<figure class="cover-image">${lightboxTrigger({ src: comic.cover, caption: 'Portada principal', alt: `Portada principal de ${comic.title}` })}<figcaption>PORTADA PRINCIPAL</figcaption></figure>`;
+  const coverGallery = `<figure class="cover-image">${lightboxTrigger({ src: comic.cover, caption: 'Portada principal', alt: `Portada principal de ${comic.title}` })}<figcaption>PORTADA PRINCIPAL</figcaption></figure>${comic.backCover ? `<figure class="cover-image">${lightboxTrigger({ src: comic.backCover, caption: 'Contraportada', alt: `Contraportada de ${comic.title}` })}<figcaption>CONTRAPORTADA</figcaption></figure>` : ''}`;
   const formatBadge = comic.format === 'One-shot' ? '<span class="series-badge oneshot-badge">TOMO ÚNICO · ONESHOT</span>' : comic.format === 'Series' ? `<span class="series-badge">SERIE · ${comic.availableChapters} CAPÍTULO${comic.availableChapters === 1 ? '' : 'S'}${comic.chapterCount !== comic.availableChapters ? ` · ${comic.availableChapters} DE ${comic.chapterCount}` : ''}</span>` : '<span class="series-badge">FORMATO POR CONFIRMAR</span>';
   const genreText = comic.genres?.length ? comic.genres.map(esc).join(' · ') : 'Géneros por agregar';
   return `<section class="detail-shell comic-detail">
     <a class="detail-back" href="/comics" data-route>← Todos los cómics</a>
-    <div class="series-hero-banner">${cover}<div class="series-hero-shade"></div><div class="series-hero-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE · CÓMIC / MANGA</p><h1>${esc(comic.title)}<span class="red">.</span></h1><div class="series-badges">${formatBadge}<span class="series-badge">GÉNERO · ${genreText}</span></div><p class="series-hero-synopsis">${esc(comic.synopsis || 'La sinopsis estará disponible próximamente.')}</p><a class="button button-light" href="#chapters">Leer o comprar <span>↘</span></a></div></div>
+    <div class="series-hero-banner">${cover}<div class="series-hero-shade"></div><div class="series-hero-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE · ${esc(comic.medium || 'CÓMIC / MANGA')}</p><h1>${esc(comic.title)}<span class="red">.</span></h1><div class="series-badges">${formatBadge}<span class="series-badge">GÉNERO · ${genreText}</span></div><p class="series-hero-synopsis">${esc(comic.synopsis || 'La sinopsis estará disponible próximamente.')}</p><a class="button button-light" href="#chapters">Leer o comprar <span>↘</span></a></div></div>
     <section class="detail-block synopsis-block"><p class="eyebrow">LA HISTORIA</p><h2>Sinopsis</h2><p class="series-synopsis">${esc(comic.synopsis || 'La sinopsis de esta historia se agregará aquí.')}</p></section>
     <section class="detail-block" id="chapters"><p class="eyebrow">LEE LA HISTORIA</p><h2>Capítulos</h2>${chapterSection}</section>
     <section class="detail-block"><p class="eyebrow">PORTADAS</p><h2>Galería de portadas</h2><div class="cover-gallery" data-lightbox-group>${coverGallery}${comic.variants?.length ? comic.variants.map(image => `<figure class="cover-image">${lightboxTrigger({ src: image, caption: 'Portada alternativa', alt: `Portada alternativa de ${comic.title}` })}<figcaption>PORTADA ALTERNATIVA</figcaption></figure>`).join('') : '<div class="detail-empty">Las portadas alternativas y especiales aparecerán aquí cuando estén disponibles.</div>'}</div></section>
@@ -1011,7 +1021,7 @@ function setHeadMeta(selector, attribute, key, value) {
   element.setAttribute('content', value);
 }
 function applySeoMetadata() {
-  const metadata = pageMetadata(location.pathname, location.origin);
+  const metadata = pageMetadata(location.pathname, location.origin, liveCmsContent);
   const existingRobots = document.head.querySelector('meta[name="robots"]');
   if (!metadata) {
     if (existingRobots) existingRobots.remove();
@@ -1162,6 +1172,7 @@ async function hydrateCmsContent() {
     const response = await fetch('/api/content', { cache: 'no-store' });
     if (!response.ok) return;
     const content = await response.json();
+    liveCmsContent = content;
     for (const [key, target] of [['comics', comics], ['authors', authors], ['projects', projects]]) {
       if (Array.isArray(content[key])) target.splice(0, target.length, ...content[key]);
     }
