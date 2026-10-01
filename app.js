@@ -309,17 +309,28 @@ async function mountAuthorGallery(author) {
     return `<figure class="gallery-tile">${lightboxTrigger({ src, caption: label, alt: `${nick} · ${label}` })}</figure>`;
   }).join('');
 }
-function chapterCreditsHtml(chapter) {
-  const creatorEntries=(chapter.credits||[]).map(item=>({name:authors.find(author=>author.slug===item.creatorSlug)?.name,roles:item.roles||[]})).filter(item=>item.name);
-  const externalEntries=(chapter.externalCredits||[]).map(item=>typeof item==='string'?{name:item,roles:[]}:item).filter(item=>item.name);
-  const entries=[...creatorEntries,...externalEntries];
+function workAuthorSlugs(comic) {
+  return comic.workAuthorSlugs || (comic.creatorSlugs || []).filter(slug => /^(autor(?:\/a)?|obra(?: completa)?|creador(?:\/a)?)$/i.test(String(comic.creatorCredits?.[slug] || '').trim()));
+}
+function chapterCreditsHtml(chapter, comic) {
+  const authorSlugs = workAuthorSlugs(comic);
+  const creatorEntries=(chapter.credits||[]).map(item=>({slug:item.creatorSlug,name:authors.find(author=>author.slug===item.creatorSlug)?.name,roles:item.roles||[]})).filter(item=>item.name);
+  const authorsInChapter = authorSlugs.map(slug=>({slug,name:authors.find(author=>author.slug===slug)?.name,roles:['Autor de la obra']})).filter(item=>item.name);
+  for (const item of creatorEntries) {
+    const author = authorsInChapter.find(entry=>entry.slug===item.slug);
+    if (author) author.roles.push(...item.roles.filter(role=>!author.roles.includes(role)));
+  }
+  const entries=[...authorsInChapter,...creatorEntries.filter(item=>!authorSlugs.includes(item.slug)),...(chapter.externalCredits||[]).map(item=>typeof item==='string'?{name:item,roles:[]}:item).filter(item=>item.name)];
   if(!entries.length)return '';
-  return `<div class="chapter-public-credits"><strong>Equipo y créditos del capítulo</strong><ul>${entries.map(item=>`<li><span>${esc(item.name)}</span>${item.roles?.length?`<small>${esc(item.roles.join(' · '))}</small>`:''}</li>`).join('')}</ul></div>`;
+  return `<div class="chapter-public-credits"><strong>Autor de la obra y colaboradores</strong><ul>${entries.map(item=>`<li><span>${esc(item.name)}</span>${item.roles?.length?`<small>${esc(item.roles.join(' · '))}</small>`:''}</li>`).join('')}</ul></div>`;
 }
 function comicPage(comic) {
   const linkedAuthors = creatorsFor(comic);
+  const workAuthors = new Set(workAuthorSlugs(comic));
+  const linkedWorkAuthors = linkedAuthors.filter(author=>workAuthors.has(author.slug));
+  const linkedCollaborators = linkedAuthors.filter(author=>!workAuthors.has(author.slug));
   const publicChapters = (comic.chapters || []).filter(chapter => !['draft','borrador','archived','archivado'].includes(String(chapter.status || 'published').toLowerCase()));
-  const chapterSection = publicChapters.length ? `<div class="chapter-grid">${publicChapters.map(chapter => `<article class="chapter-card"><div class="chapter-art"><img src="${esc(chapter.cover)}" alt="${esc(comic.title)} — portada del ${esc(chapter.title)}" onerror="this.remove()"><span>PORTADA DEL CAPÍTULO POR AGREGAR</span></div><div><b>CAPÍTULO ${String(chapter.number).padStart(2, '0')}</b><h3>${esc(chapter.title)}</h3>${chapter.synopsis ? `<p>${esc(chapter.synopsis)}</p>` : ''}${chapterCreditsHtml(chapter)}${chapter.digitalUrl ? `<a href="${esc(chapter.digitalUrl)}">COMPRAR EDICIÓN DIGITAL ↗</a>` : ''}${chapter.physicalUrl ? `<a href="${esc(chapter.physicalUrl)}">COMPRAR EDICIÓN IMPRESA ↗</a>` : '<span class="purchase-unavailable">Enlace de compra por agregar</span>'}</div></article>`).join('')}</div>` : comic.format === 'One-shot' ? '<div class="detail-empty">Este oneshot se presenta como una obra única. Los enlaces de lectura y compra se agregarán cuando estén disponibles.</div>' : '<div class="detail-empty">Todavía no se ha agregado información de los capítulos.</div>';
+  const chapterSection = publicChapters.length ? `<div class="chapter-grid">${publicChapters.map(chapter => `<article class="chapter-card"><div class="chapter-art"><img src="${esc(chapter.cover)}" alt="${esc(comic.title)} — portada del ${esc(chapter.title)}" onerror="this.remove()"><span>PORTADA DEL CAPÍTULO POR AGREGAR</span></div><div><b>CAPÍTULO ${String(chapter.number).padStart(2, '0')}</b><h3>${esc(chapter.title)}</h3>${chapter.synopsis ? `<p>${esc(chapter.synopsis)}</p>` : ''}${chapterCreditsHtml(chapter, comic)}${chapter.digitalUrl ? `<a href="${esc(chapter.digitalUrl)}">COMPRAR EDICIÓN DIGITAL ↗</a>` : ''}${chapter.physicalUrl ? `<a href="${esc(chapter.physicalUrl)}">COMPRAR EDICIÓN IMPRESA ↗</a>` : '<span class="purchase-unavailable">Enlace de compra por agregar</span>'}</div></article>`).join('')}</div>` : comic.format === 'One-shot' ? '<div class="detail-empty">Este oneshot se presenta como una obra única. Los enlaces de lectura y compra se agregarán cuando estén disponibles.</div>' : '<div class="detail-empty">Todavía no se ha agregado información de los capítulos.</div>';
   const charSection = comic.characters.length ? `<div class="character-grid">${comic.characters.map(character => `<article class="character-card"><div class="character-art">${character.image ? `<img src="${esc(character.image)}" alt="${esc(character.name)}">` : 'ILUSTRACIÓN POR AGREGAR'}</div><h3>${esc(character.name)}</h3></article>`).join('')}</div>` : '<div class="detail-empty">Los nombres e ilustraciones de los personajes se agregarán aquí.</div>';
   const gallery = comic.gallery.length
     ? `<div class="comic-gallery" data-lightbox-group>${comic.gallery.map(image => `<figure class="gallery-tile">${lightboxTrigger({ src: image.src, caption: image.alt || comic.title, alt: image.alt || comic.title })}</figure>`).join('')}</div>`
@@ -337,7 +348,7 @@ function comicPage(comic) {
     <section class="detail-block"><p class="eyebrow">PORTADAS</p><h2>Galería de portadas</h2><div class="cover-gallery" data-lightbox-group>${coverGallery}${comic.variants?.length ? comic.variants.map(image => `<figure class="cover-image">${lightboxTrigger({ src: image, caption: 'Portada alternativa', alt: `Portada alternativa de ${comic.title}` })}<figcaption>PORTADA ALTERNATIVA</figcaption></figure>`).join('') : '<div class="detail-empty">Las portadas alternativas y especiales aparecerán aquí cuando estén disponibles.</div>'}</div></section>
     <section class="detail-block"><p class="eyebrow">PERSONAJES</p><h2>Conoce al elenco</h2>${charSection}</section>
     <section class="detail-block"><p class="eyebrow">ARTE Y PROCESO</p><h2>Galería</h2>${gallery}</section>
-    <section class="detail-block"><p class="eyebrow">CREADO POR</p><h2>Sus creadores</h2>${linkedAuthors.length ? `<div class="creator-grid comic-creators">${linkedAuthors.map(author => authorCard(author, { credit: comic.creatorCredits?.[author.slug] || '' })).join('')}</div>` : '<div class="detail-empty">Los créditos de creación se vincularán aquí cuando se confirmen.</div>'}${comic.externalCredits?.length ? `<div class="comic-credits">${comic.externalCredits.map(line => `<p>${esc(line)}</p>`).join('')}</div>` : ''}</section>
+    <section class="detail-block"><p class="eyebrow">CRÉDITOS DE LA OBRA</p><h2>Autoría y colaboradores</h2>${linkedWorkAuthors.length ? `<h3 class="credit-group-title">Autoría de la obra</h3><div class="creator-grid comic-creators">${linkedWorkAuthors.map(author => authorCard(author, { credit: 'Autor / dueño de la obra' })).join('')}</div>` : ''}${linkedCollaborators.length ? `<h3 class="credit-group-title">Colaboradores</h3><div class="creator-grid comic-creators">${linkedCollaborators.map(author => authorCard(author, { credit: comic.creatorCredits?.[author.slug] || 'Colaborador' })).join('')}</div>` : ''}${!linkedAuthors.length ? '<div class="detail-empty">Los créditos de creación se vincularán aquí cuando se confirmen.</div>' : ''}${comic.externalCredits?.length ? `<div class="comic-credits"><strong>Colaboradores externos</strong>${comic.externalCredits.map(line => `<p>${esc(line)}</p>`).join('')}</div>` : ''}</section>
     <section class="detail-block"><p class="eyebrow">DESCUBRE MÁS</p><h2>Más de Alpha Eve</h2><div class="comic-directory-grid">${comics.filter(entry => entry.slug !== comic.slug).map(comicCard).join('')}</div></section>
   </section>`;
 }

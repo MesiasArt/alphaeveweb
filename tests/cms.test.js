@@ -170,15 +170,17 @@ test('first authenticated editor load backfills existing series credits without 
   assert.deepEqual(after.creatorCredits,before.creatorCredits);
 });
 
-test('SEO uses editor overrides and keeps published routes while omitting drafts', async () => {
+test('SEO metadata is generated from page content and keeps published routes while omitting drafts', async () => {
   const env = makeEnv();
   const cookie = await signedIn(env);
   const payload = { slug: 'seo-audit-comic', title: 'SEO audit comic', cover: '/banner.jpg', synopsis: 'Descripción editorial.', seoTitle: 'Título SEO de prueba', seoDescription: 'Descripción SEO de prueba.', status: 'published' };
   await api(env, '/api/cms/content', { method: 'PUT', cookie, body: { type: 'comics', slug: payload.slug, payload } });
   const content = await getContent(env);
   const metadata = pageMetadata(`/comics/${payload.slug}`, 'https://alphaeve.example', content);
-  assert.equal(metadata.title, payload.seoTitle);
-  assert.equal(metadata.description, payload.seoDescription);
+  assert.equal(metadata.title, 'SEO audit comic — Alpha Eve Studios');
+  assert.equal(metadata.description, payload.synopsis);
+  assert.ok(metadata.title.length <= 70);
+  assert.ok(metadata.description.length <= 160);
   assert.ok(publicRoutes(content).includes(`/comics/${payload.slug}`));
   assert.equal(resolvePage('/comics/nonexistent-audit-slug', 'https://alphaeve.example', content), null);
 });
@@ -196,6 +198,7 @@ test('series creators and chapter credits stay separate in D1, API, and chapter 
   const series = {
     slug: 'credits-test-series', title: 'Test Series', cover: '/banner.jpg', status: 'published',
     creatorSlugs: ['francisco-test','darwin-test'],
+    workAuthorSlugs: ['francisco-test'],
     creatorCredits: { 'francisco-test': 'Guion', 'darwin-test': 'Portada' },
     chapters: [
       { id:'chapter-1', number:1, title:'Capítulo 1', status:'published', credits:[{creatorSlug:'francisco-test',roles:['Guion']},{creatorSlug:'darwin-test',roles:['Portada']}] },
@@ -207,6 +210,7 @@ test('series creators and chapter credits stay separate in D1, API, and chapter 
   let content = await getContent(env);
   let stored = content.comics.find(comic=>comic.slug===series.slug);
   assert.deepEqual(stored.creatorSlugs,['francisco-test','darwin-test']);
+  assert.deepEqual(stored.workAuthorSlugs,['francisco-test']);
   assert.deepEqual(stored.chapters[0].credits.map(credit=>credit.creatorSlug),['francisco-test','darwin-test']);
   assert.deepEqual(stored.chapters[1].credits.map(credit=>credit.creatorSlug),['francisco-test','carlos-test']);
   assert.deepEqual(stored.chapters[1].externalCredits,[{name:'Luz externa',roles:['Lettering'],order:0}]);

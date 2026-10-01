@@ -283,16 +283,20 @@ function mediaField(label, key, value, options = {}) {
 }
 function keyId(key) { return `media-${key.replace(/[^a-z0-9]+/gi, '-')}`; }
 function section(title, help, body) { return `<section class="editor-section"><h3>${title}</h3>${help ? `<p class="section-help">${help}</p>` : ''}${body}</section>`; }
+function workAuthorSlugsFor(record) {
+  return record.workAuthorSlugs || (record.creatorSlugs || []).filter(slug => /^(autor(?:\/a)?|obra(?: completa)?|creador(?:\/a)?)$/i.test(String(record.creatorCredits?.[slug] || '').trim()));
+}
 function creatorSection(record, type) {
   const chosen = Array.isArray(record.creatorSlugs) ? record.creatorSlugs : [];
   const roles = record.creatorCredits || {};
+  const workAuthors = new Set(workAuthorSlugsFor(record));
   const people = chosen.map(slug => findRecord('authors', slug)).filter(Boolean);
   const choices = allRecords('authors').filter(author => !chosen.includes(author.slug)).sort((a,b) => a.name.localeCompare(b.name, 'es'));
-  return section('Creadores', 'Busca personas del equipo y asigna el crédito de cada una.', `
+  return section('Autoría y colaboradores', 'Marca quién es autor o dueño de la obra. Esa persona aparecerá automáticamente en todos los capítulos; los demás son colaboradores.', `
     <div class="inline-add"><label class="field">Buscar creador<input type="search" data-creator-search placeholder="Escribe un nombre"></label>
       <label class="field">Seleccionar<select data-creator-choice><option value="">Elige una persona</option>${choices.map(author => `<option value="${esc(author.slug)}">${esc(author.name)}</option>`).join('')}</select></label>
       <button class="button secondary" type="button" data-add-creator>Agregar</button></div>
-    <div class="selected-list" data-creators-list>${people.length ? people.map(person => `<div class="selected-person" data-person="${esc(person.slug)}"><div><strong>${esc(person.name)}</strong><small>${esc(person.role || 'Creador')}</small></div><input data-person-credit value="${esc(roles[person.slug] || '')}" aria-label="Crédito de ${esc(person.name)}" placeholder="Rol o crédito"><button class="button quiet small" type="button" data-remove-person="${esc(person.slug)}" aria-label="Quitar a ${esc(person.name)}">Quitar</button></div>`).join('') : '<p class="muted">Aún no hay creadores vinculados.</p>'}</div>`);
+    <div class="selected-list" data-creators-list>${people.length ? people.map(person => `<div class="selected-person" data-person="${esc(person.slug)}"><div><strong>${esc(person.name)}</strong><small>${esc(person.role || 'Creador')}</small></div><label class="field">Tipo<select data-person-type><option value="collaborator"${workAuthors.has(person.slug)?'':' selected'}>Colaborador</option><option value="author"${workAuthors.has(person.slug)?' selected':''}>Autor / dueño de la obra</option></select></label><input data-person-credit value="${esc(roles[person.slug] || '')}" aria-label="Crédito de ${esc(person.name)}" placeholder="Rol o crédito"><button class="button quiet small" type="button" data-remove-person="${esc(person.slug)}" aria-label="Quitar a ${esc(person.name)}">Quitar</button></div>`).join('') : '<p class="muted">Aún no hay creadores vinculados.</p>'}</div>`);
 }
 function externalCreditsSection(record) {
   const credits = (record.externalCredits || []).map(value => typeof value === 'string' ? parseExternalCredit(value) : value);
@@ -322,14 +326,14 @@ function slugField(record, isNew, entityName) {
 }
 function chapterSection(record) {
   const chapters = record.chapters || [];
-  const seriesCreators = Array.isArray(record.creatorSlugs) ? record.creatorSlugs : [];
-  return section('Capítulos', chapters.length ? 'Edita la información y el equipo de cada capítulo. Los creadores generales no se asignan automáticamente.' : 'Este cómic todavía no tiene capítulos.', `<div data-chapter-list>${chapters.length ? chapters.map((chapter,index) => chapterEditor(chapter,index,index,seriesCreators)).join('') : '<p class="muted">Este cómic todavía no tiene capítulos.</p>'}</div><button class="button secondary small" type="button" data-add-chapter>+ Agregar capítulo</button>`);
+  const workAuthors = workAuthorSlugsFor(record);
+  return section('Capítulos', chapters.length ? 'El autor de la obra aparecerá en todos los capítulos. Asigna aquí los colaboradores que participaron en cada uno.' : 'Este cómic todavía no tiene capítulos.', `<div data-chapter-list>${chapters.length ? chapters.map((chapter,index) => chapterEditor(chapter,index,index,workAuthors)).join('') : '<p class="muted">Este cómic todavía no tiene capítulos.</p>'}</div><button class="button secondary small" type="button" data-add-chapter>+ Agregar capítulo</button>`);
 }
 function chapterEditor(chapter, index, originalIndex = index, seriesCreators = []) {
   const knownCreators = allRecords('authors').slice().sort((a,b)=>a.name.localeCompare(b.name,'es'));
   const seriesNames = seriesCreators.map(slug=>findRecord('authors',slug)?.name).filter(Boolean);
   const selectedSlugs = (chapter.credits || []).map(credit=>credit.creatorSlug);
-  const availableCreators = knownCreators.filter(author=>!selectedSlugs.includes(author.slug));
+  const availableCreators = knownCreators.filter(author=>!selectedSlugs.includes(author.slug) && !seriesCreators.includes(author.slug));
   const team = (chapter.credits || []).map((credit,creditIndex)=>chapterCreatorCredit(credit,creditIndex)).join('');
   const externalTeam = (chapter.externalCredits || []).map((credit,creditIndex)=>chapterExternalCredit(typeof credit === 'string' ? parseExternalCredit(credit) : credit,creditIndex)).join('');
   const chapterId = chapter.id || `chapter-${Number(chapter.number)||index+1}-${slugify(chapter.title)||'untitled'}`;
@@ -338,8 +342,8 @@ function chapterEditor(chapter, index, originalIndex = index, seriesCreators = [
     ${selectField('Estado del capítulo', 'chapter-status', normStatus(chapter.status || 'published'), [{value:'draft',label:'Borrador'},{value:'published',label:'Publicado'},{value:'archived',label:'Archivado'}])}
     ${field('Enlace de lectura (opcional)', 'chapter-digital', chapter.digitalUrl || '', { placeholder:'https://…' })}${field('Enlace de compra (opcional)', 'chapter-physical', chapter.physicalUrl || '', { placeholder:'https://…' })}</div>
     ${mediaField('Portada del capítulo', `chapter-${index}-cover`, chapter.cover || '', { ratio:'landscape' })}
-    <section class="chapter-credit-editor"><h4>Equipo y créditos del capítulo</h4><p class="field-hint">Elige solamente a las personas que trabajaron en este capítulo. La lista de la serie es una referencia.</p><div class="series-creator-reference"><strong>Creadores de la serie</strong><span>${seriesNames.length ? esc(seriesNames.join(' · ')) : 'No hay creadores generales asignados.'}</span></div>
-      <strong class="chapter-team-label">Créditos de este capítulo</strong><div class="chapter-credit-list" data-chapter-credit-list>${team || '<p class="muted">Todavía no hay creadores con créditos específicos.</p>'}</div>
+    <section class="chapter-credit-editor"><h4>Equipo y créditos del capítulo</h4><p class="field-hint">El autor de la obra se incluye automáticamente en todos los capítulos. Agrega aquí solo a los colaboradores de este capítulo.</p><div class="series-creator-reference"><strong>Autor de la obra · incluido siempre</strong><span>${seriesNames.length ? esc(seriesNames.join(' · ')) : 'Marca al autor en “Autoría y colaboradores” para incluirlo automáticamente.'}</span></div>
+      <strong class="chapter-team-label">Colaboradores de este capítulo</strong><div class="chapter-credit-list" data-chapter-credit-list>${team || '<p class="muted">Todavía no hay colaboradores específicos.</p>'}</div>
       <div class="inline-add chapter-credit-add"><label class="field">Buscar creador<input type="search" data-chapter-creator-search placeholder="Buscar creador…"></label><label class="field">Creador<select data-chapter-creator-choice><option value="">Selecciona un creador</option>${availableCreators.map(person=>`<option value="${esc(person.slug)}" data-search="${esc(person.name.toLocaleLowerCase())}">${esc(person.name)}</option>`).join('')}</select></label><button class="button secondary small" type="button" data-add-chapter-creator>+ Agregar creador</button></div>
       <strong class="chapter-team-label">Colaboradores externos de este capítulo</strong><div class="chapter-credit-list" data-chapter-external-list>${externalTeam || '<p class="muted">Todavía no hay colaboradores externos.</p>'}</div><button class="button secondary small" type="button" data-add-chapter-external>+ Agregar colaborador externo</button>
     </section></article>`;
@@ -392,7 +396,6 @@ function renderEditor() {
     sections += creatorSection(original,type) + externalCreditsSection(original) + gallerySection(original,type);
     sections += section('Créditos editoriales', 'Agrega aquí la descripción de créditos que ya utiliza la página del proyecto.', `<div class="form-grid">${field('Créditos', 'roleCopy', original.roleCopy || '', { type:'textarea', full:true, rows:4, placeholder:'Ilustración: … · Color: …' })}${field('Quién escribió la historia', 'storyBy', original.storyBy || '', { placeholder:'Nombre (opcional)' })}${field('Quién hizo la ilustración', 'illustrationBy', original.illustrationBy || '', { placeholder:'Nombre o créditos' })}</div>`);
   }
-  sections += section('Vista previa en buscadores', 'Opcional. Si lo dejas vacío, el sitio usará el título y la descripción normales.', `<div class="form-grid">${field('Título SEO', 'seoTitle', original.seoTitle || '', { full:true, maxlength:70, hint:'Recomendado: menos de 60 caracteres.' })}${field('Descripción SEO', 'seoDescription', original.seoDescription || '', { type:'textarea', full:true, rows:3, maxlength:180, hint:'Recomendado: 120–160 caracteres.' })}</div>`);
   const overlay = document.createElement('div');
   overlay.className = 'modal-backdrop'; overlay.innerHTML = `<section class="editor-drawer" role="dialog" aria-modal="true" aria-labelledby="editor-title"><header class="drawer-header"><div><p class="eyebrow">${isNew ? 'NUEVO CONTENIDO' : 'EDITAR CONTENIDO'}</p><h2 id="editor-title">${esc(isNew ? `Nuevo ${labels[type]}` : title)}</h2></div><div class="button-row"><button class="button secondary small" type="button" data-preview>Vista previa</button><button class="button quiet" type="button" data-close-editor aria-label="Cerrar editor">Cerrar</button></div></header><form data-editor-form novalidate><div class="drawer-body">${sections}<p class="muted">Las direcciones actuales del sitio se conservan. Los campos que dejes vacíos pueden completarse después.</p></div><footer class="drawer-footer"><button class="button quiet" type="button" data-close-editor>Cancelar</button><div class="button-row"><button class="button secondary save-draft" type="button" data-save-status="draft">Guardar borrador</button><button class="button primary" type="button" data-save-status="current">Guardar cambios</button><button class="button accent" type="button" data-save-status="published">Publicar</button></div></footer></form></section>`;
   document.body.append(overlay);
@@ -420,7 +423,7 @@ function bindEditor(overlay) {
     if (event.target.closest('[data-remove-external]')) event.target.closest('[data-external-credit]').remove();
     if (event.target.closest('[data-add-genre]')) addChip(overlay,'genre');
     if (event.target.closest('[data-add-chip]')) addChip(overlay,event.target.closest('[data-add-chip]').dataset.addChip);
-    if (event.target.closest('[data-add-chapter]')) { const list = $('[data-chapter-list]',overlay); list.querySelector('.muted')?.remove(); list.insertAdjacentHTML('beforeend',chapterEditor({},$$('[data-chapter-index]',list).length,null,state.editing.original.creatorSlugs||[])); renumberChapters(list); }
+  if (event.target.closest('[data-add-chapter]')) { const list = $('[data-chapter-list]',overlay); list.querySelector('.muted')?.remove(); const workAuthors=$$('[data-person]',overlay).filter(item=>$('[data-person-type]',item).value==='author').map(item=>item.dataset.person); list.insertAdjacentHTML('beforeend',chapterEditor({},$$('[data-chapter-index]',list).length,null,workAuthors)); renumberChapters(list); }
     if (event.target.closest('[data-remove-chapter]')) { event.target.closest('[data-chapter-index]').remove(); renumberChapters($('[data-chapter-list]',overlay)); }
     if (event.target.closest('[data-add-chapter-creator]')) addChapterCreator(event.target.closest('[data-chapter-index]'));
     if (event.target.closest('[data-remove-chapter-credit]')) { const card=event.target.closest('[data-chapter-index]');event.target.closest('[data-chapter-credit]').remove();syncChapterCreatorOptions(card); }
@@ -488,7 +491,7 @@ function addCreator(overlay) {
   const select = $('[data-creator-choice]',overlay); const slug = select.value; if (!slug) return;
   const author = findRecord('authors',slug); if (!author || $(`[data-person="${CSS.escape(slug)}"]`,overlay)) return;
   const node = $('[data-creators-list]',overlay); node.querySelector('.muted')?.remove();
-  node.insertAdjacentHTML('beforeend',`<div class="selected-person" data-person="${esc(slug)}"><div><strong>${esc(author.name)}</strong><small>${esc(author.role || 'Creador')}</small></div><input data-person-credit value="" aria-label="Crédito de ${esc(author.name)}" placeholder="Rol o crédito"><button class="button quiet small" type="button" data-remove-person="${esc(slug)}">Quitar</button></div>`);
+  node.insertAdjacentHTML('beforeend',`<div class="selected-person" data-person="${esc(slug)}"><div><strong>${esc(author.name)}</strong><small>${esc(author.role || 'Creador')}</small></div><label class="field">Tipo<select data-person-type><option value="collaborator" selected>Colaborador</option><option value="author">Autor / dueño de la obra</option></select></label><input data-person-credit value="" aria-label="Crédito de ${esc(author.name)}" placeholder="Rol o crédito"><button class="button quiet small" type="button" data-remove-person="${esc(slug)}">Quitar</button></div>`);
   select.querySelector(`option[value="${CSS.escape(slug)}"]`)?.remove(); select.value=''; $('[data-creator-search]',overlay).value=''; filterCreatorChoices(overlay,'');
 }
 function addChip(overlay,name) {
@@ -572,9 +575,9 @@ function serializeExternalCredits(overlay) {
   return $$('[data-external-credit]',overlay).map(card=>({name:formValue(card,'external-name'),role:formValue(card,'external-role')})).filter(item=>item.name||item.role).map(item=>item.role?`${item.role}: ${item.name}`:item.name);
 }
 function serializeCreators(overlay) {
-  const creatorSlugs=[];const creatorCredits={};
-  $$('[data-person]',overlay).forEach(item=>{const slug=item.dataset.person;creatorSlugs.push(slug);const credit=$('[data-person-credit]',item).value.trim();if(credit)creatorCredits[slug]=credit;});
-  return {creatorSlugs,creatorCredits};
+  const creatorSlugs=[];const creatorCredits={};const workAuthorSlugs=[];
+  $$('[data-person]',overlay).forEach(item=>{const slug=item.dataset.person;creatorSlugs.push(slug);if($('[data-person-type]',item).value==='author')workAuthorSlugs.push(slug);const credit=$('[data-person-credit]',item).value.trim();if(credit)creatorCredits[slug]=credit;});
+  return {creatorSlugs,creatorCredits,workAuthorSlugs};
 }
 function serializeGallery(overlay,type) {
   return $$('[data-gallery-card]',overlay).map(card=>{
@@ -597,7 +600,6 @@ function buildPayload(overlay,status) {
     payload.title=formValue(form,'title');payload.slug=formValue(form,'slug')||uniqueSlug(type,slugify(payload.title)||'borrador-proyecto');payload.category=formValue(form,'category');payload.categories=[...new Set([...(original.categories||[]).filter(value=>value!==original.category),payload.category].filter(Boolean))];payload.client=formValue(form,'client');payload.type=formValue(form,'type');payload.subtitle=formValue(form,'subtitle');payload.storyCopy=formValue(form,'description').split(/\n\s*\n/).map(part=>part.trim()).filter(Boolean);payload.externalUrl=formValue(form,'website');payload.roleCopy=formValue(form,'roleCopy');payload.storyBy=formValue(form,'storyBy');payload.illustrationBy=formValue(form,'illustrationBy');
     Object.assign(payload,serializeCreators(overlay));payload.externalCredits=serializeExternalCredits(overlay);payload.assets={...(payload.assets||{}),hero:$('[data-media-container="project-hero"] [data-media-value]',overlay)?.value||'',gallery:serializeGallery(overlay,'projects')};
   }
-  payload.seoTitle=formValue(form,'seoTitle');payload.seoDescription=formValue(form,'seoDescription');
   if(isNew && !payload.slug) payload.slug=`borrador-${type}-${Date.now()}`;
   return payload;
 }

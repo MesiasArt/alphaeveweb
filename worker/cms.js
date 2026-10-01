@@ -259,6 +259,7 @@ function validateComicCredits(comic, authors) {
   if (comic.creatorSlugs !== undefined && (!Array.isArray(comic.creatorSlugs) || new Set(comic.creatorSlugs).size !== comic.creatorSlugs.length)) return 'Revisa la lista de creadores generales: no puede haber personas repetidas.';
   const known = new Set(authors.map(author => author.slug));
   if ((comic.creatorSlugs || []).some(slug => typeof slug !== 'string' || !known.has(slug))) return 'Selecciona creadores que existan en el catálogo.';
+  if (comic.workAuthorSlugs !== undefined && (!Array.isArray(comic.workAuthorSlugs) || new Set(comic.workAuthorSlugs).size !== comic.workAuthorSlugs.length || comic.workAuthorSlugs.some(slug => !known.has(slug) || !(comic.creatorSlugs || []).includes(slug)))) return 'Los autores de la obra deben ser creadores vinculados y no repetirse.';
   if (!Array.isArray(comic.chapters || [])) return 'La lista de capítulos no tiene un formato válido.';
   const ids = new Set();
   for (const chapter of comic.chapters || []) {
