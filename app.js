@@ -123,7 +123,7 @@ function authorCard(author, options = {}) {
 function comicCard(comic, index = 0) {
   return `<a class="comic-card" href="/comics/${comic.slug}" data-route>
     <div class="comic-card-art"><span class="comic-edition">ORIGINAL DE ALPHA EVE · ${String(index + 1).padStart(2, '0')}</span>${comic.cover ? `<img src="${esc(comic.cover)}" alt="Portada de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()">` : ''}<strong>${esc(comic.initials)}</strong><span class="comic-art-note">PORTADA POR AGREGAR</span></div>
-    <div class="comic-card-copy"><h3>${esc(comic.title)}</h3><p>${esc(comic.genres?.length ? comic.genres.join(' · ') : 'Géneros por agregar')} <span>·</span> ${esc(comic.format === 'One-shot' ? 'Tomo único (oneshot)' : comic.format === 'Series' ? `Serie · ${comic.availableChapters || 0}${comic.chapterCount && comic.chapterCount !== comic.availableChapters ? ` de ${comic.chapterCount}` : ''} capítulos` : 'Formato por confirmar')}</p><span class="comic-card-arrow">↗</span></div>
+    <div class="comic-card-copy"><h3>${esc(comic.title)}</h3><p>${esc(comic.genres?.length ? comic.genres.join(' · ') : 'Géneros por agregar')} <span>·</span> ${esc(comicCatalogType(comic) || 'Tipo por confirmar')} <span>·</span> ${esc(comic.format === 'One-shot' ? 'Tomo único (oneshot)' : comic.format === 'Series' ? `Serie · ${comic.availableChapters || 0}${comic.chapterCount && comic.chapterCount !== comic.availableChapters ? ` de ${comic.chapterCount}` : ''} capítulos` : 'Formato por confirmar')}</p><span class="comic-card-arrow">↗</span></div>
   </a>`;
 }
 function ipCard(item) {
@@ -150,8 +150,12 @@ function authorDirectory() {
 function normalizedTitle(value) {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 }
-const genreOptions = ['Acción', 'Misterio', 'Gore +18', 'Slice of Life', 'Psicológico', 'Isekai', 'Kaiju', 'Ecchi +18', 'Fantasía', 'Cyberpunk', 'Comedia', 'Superhéroes', 'Crimen', 'Vampiros', 'Shonen', 'Aventura', 'Noir', 'Deportivo', 'Sobrenatural', 'Detective', 'Zombies', 'Shojo', 'Horror', 'Mecha', 'Histórico', 'Thriller', 'Artes Marciales', 'Steampunk', 'Seinen', 'Sci-Fi', 'Romance', 'Drama', 'Suspenso', 'Magia', 'Western', 'Josei'];
+const genreOptions = ['Acción', 'Kaiju', 'Crimen', 'Sobrenatural', 'Histórico', 'Romance', 'Misterio', 'Ecchi +18', 'Vampiros', 'Detective', 'Thriller', 'Drama', 'Gore +18', 'Fantasía', 'Shonen', 'Zombies', 'Artes Marciales', 'Suspenso', 'Slice of Life', 'Cyberpunk', 'Aventura', 'Shojo', 'Steampunk', 'Magia', 'Psicológico', 'Comedia', 'Noir', 'Horror', 'Seinen', 'Western', 'Isekai', 'Superhéroes', 'Deportivo', 'Mecha', 'Sci-Fi', 'Josei'];
 const catalogTypes = ['Comics', 'Manga', 'Cuentos Infantiles', 'Novelas', 'Artbooks', 'Otros'];
+function comicCatalogType(comic) {
+  if (comic.catalogType) return comic.catalogType;
+  return ({ 'Manga':'Manga', 'Novela gráfica':'Novelas', 'Novelas':'Novelas', 'Artbook':'Artbooks', 'Artbooks':'Artbooks', 'Cuentos Infantiles':'Cuentos Infantiles', 'Otro':'Otros', 'Otros':'Otros' }[comic.medium] || 'Comics');
+}
 function comicDirectory() {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   return `<section class="directory-page comics-directory"><div class="directory-heading"><a class="detail-back" href="/" data-route>← Inicio</a><p class="eyebrow">ALPHA EVE STUDIOS · PUBLICACIONES</p><h1>CATÁLOGO<span class="red">.</span></h1><p>Historias y mundos originales publicados por Alpha Eve. Selecciona un título para conocer a sus creadores y su arte.</p><div class="directory-count">${comics.length} TÍTULOS</div></div><div class="catalog-types"><p>FORMATO</p><div>${['', ...catalogTypes].map(type => `<button type="button" data-catalog-type="${esc(type)}" ${type === activeCatalogType ? 'class="active"' : ''}>${type ? esc(type) : 'TODOS'}</button>`).join('')}</div></div><div class="catalog-filters"><label class="catalog-search"><span>BUSCAR TÍTULOS</span><input id="comic-search" type="search" placeholder="Buscar títulos…" autocomplete="off"></label><fieldset class="catalog-genres"><legend>FILTRAR POR GÉNERO</legend><p class="genre-filter-note">Selecciona uno o más géneros. Puedes asignar los géneros a cada título más adelante.</p><div class="genre-filter-grid">${genreOptions.map(genre => `<label><input type="checkbox" data-comic-genre value="${esc(genre)}"><span>${esc(genre)}</span></label>`).join('')}</div></fieldset></div><nav class="catalog-letters" aria-label="Filtrar cómics por letra inicial"><button type="button" class="active" data-comic-letter="">TODOS</button>${letters.map(letter => `<button type="button" data-comic-letter="${letter}" ${comics.some(comic => normalizedTitle(comic.title).startsWith(letter)) ? '' : 'disabled'}>${letter}</button>`).join('')}</nav><p id="catalog-results-line" class="catalog-results-line" aria-live="polite"></p><div class="comic-directory-grid" id="comic-directory-grid"></div><div class="directory-subsection"><p class="eyebrow">MÁS MUNDOS ORIGINALES</p><div class="ip-grid">${originalIp.map(ipCard).join('')}</div></div></section>`;
@@ -167,12 +171,12 @@ function renderComicCatalog() {
   const filtered = comics.filter(comic => {
     const title = normalizedTitle(comic.title);
     return (!activeComicLetter || title.startsWith(activeComicLetter))
-      && (!activeCatalogType || comic.catalogType === activeCatalogType)
+      && (!activeCatalogType || comicCatalogType(comic) === activeCatalogType)
       && (!activeComicGenres.length || activeComicGenres.some(genre => comic.genres?.includes(genre)))
       && (!query || title.includes(query));
   });
   const selectedGenresAssigned = comics.some(comic => activeComicGenres.some(genre => comic.genres?.includes(genre)));
-  const selectedTypeAssigned = comics.some(comic => comic.catalogType === activeCatalogType);
+  const selectedTypeAssigned = comics.some(comic => comicCatalogType(comic) === activeCatalogType);
   grid.innerHTML = filtered.length
     ? filtered.map(comic => comicCard(comic, comics.indexOf(comic))).join('')
     : `<p class="catalog-empty">${activeCatalogType && !selectedTypeAssigned ? 'Todavía no hay títulos en este formato.' : activeComicGenres.length && !selectedGenresAssigned ? 'Todavía no hay títulos asignados a los géneros seleccionados.' : 'Ningún título coincide con estos filtros.'}</p>`;
@@ -344,7 +348,7 @@ function comicPage(comic) {
   const genreText = comic.genres?.length ? comic.genres.map(esc).join(' · ') : 'Géneros por agregar';
   return `<section class="detail-shell comic-detail">
     <a class="detail-back" href="/comics" data-route>← Todos los cómics</a>
-    <div class="series-hero-banner">${cover}<div class="series-hero-shade"></div><div class="series-hero-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE · ${esc(comic.medium || 'CÓMIC / MANGA')}</p><h1>${esc(comic.title)}<span class="red">.</span></h1><div class="series-badges">${formatBadge}<span class="series-badge">GÉNERO · ${genreText}</span></div><a class="button button-light" href="#reading">Leer o comprar <span>↘</span></a></div></div>
+    <div class="series-hero-banner">${cover}<div class="series-hero-shade"></div><div class="series-hero-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE · ${esc(comicCatalogType(comic) || comic.medium || 'CÓMIC / MANGA')}</p><h1>${esc(comic.title)}<span class="red">.</span></h1><div class="series-badges">${formatBadge}<span class="series-badge">GÉNERO · ${genreText}</span></div><a class="button button-light" href="#reading">Leer o comprar <span>↘</span></a></div></div>
     <section class="detail-block synopsis-block"><p class="eyebrow">LA HISTORIA</p><h2>Sinopsis</h2>${String(comic.synopsis || '').trim() ? `<p class="series-synopsis">${esc(comic.synopsis)}</p>` : ''}</section>
     ${readingSection}
     ${coverGallery}

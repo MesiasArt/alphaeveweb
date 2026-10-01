@@ -3,8 +3,9 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const root = $('#page-content');
 const loginView = $('#login-view');
 const cmsView = $('#cms-view');
-const state = { content: null, user: null, route: 'dashboard', filter: '', statusFilter: 'all', genreFilter: 'all', formatFilter: 'all', editing: null, toastTimer: null };
-const genres = ['Acción', 'Aventura', 'Comedia', 'Drama', 'Fantasía', 'Horror', 'Romance', 'Ciencia ficción', 'Misterio', 'Terror'];
+const state = { content: null, user: null, route: 'dashboard', filter: '', statusFilter: 'all', genreFilter: 'all', formatFilter: 'all', catalogTypeFilter: 'all', editing: null, toastTimer: null };
+const genres = ['Acción', 'Kaiju', 'Crimen', 'Sobrenatural', 'Histórico', 'Romance', 'Misterio', 'Ecchi +18', 'Vampiros', 'Detective', 'Thriller', 'Drama', 'Gore +18', 'Fantasía', 'Shonen', 'Zombies', 'Artes Marciales', 'Suspenso', 'Slice of Life', 'Cyberpunk', 'Aventura', 'Shojo', 'Steampunk', 'Magia', 'Psicológico', 'Comedia', 'Noir', 'Horror', 'Seinen', 'Western', 'Isekai', 'Superhéroes', 'Deportivo', 'Mecha', 'Sci-Fi', 'Josei'];
+const catalogTypes = ['Comics', 'Manga', 'Cuentos Infantiles', 'Novelas', 'Artbooks', 'Otros'];
 const creditRoles = ['Obra', 'Obra completa', 'Guion', 'Historia', 'Arte', 'Dibujo', 'Tinta', 'Color', 'Portada', 'Lettering', 'Rotulación', 'Traducción', 'Edición', 'Diseño', 'Asistencia'];
 const entityForRoute = { comics: 'comics', creators: 'authors', projects: 'projects' };
 const labels = { comics: 'cómic', authors: 'creador', projects: 'proyecto' };
@@ -145,7 +146,7 @@ function routeFromLocation(focus = true) {
 function navigate(path, replace = false) {
   history[replace ? 'replaceState' : 'pushState']({}, '', path);
   state.filter = '';
-  state.statusFilter = 'all'; state.genreFilter = 'all'; state.formatFilter = 'all';
+  state.statusFilter = 'all'; state.genreFilter = 'all'; state.formatFilter = 'all'; state.catalogTypeFilter = 'all';
   routeFromLocation();
 }
 window.addEventListener('popstate', () => routeFromLocation());
@@ -265,17 +266,18 @@ function renderCatalog(type) {
     return text.includes(state.filter.toLocaleLowerCase())
       && (state.statusFilter === 'all' || normStatus(record.status) === state.statusFilter)
       && (!isComic || state.genreFilter === 'all' || (record.genres || []).includes(state.genreFilter))
-      && (!isComic || state.formatFilter === 'all' || record.format === state.formatFilter);
+      && (!isComic || state.formatFilter === 'all' || record.format === state.formatFilter)
+      && (!isComic || state.catalogTypeFilter === 'all' || (record.catalogType || '') === state.catalogTypeFilter);
   });
   const sortRecords = [...records].sort((a,b) => displayName(a).localeCompare(displayName(b), 'es'));
-  const genreOptions = [...new Set(allRecords('comics').flatMap(item => item.genres || []))].sort((a,b) => a.localeCompare(b, 'es'));
+  const genreOptions = [...new Set([...genres, ...allRecords('comics').flatMap(item => item.genres || [])])].sort((a,b) => a.localeCompare(b, 'es'));
   const canCreate = state.user?.role === 'admin';
   root.innerHTML = `
     <div class="page-heading"><div><p class="eyebrow">${state.user?.role==='author'?'TU ESPACIO DE AUTOR':'CATÁLOGO EDITORIAL'}</p><h1>${title}</h1><p>${state.user?.role==='author'&&isComic?'Aquí aparecen únicamente los cómics donde eres autor de la obra.':subtitle}</p></div>${canCreate?`<button class="button accent" data-create="${type}" type="button">+ Nuevo ${isComic ? 'cómic' : isCreator ? 'creador' : 'proyecto'}</button>`:''}</div>
     <div class="catalog-toolbar">
       <label class="field search-field"><span class="screen-reader">Buscar ${title.toLowerCase()}</span><input type="search" id="catalog-search" placeholder="Buscar por nombre o cliente" value="${esc(state.filter)}"></label>
       <label class="field"><span class="screen-reader">Filtrar por estado</span><select id="status-filter"><option value="all">Todos los estados</option><option value="published">Publicados</option><option value="draft">Borradores</option><option value="archived">Archivados</option></select></label>
-      ${isComic ? `<label class="field"><span class="screen-reader">Filtrar por género</span><select id="genre-filter"><option value="all">Todos los géneros</option>${genreOptions.map(item => `<option value="${esc(item)}">${esc(item)}</option>`).join('')}</select></label><label class="field"><span class="screen-reader">Filtrar por formato</span><select id="format-filter"><option value="all">Todos los formatos</option>${['One-shot','Series'].map(item => `<option value="${item}">${item === 'One-shot' ? 'Tomo único' : 'Serie'}</option>`).join('')}</select></label>` : ''}
+      ${isComic ? `<label class="field"><span class="screen-reader">Filtrar por género</span><select id="genre-filter"><option value="all">Todos los géneros</option>${genreOptions.map(item => `<option value="${esc(item)}">${esc(item)}</option>`).join('')}</select></label><label class="field"><span class="screen-reader">Filtrar por formato de lectura</span><select id="format-filter"><option value="all">Todos los formatos de lectura</option>${['One-shot','Series'].map(item => `<option value="${item}">${item === 'One-shot' ? 'Tomo único' : 'Serie'}</option>`).join('')}</select></label><label class="field"><span class="screen-reader">Filtrar por tipo de publicación</span><select id="catalog-type-filter"><option value="all">Todos los tipos de publicación</option>${catalogTypes.map(item => `<option value="${esc(item)}">${esc(item)}</option>`).join('')}</select></label>` : ''}
     </div>
     <div class="section-heading"><div><h2>${sortRecords.length} ${title.toLocaleLowerCase()}</h2><p>Selecciona una tarjeta para editar su información.</p></div></div>
     ${sortRecords.length ? `<div class="catalog-grid">${sortRecords.map(record => catalogCard(type, record)).join('')}</div>` : `<div class="empty-state"><h3>${state.user?.role==='author'?'No hay cómics asignados a tu autoría.':'No encontramos contenido con esos filtros.'}</h3><p>${canCreate?'Prueba con otra búsqueda o crea un registro nuevo.':'Contacta con administración para revisar la asignación de autoría.'}</p>${canCreate?`<button class="button secondary" data-create="${type}" type="button">Crear ${isComic ? 'cómic' : isCreator ? 'creador' : 'proyecto'}</button>`:''}</div>`}`;
@@ -287,6 +289,8 @@ function renderCatalog(type) {
     $('#genre-filter', root).addEventListener('change', event => { state.genreFilter = event.target.value; renderCatalog(type); });
     $('#format-filter', root).value = state.formatFilter;
     $('#format-filter', root).addEventListener('change', event => { state.formatFilter = event.target.value; renderCatalog(type); });
+    $('#catalog-type-filter', root).value = state.catalogTypeFilter;
+    $('#catalog-type-filter', root).addEventListener('change', event => { state.catalogTypeFilter = event.target.value; renderCatalog(type); });
   }
   $('[data-create]', root)?.addEventListener('click', event => createRecord(event.currentTarget.dataset.create));
   $$('.record-card', root).forEach(card => card.addEventListener('click', () => {
@@ -299,7 +303,7 @@ function catalogCard(type, record) {
   const photo = isComic ? record.cover : isCreator ? imageUrl(record.image, 'authors', record) : projectImage(record);
   const personNames = creatorNames(record.creatorSlugs || []);
   const chapterCount = (record.chapters || []).length;
-  const meta = isComic ? [record.format === 'One-shot' ? 'Tomo único' : record.format === 'Series' ? 'Serie' : 'Formato por agregar', record.medium || 'Cómic / manga', `${chapterCount} capítulos`] : isCreator ? [record.role || 'Rol por agregar', `${(record.comicSlugs || []).length} cómics`, `${(record.projectSlugs || []).length} proyectos`] : [record.category || 'Categoría por agregar', record.client || 'Proyecto del estudio'];
+  const meta = isComic ? [record.catalogType || record.medium || 'Tipo por agregar', record.format === 'One-shot' ? 'Tomo único' : record.format === 'Series' ? 'Serie' : 'Formato por agregar', `${chapterCount} capítulos`] : isCreator ? [record.role || 'Rol por agregar', `${(record.comicSlugs || []).length} cómics`, `${(record.projectSlugs || []).length} proyectos`] : [record.category || 'Categoría por agregar', record.client || 'Proyecto del estudio'];
   return `<button class="record-card" type="button" data-slug="${esc(record.slug)}">
     <span class="record-image">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" onerror="this.remove()">` : 'AE'}</span>
     <span class="record-info"><span>${statusBadge(record.status)}</span><h3>${esc(displayName(record))}</h3><span class="record-meta">${meta.map(esc).join(' · ')}</span>${personNames.length ? `<span class="record-creators">${esc(personNames.join(' · '))}</span>` : ''}</span>
@@ -308,7 +312,7 @@ function catalogCard(type, record) {
 
 function createRecord(type) {
   const template = type === 'comics'
-    ? { title: '', slug: '', initials: '', medium: 'Cómic', format: 'Series', language: 'Español', status: 'draft', genres: [], synopsis: '', cover: '', backCover: '', creatorSlugs: [], creatorCredits: {}, externalCredits: [], chapters: [], characters: [], gallery: [] }
+    ? { title: '', slug: '', initials: '', catalogType: 'Comics', medium: 'Cómic', format: 'Series', language: 'Español', status: 'draft', genres: [], synopsis: '', cover: '', backCover: '', creatorSlugs: [], creatorCredits: {}, externalCredits: [], chapters: [], characters: [], gallery: [] }
     : type === 'authors'
       ? { name: '', slug: '', role: '', image: '', bio: '', specialties: [], social: '', instagram: '', twitter: '', website: '', comicSlugs: [], projectSlugs: [] }
       : { title: '', slug: '', category: '', categories: [], client: '', type: '', subtitle: '', storyCopy: [], assetDir: '', creatorSlugs: [], creatorCredits: {}, externalCredits: [], assets: { gallery: [] } };
@@ -446,8 +450,9 @@ function renderEditor() {
   const isComic = type === 'comics'; const isCreator = type === 'authors';
   const title = displayName(original);
   const entityName = isComic ? 'comics' : isCreator ? 'authors' : 'projects';
+  const inferredCatalogType = original.catalogType || ({ 'Manga':'Manga', 'Novela gráfica':'Novelas', 'Novelas':'Novelas', 'Artbook':'Artbooks', 'Artbooks':'Artbooks', 'Cuentos Infantiles':'Cuentos Infantiles', 'Otro':'Otros', 'Otros':'Otros' }[original.medium] || 'Comics');
   const basic = isComic
-    ? section('Información básica', 'Empieza con el título. El enlace se genera automáticamente.', `<div class="form-grid">${field('Título', 'title', original.title, { placeholder:'Ej. La Armadura de mi Hermano', full:true })}${selectField('Tipo o medio', 'medium', original.medium || 'Cómic', ['Cómic','Manga','Novela gráfica','Webcómic','Ilustración','Otro'].map(value=>({value,label:value})))}${selectField('Formato', 'format', original.format || '', [{value:'',label:'Seleccionar formato'},{value:'One-shot',label:'Tomo único'},{value:'Series',label:'Serie'},{value:'Novela gráfica',label:'Novela gráfica'},{value:'Otro',label:'Otro'}])}${selectField('Idioma', 'language', original.language || 'Español', ['Español','Inglés','Bilingüe','Otro'].map(value=>({value,label:value})))}${field('Iniciales para portada', 'initials', original.initials || '', { placeholder:'Ej. ARMADURA', hint:'Se usan si todavía no hay portada.' })}${statusField(original)}</div>${slugField(original,isNew,'comics')}`)
+    ? section('Información básica', 'Elige el tipo de publicación y si se publica como serie o tomo único.', `<div class="form-grid">${field('Título', 'title', original.title, { placeholder:'Ej. La Armadura de mi Hermano', full:true })}${selectField('Formato de catálogo', 'catalogType', inferredCatalogType, [{value:'',label:'Seleccionar formato'}, ...catalogTypes.map(value=>({value,label:value}))], { hint:'Cómics, manga, cuentos, novelas, artbooks u otros.' })}${selectField('Presentación', 'format', original.format || '', [{value:'',label:'Seleccionar presentación'},{value:'One-shot',label:'Tomo único'},{value:'Series',label:'Serie'},...(original.format && !['One-shot','Series'].includes(original.format) ? [{value:original.format,label:`${original.format} (actual)`}] : [])], { hint:'Indica si es una obra completa o una serie por capítulos.' })}${selectField('Idioma', 'language', original.language || 'Español', ['Español','Inglés','Bilingüe','Otro'].map(value=>({value,label:value})))}${field('Iniciales para portada', 'initials', original.initials || '', { placeholder:'Ej. ARMADURA', hint:'Se usan si todavía no hay portada.' })}${statusField(original)}</div>${slugField(original,isNew,'comics')}`)
     : isCreator
       ? section('Información básica', 'Nombre, perfil y formas de contacto del creador.', `<div class="form-grid">${field('Nombre', 'name', original.name, { placeholder:'Nombre y apellido', full:true })}${field('Nombre público o seudónimo', 'role', original.role || '', { placeholder:'Nombre artístico' })}${field('Rol principal', 'primaryRole', original.primaryRole || '', { placeholder:'Ilustrador, guionista…' })}${field('Instagram', 'instagram', original.instagram || original.social || '', { placeholder:'@usuario o enlace' })}${field('X / Twitter', 'twitter', original.twitter || original.social || '', { placeholder:'@usuario o enlace' })}${field('Sitio web', 'website', original.website || '', { placeholder:'https://…' })}${field('Biografía', 'bio', original.bio || '', { type:'textarea', full:true, rows:5 })}${statusField(original)}</div>${slugField(original,isNew,'authors')}`)
       : section('Información del proyecto', 'Conserva la categoría y los datos existentes; completa solo lo que tengas.', `<div class="form-grid">${field('Título', 'title', original.title, { placeholder:'Nombre del proyecto', full:true })}${selectField('Categoría', 'category', original.category || '', projectCategoryChoices(original.category))}${field('Cliente', 'client', original.client || '', { placeholder:'Nombre del cliente (opcional)' })}${field('Tipo de trabajo', 'type', original.type || '', { placeholder:'Ilustración editorial, cómic…' })}${field('Subtítulo', 'subtitle', original.subtitle || '', { full:true, placeholder:'Frase corta para presentar el proyecto' })}${field('Descripción', 'description', projectDescription(original), { type:'textarea', full:true, rows:6, hint:'Separa cada párrafo con una línea en blanco.' })}${field('Sitio web', 'website', original.externalUrl || '', { placeholder:'https://…' })}${statusField(original)}</div>${slugField(original,isNew,'projects')}`);
@@ -672,7 +677,7 @@ function buildPayload(overlay,status) {
   payload.status=normalizedStatus || 'draft';
   if(type==='comics') {
     payload.title=formValue(form,'title');payload.slug=formValue(form,'slug')||uniqueSlug(type,slugify(payload.title)||'borrador-comic');payload.initials=formValue(form,'initials')||payload.title.slice(0,18).toLocaleUpperCase();
-    payload.medium=formValue(form,'medium');payload.format=formValue(form,'format');payload.language=formValue(form,'language');payload.synopsis=formValue(form,'synopsis');payload.cover=$('[data-media-container="comic-cover"] [data-media-value]',overlay)?.value||'';payload.backCover=$('[data-media-container="comic-back-cover"] [data-media-value]',overlay)?.value||'';
+    payload.catalogType=formValue(form,'catalogType');payload.format=formValue(form,'format');payload.language=formValue(form,'language');payload.synopsis=formValue(form,'synopsis');payload.cover=$('[data-media-container="comic-cover"] [data-media-value]',overlay)?.value||'';payload.backCover=$('[data-media-container="comic-back-cover"] [data-media-value]',overlay)?.value||'';
     payload.genres=collectChips(overlay,'[data-genre-list] input');Object.assign(payload,serializeCreators(overlay));payload.externalCredits=serializeExternalCredits(overlay);payload.chapters=serializeChapters(overlay,original.chapters||[]);payload.gallery=serializeGallery(overlay,'comics');
     if(payload.chapters.length){payload.chapterCount=Math.max(...payload.chapters.map(ch=>ch.number));payload.availableChapters=payload.chapters.filter(ch=>normStatus(ch.status)==='published').length;}
   } else if(type==='authors') {
