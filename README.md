@@ -1,6 +1,6 @@
 # Alpha Eve Studios
 
-Responsive creative studio and publisher site for the 2007–2027 anniversary.
+Responsive creative studio and publisher site for the 2006–2026 anniversary.
 
 ## Run locally
 
