@@ -18,28 +18,36 @@ export async function handleCms(request, env, url) {
   if (url.pathname === "/api/cms/login") return login(request, env, url);
   if (url.pathname === "/api/cms/session") {
     if (request.method !== "GET") return json({ error: "Método no permitido." }, 405);
-    return json({ authenticated: await isAuthenticated(request, env) }, 200, { "cache-control": "no-store" });
+    const user = await getSession(request, env);
+    return json({ authenticated: !!user, user: user || null }, 200, { "cache-control": "no-store" });
   }
+  if (url.pathname === "/api/cms/users") return manageUsers(request, env, url);
+  if (url.pathname === "/api/cms/password") return changePassword(request, env, url);
   if (url.pathname === "/api/cms/logout") {
     if (request.method !== "POST") return json({ error: "Método no permitido." }, 405);
     if (!sameOrigin(request, url)) return json({ error: "Origen no permitido." }, 403);
     return json({ ok: true }, 200, { "set-cookie": cookie(url, "", 0) });
   }
   if (url.pathname === "/api/cms/content") {
-    if (!await requireCms(request, env, url)) return json({ error: "No autorizado." }, 401);
+    const user = await requireCms(request, env, url);
+    if (!user) return json({ error: "No autorizado." }, 401);
     if (!env.CMS_DB) return json({ error: "Falta la vinculación D1 CMS_DB." }, 503);
     if (request.method === "GET") {
       await ensureCreditModel(env);
-      return json(await getContent(env, { includeUnpublished: true }));
+      const content = await getContent(env, { includeUnpublished: true });
+      return json(user.role === 'admin' ? content : authorWorkspace(content, user.authorSlug));
     }
     if (request.method !== "PUT" && request.method !== "DELETE") return json({ error: "Método no permitido." }, 405);
     if (!sameOrigin(request, url)) return json({ error: "Origen no permitido." }, 403);
-    return saveContent(request, env);
+    if (user.mustChangePassword) return json({ error: "Cambia tu contraseña temporal antes de editar contenido." }, 403);
+    return saveContent(request, env, user);
   }
   if (url.pathname === "/api/cms/media") {
-    if (!await requireCms(request, env, url)) return json({ error: "No autorizado." }, 401);
+    const user = await requireCms(request, env, url);
+    if (!user) return json({ error: "No autorizado." }, 401);
     if (request.method !== "POST") return json({ error: "Método no permitido." }, 405);
     if (!sameOrigin(request, url)) return json({ error: "Origen no permitido." }, 403);
+    if (user.mustChangePassword) return json({ error: "Cambia tu contraseña temporal antes de subir archivos." }, 403);
     return uploadMedia(request, env);
   }
   return json({ error: "No encontrado." }, 404);
@@ -195,7 +203,7 @@ export async function listOverrides(env) {
   return results.map(row => ({ ...row, payload: row.is_deleted ? null : safeParse(row.payload) }));
 }
 
-async function saveContent(request, env) {
+async function saveContent(request, env, user) {
   if (!env.CMS_DB) return json({ error: "Falta la vinculación D1 CMS_DB." }, 503);
   await ensureCreditModel(env);
   if (request.method === "DELETE") {
@@ -203,6 +211,7 @@ async function saveContent(request, env) {
     try { body = await request.json(); } catch { return json({ error: "JSON inválido." }, 400); }
     const { type, slug } = body || {};
     if (!TYPES.has(type) || !validSlug(slug)) return json({ error: "Tipo o slug inválido." }, 400);
+    if (user.role !== 'admin') return json({ error: 'Solo administración puede eliminar o restablecer contenido.' }, 403);
     if (type === 'authors') {
       const { results = [] } = await env.CMS_DB.prepare("SELECT comic_slug FROM cms_credits WHERE creator_slug = ? LIMIT 1").bind(slug).all();
       if (results.length) return json({ error: 'Este creador tiene créditos asociados. Retira primero sus créditos antes de eliminar su perfil.' }, 409);
@@ -231,6 +240,25 @@ async function saveContent(request, env) {
   const { type, slug, payload } = body || {};
   if (!TYPES.has(type) || !validSlug(slug) || !payload || typeof payload !== "object" || Array.isArray(payload)) return json({ error: "Tipo, slug o registro inválido." }, 400);
   if (payload.slug !== slug) return json({ error: "El slug del registro debe coincidir con la clave y no puede cambiarse." }, 400);
+  if (user.role !== 'admin') {
+    if (type === 'projects' || !['authors','comics'].includes(type)) return json({ error: 'Tu cuenta solo puede editar tu perfil y los cómics donde figuras como autor de la obra.' }, 403);
+    if (type === 'authors' && slug !== user.authorSlug) return json({ error: 'Solo puedes editar tu propio perfil.' }, 403);
+    if (type === 'authors') {
+      const current = await getContent(env, { includeUnpublished: true });
+      const ownProfile = current.authors.find(author => author.slug === user.authorSlug);
+      if (!ownProfile) return json({ error: 'No se encontró tu perfil.' }, 404);
+      payload.status = ownProfile.status;
+      payload.slug = ownProfile.slug;
+    }
+    if (type === 'comics') {
+      const current = await getContent(env, { includeUnpublished: true });
+      const oldComic = current.comics.find(item => item.slug === slug);
+      if (!oldComic || !workAuthors(oldComic).includes(user.authorSlug)) return json({ error: 'Solo puedes editar los cómics donde figuras como autor de la obra.' }, 403);
+      payload.workAuthorSlugs = workAuthors(oldComic);
+      payload.creatorSlugs = oldComic.creatorSlugs || [];
+      payload.creatorCredits = oldComic.creatorCredits || {};
+    }
+  }
   const currentContent = type === 'comics' ? await getContent(env, { includeUnpublished: true }) : null;
   if (type === 'comics') {
     const creditError = validateComicCredits(payload, currentContent.authors);
@@ -310,29 +338,144 @@ async function login(request, env, url) {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   if (isLoginLimited(ip)) return json({ error: "Demasiados intentos. Inténtalo de nuevo en 15 minutos." }, 429);
   const body = await request.json().catch(() => null);
-  if (!body || typeof body.password !== "string" || body.password.length > 200 || !constantTimeEqual(body.password, env.CMS_ADMIN_PASSWORD)) {
+  if (!body || typeof body.password !== "string" || body.password.length > 200) {
     recordLoginFailure(ip);
     return json({ error: "Contraseña incorrecta." }, 401);
   }
+  const username = String(body.username || '').trim().toLowerCase();
+  let user;
+  if (!username || username === 'admin') {
+    if (constantTimeEqual(body.password, env.CMS_ADMIN_PASSWORD)) user = { role: 'admin', username: 'admin', mustChangePassword: false };
+  } else if (env.CMS_DB && /^[a-z0-9][a-z0-9._-]{2,49}$/.test(username)) {
+    const row = await env.CMS_DB.prepare("SELECT user_id, username, author_slug, password_salt, password_hash, is_active, must_change_password FROM cms_users WHERE username = ? COLLATE NOCASE LIMIT 1").bind(username).first();
+    if (row?.is_active && constantTimeEqual(await hashPassword(body.password, row.password_salt), row.password_hash)) user = { role: 'author', username: row.username, userId: row.user_id, authorSlug: row.author_slug, mustChangePassword: !!row.must_change_password };
+  }
+  if (!user) {
+    recordLoginFailure(ip);
+    return json({ error: "Usuario o contraseña incorrectos." }, 401);
+  }
   loginAttempts.delete(ip);
   const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 12;
-  const token = await sign(`${expires}`, env.CMS_SESSION_SECRET);
-  return json({ ok: true }, 200, { "set-cookie": cookie(url, `${expires}.${token}`, 60 * 60 * 12) });
+  const token = await signSession({ ...user, exp: expires }, env.CMS_SESSION_SECRET);
+  return json({ ok: true, user }, 200, { "set-cookie": cookie(url, token, 60 * 60 * 12) });
 }
 
 async function requireCms(request, env, url) {
   if (!sameOrigin(request, url)) return false;
-  return isAuthenticated(request, env);
+  return getSession(request, env);
 }
 
-async function isAuthenticated(request, env) {
+async function getSession(request, env) {
   if (!env.CMS_SESSION_SECRET) return false;
   const token = parseCookies(request.headers.get("cookie") || "").ae_cms;
   if (!token) return false;
-  const [expiry, signature, extra] = token.split(".");
-  const expires = Number(expiry);
-  if (extra || !Number.isInteger(expires) || expires < Date.now() / 1000) return false;
-  return constantTimeEqual(signature || "", await sign(expiry, env.CMS_SESSION_SECRET));
+  const [encoded, signature, extra] = token.split(".");
+  if (extra || !encoded || !constantTimeEqual(signature || "", await sign(encoded, env.CMS_SESSION_SECRET))) return false;
+  let session;
+  try { const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/'); session = JSON.parse(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '='))); } catch {
+    // Accept pre-migration administrator sessions until they expire.
+    const expires = Number(encoded);
+    if (signature && Number.isInteger(expires) && expires >= Date.now() / 1000 && constantTimeEqual(signature, await sign(encoded, env.CMS_SESSION_SECRET))) return { role: 'admin', username: 'admin', mustChangePassword: false };
+    return false;
+  }
+  if (!Number.isInteger(session.exp) || session.exp < Date.now() / 1000) return false;
+  if (session.role === 'admin') return { role: 'admin', username: 'admin', mustChangePassword: false };
+  if (session.role !== 'author' || !env.CMS_DB || !session.userId || !session.authorSlug) return false;
+  const row = await env.CMS_DB.prepare("SELECT user_id, username, author_slug, is_active, must_change_password FROM cms_users WHERE user_id = ? LIMIT 1").bind(session.userId).first();
+  if (!row?.is_active || row.author_slug !== session.authorSlug) return false;
+  return { role: 'author', username: row.username, userId: row.user_id, authorSlug: row.author_slug, mustChangePassword: !!row.must_change_password };
+}
+
+function workAuthors(comic) {
+  return comic.workAuthorSlugs || (comic.creatorSlugs || []).filter(slug => String(comic.creatorCredits?.[slug] || '').split(/\s*·\s*/).some(role=>/^(autor(?:\/a)?|obra(?: completa)?|creador(?:\/a)?)$/i.test(role.trim())));
+}
+function authorWorkspace(data, authorSlug) {
+  const comics = data.comics.filter(comic => workAuthors(comic).includes(authorSlug));
+  return {
+    comics,
+    authors: data.authors.filter(author => author.slug === authorSlug).map(author => ({ ...author, comicSlugs: comics.map(comic => comic.slug), projectSlugs: [] })),
+    projects: [],
+  };
+}
+
+async function signSession(session, secret) {
+  const encoded = btoa(JSON.stringify(session)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `${encoded}.${await sign(encoded, secret)}`;
+}
+
+function randomToken(bytes = 16) {
+  const value = crypto.getRandomValues(new Uint8Array(bytes));
+  return btoa(String.fromCharCode(...value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function hashPassword(password, salt) {
+  const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const encodedSalt = salt.replace(/-/g, '+').replace(/_/g, '/');
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: Uint8Array.from(atob(encodedSalt.padEnd(Math.ceil(encodedSalt.length / 4) * 4, '=')), c => c.charCodeAt(0)), iterations: 120000 }, key, 256);
+  return btoa(String.fromCharCode(...new Uint8Array(bits))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function changePassword(request, env, url) {
+  if (request.method !== 'POST') return json({ error: 'Método no permitido.' }, 405);
+  if (!sameOrigin(request, url)) return json({ error: 'Origen no permitido.' }, 403);
+  const user = await requireCms(request, env, url);
+  if (!user || user.role !== 'author') return json({ error: 'No autorizado.' }, 401);
+  const body = await request.json().catch(() => null);
+  const oldPassword = String(body?.currentPassword || ''), newPassword = String(body?.newPassword || '');
+  if (new TextEncoder().encode(newPassword).length < 12 || new TextEncoder().encode(newPassword).length > 256) return json({ error: 'La nueva contraseña debe tener entre 12 y 256 bytes.' }, 400);
+  const row = await env.CMS_DB.prepare('SELECT password_salt, password_hash FROM cms_users WHERE user_id = ?').bind(user.userId).first();
+  if (!row || !constantTimeEqual(await hashPassword(oldPassword, row.password_salt), row.password_hash)) return json({ error: 'La contraseña actual no coincide.' }, 401);
+  const salt = randomToken();
+  const hash = await hashPassword(newPassword, salt);
+  await env.CMS_DB.prepare('UPDATE cms_users SET password_salt = ?, password_hash = ?, must_change_password = 0, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?').bind(salt, hash, user.userId).run();
+  return json({ ok: true });
+}
+
+async function manageUsers(request, env, url) {
+  if (!env.CMS_DB) return json({ error: 'Falta la vinculación D1 CMS_DB.' }, 503);
+  const actor = await requireCms(request, env, url);
+  if (!actor || actor.role !== 'admin') return json({ error: 'Solo administración puede gestionar cuentas.' }, 403);
+  if (request.method === 'GET') {
+    const [{ results: rows = [] }, content] = await Promise.all([
+      env.CMS_DB.prepare('SELECT user_id, username, author_slug, is_active, must_change_password, created_at FROM cms_users ORDER BY username').all(),
+      getContent(env, { includeUnpublished: true }),
+    ]);
+    const users = rows.map(row => ({ ...row, active: !!row.is_active, mustChangePassword: !!row.must_change_password, authorName: content.authors.find(item => item.slug === row.author_slug)?.name || row.author_slug, comicCount: content.comics.filter(comic => workAuthors(comic).includes(row.author_slug)).length }));
+    return json({ users, availableAuthors: content.authors.filter(author => !rows.some(row => row.author_slug === author.slug)).map(author => ({ slug: author.slug, name: author.name })) });
+  }
+  if (request.method !== 'POST') return json({ error: 'Método no permitido.' }, 405);
+  if (!sameOrigin(request, url)) return json({ error: 'Origen no permitido.' }, 403);
+  const body = await request.json().catch(() => null);
+  const action = String(body?.action || '');
+  const authorSlug = String(body?.authorSlug || '');
+  if (!validSlug(authorSlug)) return json({ error: 'Selecciona un autor válido.' }, 400);
+  const content = await getContent(env, { includeUnpublished: true });
+  if (!content.authors.some(author => author.slug === authorSlug)) return json({ error: 'No existe un perfil para ese autor.' }, 400);
+  if (action === 'disable' || action === 'enable') {
+    const result = await env.CMS_DB.prepare('UPDATE cms_users SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE author_slug = ?').bind(action === 'enable' ? 1 : 0, authorSlug).run();
+    if (!result.meta?.changes) return json({ error: 'No existe una cuenta para ese autor.' }, 404);
+    return json({ ok: true });
+  }
+  const password = String(body?.password || '');
+  if (new TextEncoder().encode(password).length < 12 || new TextEncoder().encode(password).length > 256) return json({ error: 'La contraseña temporal debe tener entre 12 y 256 bytes.' }, 400);
+  const username = String(body?.username || authorSlug).trim().toLowerCase();
+  if (!/^[a-z0-9][a-z0-9._-]{2,49}$/.test(username)) return json({ error: 'El usuario debe tener entre 3 y 50 caracteres: letras, números, punto, guion o guion bajo.' }, 400);
+  const salt = randomToken();
+  const hash = await hashPassword(password, salt);
+  if (action === 'create') {
+    try {
+      await env.CMS_DB.prepare('INSERT INTO cms_users (user_id, username, author_slug, password_salt, password_hash, is_active, must_change_password) VALUES (?, ?, ?, ?, ?, 1, 1)').bind(crypto.randomUUID(), username, authorSlug, salt, hash).run();
+    } catch {
+      return json({ error: 'Ya existe una cuenta con ese usuario o autor.' }, 409);
+    }
+    return json({ ok: true, username, mustChangePassword: true }, 201);
+  }
+  if (action === 'reset') {
+    const result = await env.CMS_DB.prepare('UPDATE cms_users SET password_salt = ?, password_hash = ?, is_active = 1, must_change_password = 1, updated_at = CURRENT_TIMESTAMP WHERE author_slug = ?').bind(salt, hash, authorSlug).run();
+    if (!result.meta?.changes) return json({ error: 'No existe una cuenta para ese autor.' }, 404);
+    return json({ ok: true, mustChangePassword: true });
+  }
+  return json({ error: 'Acción de cuenta inválida.' }, 400);
 }
 
 async function sign(value, secret) {

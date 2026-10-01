@@ -18,6 +18,8 @@ Comic, author and project records are modeled in `seo-data.js`. Creator-to-comic
 
 The private editor is at `/admin`. It supports creating and editing comic, author and project records, restoring the original bundled version, and uploading raster images to R2. It uses the existing record shapes so project case pages, chapter data, credits, galleries, relationship slugs and SEO metadata remain compatible. Public pages, sitemap, canonical/Open Graph metadata and JSON-LD read the merged content.
 
+The studio password remains the administrator login. Administrators can create individual author accounts in **Cuentas de autores**. Each author account can edit that author's profile and comics where the account holder is listed as a work author; contributor credits alone do not grant access. Temporary passwords are shown once, stored as salted PBKDF2 hashes, and must be changed at first login. Authors cannot edit author assignments or delete/reset content. Apply pending D1 migrations before deploying account changes.
+
 ### One-time Cloudflare setup
 
 1. Authenticate Wrangler with `pnpm dlx wrangler login`.

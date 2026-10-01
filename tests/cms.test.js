@@ -12,6 +12,7 @@ function makeEnv() {
   const creators = new Map();
   const comics = new Map();
   const migrationState = new Set();
+  const users = new Map();
   const db = {
     prepare(sql) {
       let values = [];
@@ -20,12 +21,23 @@ function makeEnv() {
         bind(...args) { values = args; return this; },
         async all() {
           if (sql.includes('FROM cms_content')) return { results: [...rows.values()] };
+          if (sql.includes('FROM cms_users')) return { results: [...users.values()] };
           if (sql.includes('FROM cms_migration_state')) return { results: migrationState.has(values[0] || 'credit_relationships_v1') ? [{ state_key: 'credit_relationships_v1' }] : [] };
           if (sql.includes('FROM cms_credits')) return { results: values.length ? credits.filter(row => row.creator_slug === values[0]).slice(0,1) : [...credits] };
           return { results: [] };
         },
+        async first() {
+          if (sql.includes('FROM cms_users') && sql.includes('WHERE username')) return [...users.values()].find(row => row.username.toLowerCase() === String(values[0]).toLowerCase()) || null;
+          if (sql.includes('FROM cms_users') && sql.includes('user_id')) return [...users.values()].find(row => row.user_id === values[0]) || null;
+          if (sql.includes('FROM cms_users') && sql.includes('author_slug')) return [...users.values()].find(row => row.author_slug === values[0]) || null;
+          return null;
+        },
         async run() {
-          if (sql.includes('INSERT INTO cms_content')) {
+          if (sql.includes('INSERT INTO cms_users')) { const [user_id,username,author_slug,password_salt,password_hash]=values; if([...users.values()].some(row=>row.author_slug===author_slug||row.username.toLowerCase()===username.toLowerCase()))throw new Error('duplicate');users.set(user_id,{user_id,username,author_slug,password_salt,password_hash,is_active:1,must_change_password:1}); }
+          else if (sql.includes('UPDATE cms_users SET is_active')) { const row=[...users.values()].find(item=>item.author_slug===values[1]);if(row)row.is_active=values[0];return {success:true,meta:{changes:row?1:0}}; }
+          else if (sql.includes('UPDATE cms_users SET password_salt') && sql.includes('WHERE author_slug')) { const row=[...users.values()].find(item=>item.author_slug===values.at(-1));if(row){row.password_salt=values[0];row.password_hash=values[1];row.is_active=1;row.must_change_password=1;}return {success:true,meta:{changes:row?1:0}}; }
+          else if (sql.includes('UPDATE cms_users SET password_salt')) { const row=users.get(values.at(-1));if(row){row.password_salt=values[0];row.password_hash=values[1];row.must_change_password=0;}return {success:true,meta:{changes:row?1:0}}; }
+          else if (sql.includes('INSERT INTO cms_content')) {
             const [entity_type, slug, payload] = values;
             rows.set(`${entity_type}:${slug}`, { entity_type, slug, payload, is_deleted: 0 });
           } else if (sql.includes('DELETE FROM cms_content')) rows.delete(`${values.length === 1 ? 'comics' : values[0]}:${values.at(-1)}`);
@@ -113,6 +125,41 @@ test('admin authentication, draft visibility, publication validation, and relati
   assert.equal(publicData.comics.some(item => item.slug === draft.slug), false);
 });
 
+test('author accounts can edit only their profile and comics they own, with forced password change', async () => {
+  const env = makeEnv();
+  const admin = await signedIn(env);
+  for (const person of [{slug:'ana-owner',name:'Ana Owner',status:'published'},{slug:'luz-owner',name:'Luz Owner',status:'published'}]) {
+    assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:admin,body:{type:'authors',slug:person.slug,payload:person}})).status,200);
+  }
+  const owned = {slug:'ana-work',title:'Ana Work',cover:'/banner.jpg',status:'published',creatorSlugs:['ana-owner','luz-owner'],creatorCredits:{'ana-owner':'Autora','luz-owner':'Color'},workAuthorSlugs:['ana-owner'],chapters:[]};
+  const collaboratorOnly = {slug:'luz-work',title:'Luz Work',cover:'/banner.jpg',status:'published',creatorSlugs:['luz-owner','ana-owner'],creatorCredits:{'luz-owner':'Autora','ana-owner':'Color'},workAuthorSlugs:['luz-owner'],chapters:[]};
+  for (const comic of [owned,collaboratorOnly]) assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:admin,body:{type:'comics',slug:comic.slug,payload:comic}})).status,200);
+  const created = await api(env,'/api/cms/users',{method:'POST',cookie:admin,body:{action:'create',authorSlug:'ana-owner',username:'ana',password:'temporary-pass-123'}});
+  assert.equal(created.status,201);
+  const login = await api(env,'/api/cms/login',{method:'POST',body:{username:'ana',password:'temporary-pass-123'}});
+  assert.equal(login.status,200);
+  const authorCookie=login.headers.get('set-cookie').split(';')[0];
+  const session=await (await api(env,'/api/cms/session',{cookie:authorCookie})).json();
+  assert.equal(session.authenticated,true,JSON.stringify({login:await login.clone().json(),session}));
+  assert.equal(session.user.role,'author');
+  assert.equal(session.user.mustChangePassword,true);
+  let scoped=await (await api(env,'/api/cms/content',{cookie:authorCookie})).json();
+  assert.deepEqual(scoped.comics.map(item=>item.slug),['ana-work']);
+  assert.deepEqual(scoped.authors.map(item=>item.slug),['ana-owner']);
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'luz-work',payload:collaboratorOnly}})).status,403);
+  const forged={...owned,title:'Updated title',creatorSlugs:['luz-owner'],creatorCredits:{},workAuthorSlugs:['luz-owner']};
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'ana-work',payload:forged}})).status,403); // temporary password must be changed first
+  assert.equal((await api(env,'/api/cms/password',{method:'POST',cookie:authorCookie,body:{currentPassword:'temporary-pass-123',newPassword:'permanent-pass-456'}})).status,200);
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'ana-work',payload:forged}})).status,200);
+  scoped=await (await api(env,'/api/cms/content',{cookie:authorCookie})).json();
+  assert.equal(scoped.comics[0].title,'Updated title');
+  assert.deepEqual(scoped.comics[0].workAuthorSlugs,['ana-owner']);
+  assert.deepEqual(scoped.comics[0].creatorSlugs,['ana-owner','luz-owner']);
+  assert.equal((await api(env,'/api/cms/users',{cookie:authorCookie})).status,403);
+  await api(env,'/api/cms/users',{method:'POST',cookie:admin,body:{action:'disable',authorSlug:'ana-owner'}});
+  assert.equal((await (await api(env,'/api/cms/session',{cookie:authorCookie})).json()).authenticated,false);
+});
+
 test('media upload validates image signature and serves uploaded bytes', async () => {
   const env = makeEnv();
   const cookie = await signedIn(env);
@@ -140,11 +187,11 @@ test('login, same-origin checks, logout, and session invalidation', async () => 
   }), env, crossOriginUrl);
   assert.equal(crossOrigin.status, 403);
   const cookie = await signedIn(env);
-  assert.deepEqual(await (await api(env, '/api/cms/session', { cookie })).json(), { authenticated: true });
+  assert.deepEqual(await (await api(env, '/api/cms/session', { cookie })).json(), { authenticated: true, user: { role:'admin', username:'admin', mustChangePassword:false } });
   const logout = await api(env, '/api/cms/logout', { method: 'POST', cookie });
   assert.equal(logout.status, 200);
   const session = await (await api(env, '/api/cms/session')).json();
-  assert.deepEqual(session, { authenticated: false });
+  assert.deepEqual(session, { authenticated: false, user: null });
   assert.equal((await api(env, '/api/cms/content')).status, 401);
 });
 

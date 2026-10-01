@@ -3,7 +3,7 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const root = $('#page-content');
 const loginView = $('#login-view');
 const cmsView = $('#cms-view');
-const state = { content: null, route: 'dashboard', filter: '', statusFilter: 'all', genreFilter: 'all', formatFilter: 'all', editing: null, toastTimer: null };
+const state = { content: null, user: null, route: 'dashboard', filter: '', statusFilter: 'all', genreFilter: 'all', formatFilter: 'all', editing: null, toastTimer: null };
 const genres = ['Acción', 'Aventura', 'Comedia', 'Drama', 'Fantasía', 'Horror', 'Romance', 'Ciencia ficción', 'Misterio', 'Terror'];
 const creditRoles = ['Obra', 'Obra completa', 'Guion', 'Historia', 'Arte', 'Dibujo', 'Tinta', 'Color', 'Portada', 'Lettering', 'Rotulación', 'Traducción', 'Edición', 'Diseño', 'Asistencia'];
 const entityForRoute = { comics: 'comics', creators: 'authors', projects: 'projects' };
@@ -39,7 +39,12 @@ function projectImage(project, value = project.assets?.hero) {
 function creatorNames(slugs = []) { return slugs.map(slug => findRecord('authors', slug)?.name).filter(Boolean); }
 
 async function api(path, options = {}) {
-  const response = await fetch(path, { cache: 'no-store', credentials: 'same-origin', ...options });
+  let response;
+  try { response = await fetch(path, { cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(15000), ...options }); }
+  catch (error) {
+    if (error.name === 'TimeoutError' || error.name === 'AbortError') throw new Error('El CMS tardó demasiado en responder. Revisa tu conexión e inténtalo otra vez.');
+    throw new Error('No se pudo conectar con el CMS. Revisa tu conexión e inténtalo otra vez.');
+  }
   const result = await response.json().catch(() => ({}));
   if (response.status === 401) {
     logoutLocal();
@@ -63,6 +68,8 @@ function logoutLocal() {
   cmsView.hidden = true;
   loginView.hidden = false;
   state.content = null;
+  state.user = null;
+  applyRoleNavigation();
   closeEditor();
 }
 
@@ -74,9 +81,10 @@ $('#login-form').addEventListener('submit', async event => {
   button.disabled = true;
   message.textContent = 'Comprobando acceso…';
   try {
-    await api('/api/cms/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: new FormData(form).get('password') }) });
+    message.textContent = 'Verificando contraseña…';
+    const login = await api('/api/cms/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: new FormData(form).get('username'), password: new FormData(form).get('password') }) });
     form.reset();
-    await openCms();
+    await openCms(login.user);
   } catch (error) {
     message.textContent = error.message === 'Contraseña incorrecta.' ? 'La contraseña no coincide. Inténtalo otra vez.' : error.message;
   } finally { button.disabled = false; }
@@ -88,11 +96,26 @@ $('#logout').addEventListener('click', async () => {
   toast('Sesión cerrada.');
 });
 
-async function openCms() {
+function applyRoleNavigation() {
+  const admin = state.user?.role === 'admin';
+  $$('[data-admin-only]').forEach(link => link.hidden = !admin);
+  const dashboard = $('[data-route="dashboard"]');
+  const projects = $('[data-route="projects"]');
+  if (dashboard) dashboard.hidden = !admin;
+  if (projects) projects.hidden = !admin;
+}
+async function openCms(user) {
   loginView.hidden = true;
   cmsView.hidden = false;
   try {
+    state.user = user || (await api('/api/cms/session')).user;
+    if (state.user?.mustChangePassword) { state.content = null; applyRoleNavigation(); renderPasswordChange(true); return; }
     state.content = await api('/api/cms/content');
+    applyRoleNavigation();
+    if (state.user?.role === 'author') {
+      const requested=location.pathname.replace(/\/+$/,'').split('/')[2];
+      if(!['comics','creators','password'].includes(requested)){navigate('/admin/comics',true);return;}
+    }
     await routeFromLocation(false);
   } catch (error) {
     loginView.hidden = false;
@@ -103,7 +126,7 @@ async function openCms() {
 async function refreshContent() { state.content = await api('/api/cms/content'); }
 function routeFromLocation(focus = true) {
   const parts = location.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
-  const next = parts[1] === 'comics' ? 'comics' : parts[1] === 'creators' ? 'creators' : parts[1] === 'projects' ? 'projects' : 'dashboard';
+  const next = parts[1] === 'comics' ? 'comics' : parts[1] === 'creators' ? 'creators' : parts[1] === 'projects' ? 'projects' : parts[1] === 'users' ? 'users' : parts[1] === 'password' ? 'password' : 'dashboard';
   state.route = next;
   if (parts[2]) {
     const type = entityForRoute[next];
@@ -136,9 +159,48 @@ document.addEventListener('click', event => {
 });
 
 function renderRoute() {
+  root.onclick = null;
+  if (state.user?.role === 'author' && !['comics','creators','password'].includes(state.route)) { navigate('/admin/comics', true); return; }
   $$('.main-nav a').forEach(link => link.classList.toggle('active', link.dataset.route === state.route));
-  if (state.route === 'dashboard') renderDashboard();
+  if (state.route === 'users' && state.user?.role === 'admin') renderUserAccounts();
+  else if (state.route === 'password') renderPasswordChange(false);
+  else if (state.route === 'dashboard' && state.user?.role === 'admin') renderDashboard();
   else renderCatalog(entityForRoute[state.route]);
+}
+function renderPasswordChange(required = false) {
+  root.innerHTML = `<div class="page-heading"><div><p class="eyebrow">SEGURIDAD DE LA CUENTA</p><h1>${required ? 'Cambia tu contraseña temporal' : 'Cambiar contraseña'}</h1><p>${required ? 'Antes de editar tu perfil o tus cómics, establece una contraseña privada.' : 'Usa una contraseña de al menos 12 caracteres.'}</p></div></div><section class="editor-section"><form id="password-change-form"><label class="field">Contraseña actual<input name="currentPassword" type="password" required autocomplete="current-password"></label><label class="field">Nueva contraseña<input name="newPassword" type="password" required minlength="12" autocomplete="new-password"></label><label class="field">Repite la nueva contraseña<input name="confirmPassword" type="password" required minlength="12" autocomplete="new-password"></label><p class="form-message" id="password-change-message" role="status"></p><button class="button primary" type="submit">Guardar contraseña</button>${required ? '' : ' <button class="button secondary" type="button" data-password-cancel>Cancelar</button>'}</form></section>`;
+  $('#password-change-form', root).addEventListener('submit', async event => {
+    event.preventDefault(); const form = event.currentTarget; const values = new FormData(form); const message = $('#password-change-message', root);
+    const newPassword = String(values.get('newPassword') || '');
+    if (newPassword !== values.get('confirmPassword')) { message.textContent = 'Las contraseñas nuevas no coinciden.'; return; }
+    const button = $('button[type="submit"]', form); button.disabled = true; message.textContent = 'Guardando…';
+    try { await api('/api/cms/password', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({currentPassword:values.get('currentPassword'),newPassword}) }); const session=await api('/api/cms/session'); await openCms(session.user); toast('Contraseña actualizada.'); }
+    catch (error) { message.textContent = error.message; button.disabled = false; }
+  });
+  $('[data-password-cancel]', root)?.addEventListener('click', () => { navigate('/admin/comics', true); });
+}
+
+function generatedPassword() {
+  const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+  let output='';
+  while(output.length<20){const bytes=crypto.getRandomValues(new Uint8Array(32));for(const value of bytes){if(value<Math.floor(256/alphabet.length)*alphabet.length)output+=alphabet[value%alphabet.length];if(output.length===20)break;}}
+  return output;
+}
+async function renderUserAccounts(reveal = null) {
+  root.innerHTML='<div class="loading">Cargando cuentas…</div>';
+  try {
+    const data=await api('/api/cms/users');
+    root.innerHTML=`<div class="page-heading"><div><p class="eyebrow">ACCESOS INDIVIDUALES</p><h1>Cuentas de autores</h1><p>Cada cuenta accede al perfil propio y a los cómics donde esa persona figura como autora de la obra. Las colaboraciones por sí solas no dan acceso.</p></div></div>${reveal?`<section class="editor-section"><h3>Contraseña temporal de ${esc(reveal.username)}</h3><p class="section-help">Cópiala y entrégala por un canal privado. Esta es la única vez que se muestra.</p><div class="inline-add"><input data-revealed-password readonly value="${esc(reveal.password)}"><button class="button secondary" type="button" data-copy-temp-password>Copiar</button></div></section>`:''}<section class="editor-section"><h3>Crear cuenta</h3><form id="account-create-form" class="form-grid"><label class="field">Autor<select name="authorSlug" required><option value="">Selecciona un autor</option>${data.availableAuthors.map(author=>`<option value="${esc(author.slug)}">${esc(author.name)}</option>`).join('')}</select></label><label class="field">Usuario<input name="username" required minlength="3" maxlength="50" autocomplete="off"></label><label class="field full">Contraseña temporal <span class="field-hint">Se mostrará una sola vez. Entrégala al autor por un canal privado; deberá cambiarla al entrar.</span><div class="inline-add"><input name="password" type="text" required minlength="12" autocomplete="new-password"><button class="button secondary" type="button" data-generate-account-password>Generar</button></div></label><div class="field full"><button class="button primary" type="submit"${data.availableAuthors.length?'':' disabled'}>Crear acceso</button><p class="form-message" data-account-message role="status"></p></div></form></section><div class="section-heading"><div><h2>${data.users.length} cuentas</h2><p>Las contraseñas nunca se muestran ni se guardan en texto plano.</p></div></div><div class="catalog-grid">${data.users.map(user=>`<section class="editor-section account-card"><div><h3>${esc(user.authorName)}</h3><p class="muted">Usuario: <strong>${esc(user.username)}</strong> · ${user.comicCount} cómics propios · ${user.active?'Activa':'Desactivada'}${user.mustChangePassword?' · Cambio de contraseña pendiente':''}</p></div><form class="account-reset-form" data-account-author="${esc(user.author_slug)}" data-account-username="${esc(user.username)}"><label class="field">Nueva contraseña temporal<input name="password" type="text" required minlength="12" autocomplete="new-password"></label><div class="button-row"><button class="button secondary" type="button" data-generate-account-password>Generar</button><button class="button secondary" type="submit">Restablecer contraseña</button><button class="button ${user.active?'danger':'secondary'}" type="button" data-toggle-account="${user.active?'disable':'enable'}" data-account-author="${esc(user.author_slug)}">${user.active?'Desactivar':'Activar'}</button></div></form></section>`).join('')||'<div class="empty-state"><h3>Aún no hay cuentas</h3><p>Selecciona cualquier perfil para crearle un acceso. Si no es autora de cómics, podrá administrar solo su perfil.</p></div>'}</div>`;
+    const createForm=$('#account-create-form',root);const authorSelect=$('[name="authorSlug"]',createForm);const usernameInput=$('[name="username"]',createForm);
+    authorSelect.addEventListener('change',()=>{usernameInput.value=authorSelect.value||'';});
+    root.onclick = async event=>{
+      if(event.target.closest('[data-generate-account-password]')){const form=event.target.closest('form');$('[name="password"]',form).value=generatedPassword();$('[name="password"]',form).select();}
+      if(event.target.closest('[data-copy-temp-password]')){const input=$('[data-revealed-password]',root);input.select();await navigator.clipboard?.writeText(input.value);toast('Contraseña copiada.');}
+      const toggle=event.target.closest('[data-toggle-account]'); if(toggle){toggle.disabled=true;try{await api('/api/cms/users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:toggle.dataset.toggleAccount,authorSlug:toggle.dataset.accountAuthor})});toast('Cuenta actualizada.');await renderUserAccounts();}catch(error){toast(error.message,true);toggle.disabled=false;}}
+    };
+    createForm.addEventListener('submit',async event=>{event.preventDefault();const values=new FormData(createForm);const message=$('[data-account-message]',createForm);try{await api('/api/cms/users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'create',authorSlug:values.get('authorSlug'),username:values.get('username'),password:values.get('password')})});await renderUserAccounts({username:values.get('username'),password:values.get('password')});}catch(error){message.textContent=error.message;}});
+    $$('.account-reset-form',root).forEach(form=>form.addEventListener('submit',async event=>{event.preventDefault();const password=new FormData(form).get('password');try{await api('/api/cms/users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'reset',authorSlug:form.dataset.accountAuthor,password})});await renderUserAccounts({username:form.dataset.accountUsername,password});toast('Contraseña restablecida; se cambiará al próximo ingreso.');}catch(error){toast(error.message,true);}}));
+  } catch(error) { root.innerHTML=`<div class="empty-state"><h3>No se pudieron cargar las cuentas</h3><p>${esc(error.message)}</p></div>`; }
 }
 function countState() {
   const records = Object.entries(entityForRoute).flatMap(([route, type]) => allRecords(type).map(record => ({ ...record, _type: type, _route: route })));
@@ -201,15 +263,16 @@ function renderCatalog(type) {
   });
   const sortRecords = [...records].sort((a,b) => displayName(a).localeCompare(displayName(b), 'es'));
   const genreOptions = [...new Set(allRecords('comics').flatMap(item => item.genres || []))].sort((a,b) => a.localeCompare(b, 'es'));
+  const canCreate = state.user?.role === 'admin';
   root.innerHTML = `
-    <div class="page-heading"><div><p class="eyebrow">CATÁLOGO EDITORIAL</p><h1>${title}</h1><p>${subtitle}</p></div><button class="button accent" data-create="${type}" type="button">+ Nuevo ${isComic ? 'cómic' : isCreator ? 'creador' : 'proyecto'}</button></div>
+    <div class="page-heading"><div><p class="eyebrow">${state.user?.role==='author'?'TU ESPACIO DE AUTOR':'CATÁLOGO EDITORIAL'}</p><h1>${title}</h1><p>${state.user?.role==='author'&&isComic?'Aquí aparecen únicamente los cómics donde eres autor de la obra.':subtitle}</p></div>${canCreate?`<button class="button accent" data-create="${type}" type="button">+ Nuevo ${isComic ? 'cómic' : isCreator ? 'creador' : 'proyecto'}</button>`:''}</div>
     <div class="catalog-toolbar">
       <label class="field search-field"><span class="screen-reader">Buscar ${title.toLowerCase()}</span><input type="search" id="catalog-search" placeholder="Buscar por nombre o cliente" value="${esc(state.filter)}"></label>
       <label class="field"><span class="screen-reader">Filtrar por estado</span><select id="status-filter"><option value="all">Todos los estados</option><option value="published">Publicados</option><option value="draft">Borradores</option><option value="archived">Archivados</option></select></label>
       ${isComic ? `<label class="field"><span class="screen-reader">Filtrar por género</span><select id="genre-filter"><option value="all">Todos los géneros</option>${genreOptions.map(item => `<option value="${esc(item)}">${esc(item)}</option>`).join('')}</select></label><label class="field"><span class="screen-reader">Filtrar por formato</span><select id="format-filter"><option value="all">Todos los formatos</option>${['One-shot','Series'].map(item => `<option value="${item}">${item === 'One-shot' ? 'Tomo único' : 'Serie'}</option>`).join('')}</select></label>` : ''}
     </div>
     <div class="section-heading"><div><h2>${sortRecords.length} ${title.toLocaleLowerCase()}</h2><p>Selecciona una tarjeta para editar su información.</p></div></div>
-    ${sortRecords.length ? `<div class="catalog-grid">${sortRecords.map(record => catalogCard(type, record)).join('')}</div>` : `<div class="empty-state"><h3>No encontramos contenido con esos filtros.</h3><p>Prueba con otra búsqueda o crea un registro nuevo.</p><button class="button secondary" data-create="${type}" type="button">Crear ${isComic ? 'cómic' : isCreator ? 'creador' : 'proyecto'}</button></div>`}`;
+    ${sortRecords.length ? `<div class="catalog-grid">${sortRecords.map(record => catalogCard(type, record)).join('')}</div>` : `<div class="empty-state"><h3>${state.user?.role==='author'?'No hay cómics asignados a tu autoría.':'No encontramos contenido con esos filtros.'}</h3><p>${canCreate?'Prueba con otra búsqueda o crea un registro nuevo.':'Contacta con administración para revisar la asignación de autoría.'}</p>${canCreate?`<button class="button secondary" data-create="${type}" type="button">Crear ${isComic ? 'cómic' : isCreator ? 'creador' : 'proyecto'}</button>`:''}</div>`}`;
   $('#catalog-search', root).addEventListener('input', event => { state.filter = event.target.value; renderCatalog(type); const input = $('#catalog-search', root); input.focus(); input.setSelectionRange(input.value.length, input.value.length); });
   $('#status-filter', root).value = state.statusFilter;
   $('#status-filter', root).addEventListener('change', event => { state.statusFilter = event.target.value; renderCatalog(type); });
@@ -219,7 +282,7 @@ function renderCatalog(type) {
     $('#format-filter', root).value = state.formatFilter;
     $('#format-filter', root).addEventListener('change', event => { state.formatFilter = event.target.value; renderCatalog(type); });
   }
-  $('[data-create]', root).addEventListener('click', event => createRecord(event.currentTarget.dataset.create));
+  $('[data-create]', root)?.addEventListener('click', event => createRecord(event.currentTarget.dataset.create));
   $$('.record-card', root).forEach(card => card.addEventListener('click', () => {
     const record = findRecord(type, card.dataset.slug);
     if (record) openEditor(type, record, false);
@@ -284,7 +347,7 @@ function mediaField(label, key, value, options = {}) {
 function keyId(key) { return `media-${key.replace(/[^a-z0-9]+/gi, '-')}`; }
 function section(title, help, body) { return `<section class="editor-section"><h3>${title}</h3>${help ? `<p class="section-help">${help}</p>` : ''}${body}</section>`; }
 function workAuthorSlugsFor(record) {
-  return record.workAuthorSlugs || (record.creatorSlugs || []).filter(slug => /^(autor(?:\/a)?|obra(?: completa)?|creador(?:\/a)?)$/i.test(String(record.creatorCredits?.[slug] || '').trim()));
+  return record.workAuthorSlugs || (record.creatorSlugs || []).filter(slug => String(record.creatorCredits?.[slug] || '').split(/\s*·\s*/).some(role=>/^(autor(?:\/a)?|obra(?: completa)?|creador(?:\/a)?)$/i.test(role.trim())));
 }
 function creatorSection(record, type) {
   const chosen = Array.isArray(record.creatorSlugs) ? record.creatorSlugs : [];
@@ -292,11 +355,11 @@ function creatorSection(record, type) {
   const workAuthors = new Set(workAuthorSlugsFor(record));
   const people = chosen.map(slug => findRecord('authors', slug)).filter(Boolean);
   const choices = allRecords('authors').filter(author => !chosen.includes(author.slug)).sort((a,b) => a.name.localeCompare(b.name, 'es'));
-  return section('Autoría y colaboradores', 'Marca quién es autor o dueño de la obra. Esa persona aparecerá automáticamente en todos los capítulos; los demás son colaboradores.', `
+  return section('Autoría y colaboradores', record.format==='One-shot'?'Marca quién es autor. Los demás aparecerán como colaboradores de este tomo único.':'Marca quién es autor. En una serie aparecerá automáticamente en todos los capítulos; los demás son colaboradores.', `
     <div class="inline-add"><label class="field">Buscar creador<input type="search" data-creator-search placeholder="Escribe un nombre"></label>
       <label class="field">Seleccionar<select data-creator-choice><option value="">Elige una persona</option>${choices.map(author => `<option value="${esc(author.slug)}">${esc(author.name)}</option>`).join('')}</select></label>
       <button class="button secondary" type="button" data-add-creator>Agregar</button></div>
-    <div class="selected-list" data-creators-list>${people.length ? people.map(person => `<div class="selected-person" data-person="${esc(person.slug)}"><div><strong>${esc(person.name)}</strong><small>${esc(person.role || 'Creador')}</small></div><label class="field">Tipo<select data-person-type><option value="collaborator"${workAuthors.has(person.slug)?'':' selected'}>Colaborador</option><option value="author"${workAuthors.has(person.slug)?' selected':''}>Autor / dueño de la obra</option></select></label><input data-person-credit value="${esc(roles[person.slug] || '')}" aria-label="Crédito de ${esc(person.name)}" placeholder="Rol o crédito"><button class="button quiet small" type="button" data-remove-person="${esc(person.slug)}" aria-label="Quitar a ${esc(person.name)}">Quitar</button></div>`).join('') : '<p class="muted">Aún no hay creadores vinculados.</p>'}</div>`);
+    <div class="selected-list" data-creators-list>${people.length ? people.map(person => `<div class="selected-person" data-person="${esc(person.slug)}"><div><strong>${esc(person.name)}</strong><small>${esc(person.role || 'Creador')}</small></div><label class="field">Tipo<select data-person-type${state.user?.role==='author'?' disabled':''}><option value="collaborator"${workAuthors.has(person.slug)?'':' selected'}>Colaborador</option><option value="author"${workAuthors.has(person.slug)?' selected':''}>Autor</option></select></label><input data-person-credit value="${esc(roles[person.slug] || '')}" aria-label="Rol de ${esc(person.name)}" placeholder="Rol o crédito"${workAuthors.has(person.slug)?' hidden':''}${state.user?.role==='author'?' disabled':''}><button class="button quiet small" type="button" data-remove-person="${esc(person.slug)}" aria-label="Quitar a ${esc(person.name)}"${state.user?.role==='author'?' disabled':''}>Quitar</button></div>`).join('') : '<p class="muted">Aún no hay creadores vinculados.</p>'}</div>`);
 }
 function externalCreditsSection(record) {
   const credits = (record.externalCredits || []).map(value => typeof value === 'string' ? parseExternalCredit(value) : value);
@@ -327,7 +390,8 @@ function slugField(record, isNew, entityName) {
 function chapterSection(record) {
   const chapters = record.chapters || [];
   const workAuthors = workAuthorSlugsFor(record);
-  return section('Capítulos', chapters.length ? 'El autor de la obra aparecerá en todos los capítulos. Asigna aquí los colaboradores que participaron en cada uno.' : 'Este cómic todavía no tiene capítulos.', `<div data-chapter-list>${chapters.length ? chapters.map((chapter,index) => chapterEditor(chapter,index,index,workAuthors)).join('') : '<p class="muted">Este cómic todavía no tiene capítulos.</p>'}</div><button class="button secondary small" type="button" data-add-chapter>+ Agregar capítulo</button>`);
+  const help = chapters.length ? 'El autor de la obra aparecerá en todos los capítulos. Asigna aquí los colaboradores que participaron en cada uno.' : 'Este cómic todavía no tiene capítulos.';
+  return `<section class="editor-section" data-chapter-section><h3>Capítulos</h3><p class="section-help">${help}</p><div data-chapter-list>${chapters.length ? chapters.map((chapter,index) => chapterEditor(chapter,index,index,workAuthors)).join('') : '<p class="muted">Este cómic todavía no tiene capítulos.</p>'}</div><button class="button secondary small" type="button" data-add-chapter>+ Agregar capítulo</button></section>`;
 }
 function chapterEditor(chapter, index, originalIndex = index, seriesCreators = []) {
   const knownCreators = allRecords('authors').slice().sort((a,b)=>a.name.localeCompare(b.name,'es'));
@@ -387,7 +451,7 @@ function renderEditor() {
     sections += section('Sinopsis', 'Cuenta de qué trata la historia.', field('Sinopsis', 'synopsis', original.synopsis || '', { type:'textarea', full:true, rows:6, placeholder:'Escribe aquí la sinopsis…' }));
     sections += section('Portadas', 'Sube imágenes desde tu equipo. El CMS guarda y coloca los enlaces por ti.', mediaField('Portada principal','comic-cover',original.cover || '') + mediaField('Contraportada','comic-back-cover',original.backCover || '',{ratio:'landscape'}));
     sections += genreSection(original.genres || []);
-    sections += creatorSection(original,type) + externalCreditsSection(original) + chapterSection(original) + gallerySection(original,type);
+    sections += creatorSection(original,type) + externalCreditsSection(original) + (original.format==='One-shot'?'':chapterSection(original)) + gallerySection(original,type);
   } else if (isCreator) {
     sections += section('Foto de perfil', 'Usa una imagen clara del creador. Puedes dejarla pendiente.', mediaField('Foto del creador','creator-image',original.image || '',{preview:imageUrl(original.image,'authors',original)}));
     sections += section('Especialidades', 'Selecciona o agrega las áreas en las que trabaja.', chipSection(original.specialties || [], ['Ilustración','Cómic','Diseño','Color','Guion','Lettering','Concept art','Animación'], 'specialties'));
@@ -451,6 +515,8 @@ function bindEditor(overlay) {
   overlay.addEventListener('change', async event => {
     if (event.target.matches('[data-media-input]') && event.target.files?.[0]) await uploadMedia(event.target.files[0],event.target.closest('[data-media-container]'));
     if (event.target.matches('[data-add-gallery-files]') && event.target.files?.length) await uploadGalleryFiles(event.target.files,overlay);
+    if (event.target.matches('[data-person-type]')) $('[data-person-credit]',event.target.closest('[data-person]')).hidden=event.target.value==='author';
+    if (event.target.name==='format' && type==='comics') syncChapterSection(overlay,event.target.value);
     if (event.target.name === 'status') state.editing.tempStatus = event.target.value;
   });
   overlay.addEventListener('dragover', event => { if (event.target.closest('[data-media-container]')) { event.preventDefault(); event.target.closest('[data-media-container]').classList.add('dragging'); } });
@@ -460,6 +526,15 @@ function bindEditor(overlay) {
     if (!container || !event.dataTransfer.files?.length) return;
     event.preventDefault(); container.classList.remove('dragging'); await uploadMedia(event.dataTransfer.files[0],container);
   });
+}
+function syncChapterSection(overlay,format) {
+  const current=$('[data-chapter-section]',overlay);
+  if(format==='One-shot'){if(current)state.editing.temporaryChapters=serializeChapters(overlay,state.editing.original.chapters||[]);current?.remove();return;}
+  if(current)return;
+  const sectionHtml=chapterSection({...state.editing.original,chapters:state.editing.temporaryChapters||state.editing.original.chapters||[]});
+  const creditsSection=$$('.editor-section',overlay).find(item=>item.querySelector('h3')?.textContent==='Colaboradores externos');
+  const gallerySection=$$('.editor-section',overlay).find(item=>item.querySelector('h3')?.textContent==='Galería');
+  if(creditsSection)creditsSection.insertAdjacentHTML('afterend',sectionHtml);else if(gallerySection)gallerySection.insertAdjacentHTML('beforebegin',sectionHtml);
 }
 function filterCreatorChoices(overlay,query) {
   const select = $('[data-creator-choice]',overlay); const needle = query.toLocaleLowerCase();
@@ -491,7 +566,7 @@ function addCreator(overlay) {
   const select = $('[data-creator-choice]',overlay); const slug = select.value; if (!slug) return;
   const author = findRecord('authors',slug); if (!author || $(`[data-person="${CSS.escape(slug)}"]`,overlay)) return;
   const node = $('[data-creators-list]',overlay); node.querySelector('.muted')?.remove();
-  node.insertAdjacentHTML('beforeend',`<div class="selected-person" data-person="${esc(slug)}"><div><strong>${esc(author.name)}</strong><small>${esc(author.role || 'Creador')}</small></div><label class="field">Tipo<select data-person-type><option value="collaborator" selected>Colaborador</option><option value="author">Autor / dueño de la obra</option></select></label><input data-person-credit value="" aria-label="Crédito de ${esc(author.name)}" placeholder="Rol o crédito"><button class="button quiet small" type="button" data-remove-person="${esc(slug)}">Quitar</button></div>`);
+  node.insertAdjacentHTML('beforeend',`<div class="selected-person" data-person="${esc(slug)}"><div><strong>${esc(author.name)}</strong><small>${esc(author.role || 'Creador')}</small></div><label class="field">Tipo<select data-person-type><option value="collaborator" selected>Colaborador</option><option value="author">Autor</option></select></label><input data-person-credit value="" aria-label="Rol de ${esc(author.name)}" placeholder="Rol o crédito"><button class="button quiet small" type="button" data-remove-person="${esc(slug)}">Quitar</button></div>`);
   select.querySelector(`option[value="${CSS.escape(slug)}"]`)?.remove(); select.value=''; $('[data-creator-search]',overlay).value=''; filterCreatorChoices(overlay,'');
 }
 function addChip(overlay,name) {
@@ -576,7 +651,7 @@ function serializeExternalCredits(overlay) {
 }
 function serializeCreators(overlay) {
   const creatorSlugs=[];const creatorCredits={};const workAuthorSlugs=[];
-  $$('[data-person]',overlay).forEach(item=>{const slug=item.dataset.person;creatorSlugs.push(slug);if($('[data-person-type]',item).value==='author')workAuthorSlugs.push(slug);const credit=$('[data-person-credit]',item).value.trim();if(credit)creatorCredits[slug]=credit;});
+  $$('[data-person]',overlay).forEach(item=>{const slug=item.dataset.person;creatorSlugs.push(slug);const isAuthor=$('[data-person-type]',item).value==='author';if(isAuthor)workAuthorSlugs.push(slug);const credit=isAuthor?'Autor':$('[data-person-credit]',item).value.trim();if(credit)creatorCredits[slug]=credit;});
   return {creatorSlugs,creatorCredits,workAuthorSlugs};
 }
 function serializeGallery(overlay,type) {
@@ -601,6 +676,7 @@ function buildPayload(overlay,status) {
     Object.assign(payload,serializeCreators(overlay));payload.externalCredits=serializeExternalCredits(overlay);payload.assets={...(payload.assets||{}),hero:$('[data-media-container="project-hero"] [data-media-value]',overlay)?.value||'',gallery:serializeGallery(overlay,'projects')};
   }
   if(isNew && !payload.slug) payload.slug=`borrador-${type}-${Date.now()}`;
+  if(type==='comics' && payload.format==='One-shot'){payload.chapters=[];payload.chapterCount=0;payload.availableChapters=0;}
   return payload;
 }
 function publishRequirements(type,payload) {
@@ -639,7 +715,7 @@ function showPreview(overlay) {
 }
 
 async function checkSession() {
-  try { const session=await api('/api/cms/session'); if(session.authenticated) await openCms(); }
+  try { const session=await api('/api/cms/session'); if(session.authenticated) await openCms(session.user); }
   catch { /* Keep the sign-in form available if the session endpoint is temporarily unavailable. */ }
 }
 checkSession();

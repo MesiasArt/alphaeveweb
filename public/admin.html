@@ -18,6 +18,7 @@
       <div class="login-art"><p class="eyebrow">ESTUDIO EDITORIAL</p><h1>Las historias de Alpha Eve, en buenas manos.</h1><p>Organiza cómics, creadores y proyectos en un solo lugar.</p></div>
       <form id="login-form" class="login-card">
         <p class="eyebrow">ACCESO DEL EQUIPO</p><h2>Iniciar sesión</h2><p class="muted">Entra con la contraseña privada del CMS.</p>
+        <label class="field">Usuario <span class="field-hint">Solo para cuentas de autores; administración puede dejarlo vacío.</span><input type="text" name="username" autocomplete="username" placeholder="Nombre de usuario del autor"></label>
         <label class="field">Contraseña<input type="password" name="password" required autocomplete="current-password"></label>
         <button class="button primary" type="submit">Entrar</button><p id="login-message" class="form-message" role="status" aria-live="polite"></p>
       </form>
@@ -31,6 +32,8 @@
           <a href="/admin/comics" data-route="comics"><span class="nav-icon">▤</span>Cómics</a>
           <a href="/admin/creators" data-route="creators"><span class="nav-icon">◉</span>Creadores</a>
           <a href="/admin/projects" data-route="projects"><span class="nav-icon">▧</span>Proyectos</a>
+          <a href="/admin/users" data-route="users" data-admin-only hidden><span class="nav-icon">♙</span>Cuentas de autores</a>
+          <a href="/admin/password" data-route="password"><span class="nav-icon">•</span>Contraseña</a>
         </nav>
         <div class="sidebar-bottom"><p>Contenido ordenado,<br>historias bien contadas.</p><button id="logout" class="link-button" type="button">Cerrar sesión</button></div>
       </aside>
