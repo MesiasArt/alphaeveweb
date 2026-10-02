@@ -6,12 +6,31 @@
   <meta name="theme-color" content="#f4f1eb" />
   <meta name="description" content="Alpha Eve Studios — estudio creativo y editorial de República Dominicana. Historias. Arte. Mundos." />
   <title>Alpha Eve Studios — Historias. Arte. Mundos.</title>
+  <style>
+    :root{color-scheme:light;--paper:#f4f1eb;--ink:#171717;--red:#ef292f;--sans:'DM Sans',Arial,sans-serif;--display:'Space Grotesk',Arial,sans-serif;--mono:'DM Mono',monospace}
+    *,*::before,*::after{box-sizing:border-box}
+    html{background:var(--paper);color:var(--ink)}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    h1,h2,h3{font-family:var(--display)}
+    .site-header{min-height:84px;display:flex;align-items:center;gap:28px;padding:0 8.3vw;border-bottom:1px solid rgba(23,23,23,.22);background:var(--paper)}
+    .brand img{display:block;width:auto;max-width:190px;max-height:52px;object-fit:contain}
+    .desktop-nav{display:flex;align-items:center;justify-content:center;gap:clamp(13px,2vw,32px);flex:1}
+    .desktop-nav a,.nav-contact{font:600 13px var(--sans)}
+    .hero{min-height:620px;display:grid;grid-template-columns:minmax(280px,.72fr) minmax(0,1.4fr);gap:2vw;align-items:center;overflow:hidden}
+    .hero h1{font-size:clamp(64px,10vw,152px);line-height:.82;letter-spacing:-.095em}
+    .hero-art{min-height:360px;background:#dfd9d0;overflow:hidden}
+    .hero-banner{width:100%;height:100%;min-height:360px;object-fit:cover}
+    .services-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid rgba(23,23,23,.22);border-left:1px solid rgba(23,23,23,.22)}
+    .service-item{min-height:180px;padding:22px;border-right:1px solid rgba(23,23,23,.22);border-bottom:1px solid rgba(23,23,23,.22)}
+    @media(max-width:760px){.site-header{min-height:68px;padding:0 6vw}.desktop-nav,.nav-contact{display:none}.hero{grid-template-columns:1fr;min-height:0;padding-top:64px;padding-bottom:64px}.hero-art{min-height:240px}.hero-banner{min-height:240px}.services-grid{grid-template-columns:1fr 1fr}}
+  </style>
+  <link rel="stylesheet" href="/styles.css" />
   <link rel="icon" href="/alpha%20eve%20favicon.png" type="image/png" />
   <link rel="apple-touch-icon" href="/alpha%20eve%20favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="site-header">

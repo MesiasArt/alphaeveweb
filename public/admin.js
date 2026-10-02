@@ -4,6 +4,7 @@ const root = $('#page-content');
 const loginView = $('#login-view');
 const cmsView = $('#cms-view');
 const state = { content: null, user: null, route: 'dashboard', filter: '', statusFilter: 'all', genreFilter: 'all', formatFilter: 'all', catalogTypeFilter: 'all', editing: null, toastTimer: null };
+const compareSpanish = (a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' });
 const genres = ['Acción', 'Kaiju', 'Crimen', 'Sobrenatural', 'Histórico', 'Romance', 'Misterio', 'Ecchi +18', 'Vampiros', 'Detective', 'Thriller', 'Drama', 'Gore +18', 'Fantasía', 'Shonen', 'Zombies', 'Artes Marciales', 'Suspenso', 'Slice of Life', 'Cyberpunk', 'Aventura', 'Shojo', 'Steampunk', 'Magia', 'Psicológico', 'Comedia', 'Noir', 'Horror', 'Seinen', 'Western', 'Isekai', 'Superhéroes', 'Deportivo', 'Mecha', 'Sci-Fi', 'Josei'];
 const catalogTypes = ['Comics', 'Manga', 'Cuentos Infantiles', 'Novelas', 'Artbooks', 'Otros'];
 const creditRoles = ['Obra', 'Obra completa', 'Guion', 'Historia', 'Arte', 'Dibujo', 'Tinta', 'Color', 'Portada', 'Lettering', 'Rotulación', 'Traducción', 'Edición', 'Diseño', 'Asistencia'];
@@ -383,7 +384,7 @@ function externalCreditRow(item = {}, index = 0) {
   return `<div class="credit-card form-grid" data-external-credit="${index}">${field('Nombre', 'external-name', item.name || '', { placeholder: 'Nombre de la persona' })}${field('Trabajo', 'external-role', item.role || '', { placeholder: 'Portada, color, traducción…' })}<div class="field full button-row"><button class="button quiet small" type="button" data-remove-external>Quitar colaborador</button></div></div>`;
 }
 function genreSection(selected = []) {
-  const all = [...new Set([...genres, ...selected])];
+  const all = [...new Set([...genres, ...selected])].sort(compareSpanish);
   return section('Géneros', 'Selecciona uno o varios. Puedes añadir otro si hace falta.', `<div class="choice-list" data-genre-list>${all.map(value => `<label class="choice-chip"><input type="checkbox" value="${esc(value)}"${selected.includes(value) ? ' checked' : ''}><span>${esc(value)}</span></label>`).join('')}</div>
     <div class="custom-choice"><input type="text" data-new-genre placeholder="Añadir otro género" aria-label="Nuevo género"><button class="button secondary small" type="button" data-add-genre>Agregar</button></div>`);
 }
@@ -586,6 +587,7 @@ function addChip(overlay,name) {
   const list = name === 'genre' ? $('[data-genre-list]',overlay) : $(`[data-chip-list="${name}"]`,overlay);
   if ([...list.querySelectorAll('input')].some(item=>item.value.toLocaleLowerCase()===value.toLocaleLowerCase())) { input.value=''; return; }
   list.insertAdjacentHTML('beforeend',`<label class="choice-chip"><input type="checkbox" value="${esc(value)}" checked><span>${esc(value)}</span></label>`); input.value='';
+  if (name === 'genre') list.append(...[...list.querySelectorAll('.choice-chip')].sort((a,b)=>compareSpanish(a.querySelector('input').value,b.querySelector('input').value)));
 }
 function updateSlugPreview(overlay,title) {
   if (!state.editing?.isNew || !state.editing.autoSlug) return;

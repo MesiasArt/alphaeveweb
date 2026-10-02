@@ -161,7 +161,7 @@ function authorDirectory() {
 function normalizedTitle(value) {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 }
-const genreOptions = ['Acción', 'Kaiju', 'Crimen', 'Sobrenatural', 'Histórico', 'Romance', 'Misterio', 'Ecchi +18', 'Vampiros', 'Detective', 'Thriller', 'Drama', 'Gore +18', 'Fantasía', 'Shonen', 'Zombies', 'Artes Marciales', 'Suspenso', 'Slice of Life', 'Cyberpunk', 'Aventura', 'Shojo', 'Steampunk', 'Magia', 'Psicológico', 'Comedia', 'Noir', 'Horror', 'Seinen', 'Western', 'Isekai', 'Superhéroes', 'Deportivo', 'Mecha', 'Sci-Fi', 'Josei'];
+const genreOptions = ['Acción', 'Kaiju', 'Crimen', 'Sobrenatural', 'Histórico', 'Romance', 'Misterio', 'Ecchi +18', 'Vampiros', 'Detective', 'Thriller', 'Drama', 'Gore +18', 'Fantasía', 'Shonen', 'Zombies', 'Artes Marciales', 'Suspenso', 'Slice of Life', 'Cyberpunk', 'Aventura', 'Shojo', 'Steampunk', 'Magia', 'Psicológico', 'Comedia', 'Noir', 'Horror', 'Seinen', 'Western', 'Isekai', 'Superhéroes', 'Deportivo', 'Mecha', 'Sci-Fi', 'Josei'].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 const catalogTypes = ['Comics', 'Manga', 'Cuentos Infantiles', 'Novelas', 'Artbooks', 'Otros'];
 function comicCatalogType(comic) {
   if (comic.catalogType) return comic.catalogType;
