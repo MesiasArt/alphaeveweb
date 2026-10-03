@@ -399,7 +399,12 @@ function mediaField(label, key, value, options = {}) {
 function keyId(key) { return `media-${key.replace(/[^a-z0-9]+/gi, '-')}`; }
 function section(title, help, body) { return `<section class="editor-section"><h3>${title}</h3>${help ? `<p class="section-help">${help}</p>` : ''}${body}</section>`; }
 function workAuthorSlugsFor(record) {
-  return record.workAuthorSlugs || (record.creatorSlugs || []).filter(slug => String(record.creatorCredits?.[slug] || '').split(/\s*·\s*/).some(role=>/^(autor(?:\/a)?|obra(?: completa)?|creador(?:\/a)?)$/i.test(role.trim())));
+  const authors = new Set(Array.isArray(record.workAuthorSlugs) ? record.workAuthorSlugs : []);
+  const isWorkAuthorRole = role => /^(autor(?:\/a)?|autor(?:es)?(?: de la obra)?|obra(?: completa)?|creador(?:\/a)?|creador(?:a)? de la obra)$/i.test(String(role || '').trim());
+  for (const slug of record.creatorSlugs || []) {
+    if (String(record.creatorCredits?.[slug] || '').split(/\s*[·,]\s*/).some(isWorkAuthorRole)) authors.add(slug);
+  }
+  return [...authors];
 }
 function creatorSection(record, type) {
   const chosen = Array.isArray(record.creatorSlugs) ? record.creatorSlugs : [];
@@ -411,7 +416,7 @@ function creatorSection(record, type) {
     <div class="inline-add"><label class="field">Buscar creador<input type="search" data-creator-search placeholder="Escribe un nombre"></label>
       <label class="field">Seleccionar<select data-creator-choice><option value="">Elige una persona</option>${choices.map(author => `<option value="${esc(author.slug)}">${esc(author.name)}</option>`).join('')}</select></label>
       <button class="button secondary" type="button" data-add-creator>Agregar</button></div>
-    <div class="selected-list" data-creators-list>${people.length ? people.map(person => `<div class="selected-person" data-person="${esc(person.slug)}"><div><strong>${esc(person.name)}</strong><small>${esc(person.role || 'Creador')}</small></div><label class="field">Tipo<select data-person-type${state.user?.role==='author'?' disabled':''}><option value="collaborator"${workAuthors.has(person.slug)?'':' selected'}>Colaborador</option><option value="author"${workAuthors.has(person.slug)?' selected':''}>Autor</option></select></label><input data-person-credit value="${esc(roles[person.slug] || '')}" aria-label="Rol de ${esc(person.name)}" placeholder="Rol o crédito"${workAuthors.has(person.slug)?' hidden':''}${state.user?.role==='author'?' disabled':''}><button class="button quiet small" type="button" data-remove-person="${esc(person.slug)}" aria-label="Quitar a ${esc(person.name)}"${state.user?.role==='author'?' disabled':''}>Quitar</button></div>`).join('') : '<p class="muted">Aún no hay creadores vinculados.</p>'}</div>`);
+    <div class="selected-list" data-creators-list>${people.length ? people.map(person => `<div class="selected-person" data-person="${esc(person.slug)}"><div><strong>${esc(person.name)}</strong><small>${esc(person.role || 'Creador')}</small></div><label class="field">Tipo<select data-person-type><option value="collaborator"${workAuthors.has(person.slug)?'':' selected'}>Colaborador</option><option value="author"${workAuthors.has(person.slug)?' selected':''}>Autor</option></select></label><input data-person-credit value="${esc(roles[person.slug] || '')}" aria-label="Rol de ${esc(person.name)}" placeholder="Rol o crédito"${workAuthors.has(person.slug)?' hidden':''}><button class="button quiet small" type="button" data-remove-person="${esc(person.slug)}" aria-label="Quitar a ${esc(person.name)}">Quitar</button></div>`).join('') : '<p class="muted">Aún no hay creadores vinculados.</p>'}</div>`);
 }
 function externalCreditsSection(record) {
   const credits = (record.externalCredits || []).map(value => typeof value === 'string' ? parseExternalCredit(value) : value);

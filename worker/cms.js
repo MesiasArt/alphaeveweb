@@ -249,16 +249,12 @@ async function saveContent(request, env, user) {
       const current = await getContent(env, { includeUnpublished: true });
       const ownProfile = current.authors.find(author => author.slug === user.authorSlug);
       if (!ownProfile) return json({ error: 'No se encontró tu perfil.' }, 404);
-      payload.status = ownProfile.status;
       payload.slug = ownProfile.slug;
     }
     if (type === 'comics') {
       const current = await getContent(env, { includeUnpublished: true });
       const oldComic = current.comics.find(item => item.slug === slug);
       if (!oldComic || !workAuthors(oldComic).includes(user.authorSlug)) return json({ error: 'Solo puedes editar los cómics donde figuras como autor de la obra.' }, 403);
-      payload.workAuthorSlugs = workAuthors(oldComic);
-      payload.creatorSlugs = oldComic.creatorSlugs || [];
-      payload.creatorCredits = oldComic.creatorCredits || {};
     }
   }
   const currentContent = type === 'comics' ? await getContent(env, { includeUnpublished: true }) : null;
@@ -388,8 +384,16 @@ async function getSession(request, env) {
   return { role: 'author', username: row.username, userId: row.user_id, authorSlug: row.author_slug, mustChangePassword: !!row.must_change_password };
 }
 
+function isWorkAuthorRole(role) {
+  return /^(autor(?:\/a)?|autor(?:es)?(?: de la obra)?|obra(?: completa)?|creador(?:\/a)?|creador(?:a)? de la obra)$/i.test(String(role || '').trim());
+}
 function workAuthors(comic) {
-  return comic.workAuthorSlugs || (comic.creatorSlugs || []).filter(slug => String(comic.creatorCredits?.[slug] || '').split(/\s*·\s*/).some(role=>/^(autor(?:\/a)?|obra(?: completa)?|creador(?:\/a)?)$/i.test(role.trim())));
+  const authors = new Set(Array.isArray(comic.workAuthorSlugs) ? comic.workAuthorSlugs : []);
+  for (const slug of comic.creatorSlugs || []) {
+    const roles = String(comic.creatorCredits?.[slug] || '').split(/\s*[·,]\s*/);
+    if (roles.some(isWorkAuthorRole)) authors.add(slug);
+  }
+  return [...authors].filter(Boolean);
 }
 function authorWorkspace(data, authorSlug) {
   const comics = data.comics.filter(comic => workAuthors(comic).includes(authorSlug));
