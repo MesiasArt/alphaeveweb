@@ -113,7 +113,10 @@ $('#logout').addEventListener('click', async () => {
 
 function applyRoleNavigation() {
   const admin = state.user?.role === 'admin';
+  const passwordRequired = !!state.user?.mustChangePassword;
   $$('[data-admin-only]').forEach(link => link.hidden = !admin);
+  $$('[data-author-only]').forEach(link => link.hidden = state.user?.role !== 'author');
+  $$('[data-route="comics"], [data-route="creators"]').forEach(link => link.hidden = passwordRequired);
   const dashboard = $('[data-route="dashboard"]');
   const projects = $('[data-route="projects"]');
   if (dashboard) dashboard.hidden = !admin;
@@ -126,7 +129,7 @@ async function openCms(user) {
   try {
     state.user = user || (await api('/api/cms/session')).user;
     $('#session-status').textContent = `Conectado como ${state.user?.role === 'admin' ? 'administrador' : (state.user?.username || 'autor')}`;
-    if (state.user?.mustChangePassword) { state.content = null; applyRoleNavigation(); renderPasswordChange(true); return; }
+    if (state.user?.mustChangePassword) { state.content = null; applyRoleNavigation(); navigate('/admin/password', true); return; }
     state.content = await api('/api/cms/content');
     applyRoleNavigation();
     if (state.user?.role === 'author') {
@@ -145,6 +148,14 @@ async function openCms(user) {
 }
 async function refreshContent() { state.content = await api('/api/cms/content'); }
 function routeFromLocation(focus = true) {
+  if (state.user?.mustChangePassword) {
+    state.route = 'password';
+    history.replaceState({}, '', '/admin/password');
+    if (state.editing) closeEditor();
+    renderRoute();
+    if (focus) root.focus({ preventScroll: true });
+    return;
+  }
   const parts = location.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
   const next = parts[1] === 'comics' ? 'comics' : parts[1] === 'creators' ? 'creators' : parts[1] === 'projects' ? 'projects' : parts[1] === 'users' ? 'users' : parts[1] === 'password' ? 'password' : 'dashboard';
   state.route = next;
@@ -180,6 +191,7 @@ document.addEventListener('click', event => {
 
 function renderRoute() {
   root.onclick = null;
+  if (state.user?.mustChangePassword) { renderPasswordChange(true); return; }
   if (state.user?.role === 'author' && !['comics','creators','password'].includes(state.route)) { navigate('/admin/comics', true); return; }
   $$('.main-nav a').forEach(link => link.classList.toggle('active', link.dataset.route === state.route));
   if (state.route === 'users' && state.user?.role === 'admin') renderUserAccounts();
@@ -194,7 +206,7 @@ function renderPasswordChange(required = false) {
     const newPassword = String(values.get('newPassword') || '');
     if (newPassword !== values.get('confirmPassword')) { message.textContent = 'Las contraseñas nuevas no coinciden.'; return; }
     const button = $('button[type="submit"]', form); button.disabled = true; message.textContent = 'Guardando…';
-    try { await api('/api/cms/password', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({currentPassword:values.get('currentPassword'),newPassword}) }); const session=await api('/api/cms/session'); await openCms(session.user); toast('Contraseña actualizada.'); }
+    try { await api('/api/cms/password', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({currentPassword:values.get('currentPassword'),newPassword}) }); const session=await api('/api/cms/session'); await openCms(session.user); if (required) navigate('/admin/comics', true); toast('Contraseña actualizada.'); }
     catch (error) { message.textContent = error.message; button.disabled = false; }
   });
   $('[data-password-cancel]', root)?.addEventListener('click', () => { navigate('/admin/comics', true); });

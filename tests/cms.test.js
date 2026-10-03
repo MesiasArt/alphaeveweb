@@ -150,11 +150,18 @@ test('author accounts can edit only their profile and comics they own, with forc
   const forged={...owned,title:'Updated title',creatorSlugs:['luz-owner'],creatorCredits:{},workAuthorSlugs:['luz-owner']};
   assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'ana-work',payload:forged}})).status,403); // temporary password must be changed first
   assert.equal((await api(env,'/api/cms/password',{method:'POST',cookie:authorCookie,body:{currentPassword:'temporary-pass-123',newPassword:'permanent-pass-456'}})).status,200);
-  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'ana-work',payload:forged}})).status,200);
+  const edited = {...owned, title:'Updated title', creatorSlugs:['ana-owner'], creatorCredits:{'ana-owner':'Autor'}, workAuthorSlugs:['ana-owner']};
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'ana-work',payload:edited}})).status,200);
   scoped=await (await api(env,'/api/cms/content',{cookie:authorCookie})).json();
   assert.equal(scoped.comics[0].title,'Updated title');
   assert.deepEqual(scoped.comics[0].workAuthorSlugs,['ana-owner']);
-  assert.deepEqual(scoped.comics[0].creatorSlugs,['ana-owner','luz-owner']);
+  assert.deepEqual(scoped.comics[0].creatorSlugs,['ana-owner']);
+  const profile = {...scoped.authors[0], bio:'Updated biography', status:'draft'};
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'authors',slug:'ana-owner',payload:profile}})).status,200);
+  const updatedProfile = (await (await api(env,'/api/cms/content',{cookie:authorCookie})).json()).authors[0];
+  assert.equal(updatedProfile.bio,'Updated biography');
+  assert.equal(updatedProfile.status,'draft');
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'authors',slug:'luz-owner',payload:{...profile,slug:'luz-owner'}}})).status,403);
   assert.equal((await api(env,'/api/cms/users',{cookie:authorCookie})).status,403);
   await api(env,'/api/cms/users',{method:'POST',cookie:admin,body:{action:'disable',authorSlug:'ana-owner'}});
   assert.equal((await (await api(env,'/api/cms/session',{cookie:authorCookie})).json()).authenticated,false);
