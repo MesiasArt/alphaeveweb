@@ -10,6 +10,18 @@ const catalogTypes = ['Comics', 'Manga', 'Cuentos Infantiles', 'Novelas', 'Artbo
 const creditRoles = ['Obra', 'Obra completa', 'Guion', 'Historia', 'Arte', 'Dibujo', 'Tinta', 'Color', 'Portada', 'Lettering', 'Rotulación', 'Traducción', 'Edición', 'Diseño', 'Asistencia'];
 const entityForRoute = { comics: 'comics', creators: 'authors', projects: 'projects' };
 const labels = { comics: 'cómic', authors: 'creador', projects: 'proyecto' };
+const heroGradientPreviewKey = 'alphaeve-hero-gradient-preview-v1';
+const heroGradientDefaults = { distance: 276, width: 720, strength: 98, blur: 30 };
+
+function readHeroGradientPreview() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(heroGradientPreviewKey) || '{}');
+    return Object.fromEntries(Object.entries(heroGradientDefaults).map(([key, fallback]) => {
+      const value = Number(saved[key]);
+      return [key, Number.isFinite(value) ? value : fallback];
+    }));
+  } catch { return { ...heroGradientDefaults }; }
+}
 
 function esc(value = '') { return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
 function slugify(value) {
@@ -249,7 +261,36 @@ function renderDashboard() {
       <section><div class="section-heading"><div><h2>Accesos rápidos</h2><p>Ve directo a lo que necesitas gestionar.</p></div></div>
         <div class="quick-links"><a class="quick-link" href="/admin/comics" data-route="comics">Administrar cómics <span>↗</span></a><a class="quick-link" href="/admin/creators" data-route="creators">Administrar creadores <span>↗</span></a><a class="quick-link" href="/admin/projects" data-route="projects">Administrar proyectos <span>↗</span></a></div>
       </section>
-    </div>`;
+    </div>
+    <section class="editor-section hero-gradient-tools">
+      <div class="section-heading"><div><p class="eyebrow">PRUEBA VISUAL</p><h2>Degradado del hero</h2><p>Ajusta los valores y abre la vista previa para comparar en tu pantalla. Solo se guardan en este navegador.</p></div></div>
+      <div class="hero-gradient-controls">
+        <label class="hero-gradient-control"><span>Extensión hacia el texto</span><output data-gradient-value="distance">${heroGradientDefaults.distance}px</output><input type="range" min="100" max="500" step="10" value="${heroGradientDefaults.distance}" data-gradient-setting="distance" aria-label="Extensión del degradado hacia el texto"></label>
+        <label class="hero-gradient-control"><span>Fuerza en el borde</span><output data-gradient-value="strength">${heroGradientDefaults.strength}%</output><input type="range" min="60" max="100" step="1" value="${heroGradientDefaults.strength}" data-gradient-setting="strength" aria-label="Fuerza del degradado en el borde"></label>
+        <label class="hero-gradient-control"><span>Ancho del desvanecido</span><output data-gradient-value="width">${heroGradientDefaults.width}px</output><input type="range" min="350" max="1000" step="10" value="${heroGradientDefaults.width}" data-gradient-setting="width" aria-label="Ancho del desvanecido"></label>
+        <label class="hero-gradient-control"><span>Suavidad del borde</span><output data-gradient-value="blur">${heroGradientDefaults.blur}px</output><input type="range" min="0" max="60" step="2" value="${heroGradientDefaults.blur}" data-gradient-setting="blur" aria-label="Desenfoque del borde"></label>
+      </div>
+      <div class="hero-gradient-actions"><a class="button primary" href="/?previewHeroGradient=1" target="_blank" rel="noopener">Abrir vista previa ↗</a><button class="button secondary" type="button" data-gradient-reset>Restablecer valores</button><span>La vista previa aplica solo en escritorio; el sitio público no cambia.</span></div>
+    </section>`;
+  const gradientPreview = readHeroGradientPreview();
+  const saveGradientPreview = () => {
+    localStorage.setItem(heroGradientPreviewKey, JSON.stringify(gradientPreview));
+    $$('[data-gradient-setting]', root).forEach(input => {
+      const key = input.dataset.gradientSetting;
+      input.value = gradientPreview[key];
+      const output = $(`[data-gradient-value="${key}"]`, root);
+      if (output) output.value = key === 'strength' ? `${gradientPreview[key]}%` : `${gradientPreview[key]}px`;
+    });
+  };
+  $$('[data-gradient-setting]', root).forEach(input => input.addEventListener('input', () => {
+    gradientPreview[input.dataset.gradientSetting] = Number(input.value);
+    saveGradientPreview();
+  }));
+  $('[data-gradient-reset]', root).addEventListener('click', () => {
+    Object.assign(gradientPreview, heroGradientDefaults);
+    saveGradientPreview();
+  });
+  saveGradientPreview();
   $('[data-create]', root).addEventListener('click', () => createRecord('comics'));
   $$('[data-open-group]', root).forEach(button => button.addEventListener('click', () => {
     const record = findRecord(button.dataset.openGroup, button.dataset.openSlug);

@@ -306,7 +306,7 @@ body.lightbox-open{overflow:hidden}
 .hero-copy,.hero-bottom{z-index:3}
 @media(min-width:1251px){
   .hero-art{overflow:visible}
-  .hero-art::before{left:calc(-1 * clamp(160px,18vw,280px));width:clamp(420px,52vw,720px);background:linear-gradient(90deg,rgba(244,241,235,.98) 0%,rgba(244,241,235,.90) 30%,rgba(244,241,235,.62) 55%,rgba(244,241,235,.26) 78%,rgba(244,241,235,0) 100%);filter:blur(30px)}
+  .hero-art::before{left:calc(-1 * var(--hero-fade-distance,clamp(160px,18vw,280px)));width:var(--hero-fade-width,clamp(420px,52vw,720px));background:linear-gradient(90deg,rgba(244,241,235,var(--hero-fade-strength,.98)) 0%,rgba(244,241,235,.90) 30%,rgba(244,241,235,.62) 55%,rgba(244,241,235,.26) 78%,rgba(244,241,235,0) 100%);filter:blur(var(--hero-fade-blur,30px))}
 }
 @media(max-width:1250px){
   .hero{height:auto;min-height:0;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(12px,2vw,24px);padding:clamp(44px,6vh,64px) 6vw 70px}

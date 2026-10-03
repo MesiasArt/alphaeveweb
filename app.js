@@ -1107,6 +1107,28 @@ if (homeCreators) {
 document.querySelector('.creator-section')?.insertAdjacentHTML('beforebegin', clientStrip());
 const home = app?.innerHTML ?? '';
 
+const heroGradientPreviewKey = 'alphaeve-hero-gradient-preview-v1';
+function applyHeroGradientPreview() {
+  if (new URLSearchParams(location.search).get('previewHeroGradient') !== '1') return;
+  const art = document.querySelector('.hero-art');
+  if (!art) return;
+  try {
+    const settings = JSON.parse(localStorage.getItem(heroGradientPreviewKey) || '{}');
+    const distance = Number(settings.distance);
+    const width = Number(settings.width);
+    const strength = Number(settings.strength);
+    const blur = Number(settings.blur);
+    if (Number.isFinite(distance)) art.style.setProperty('--hero-fade-distance', `${Math.max(100, Math.min(500, distance))}px`);
+    if (Number.isFinite(width)) art.style.setProperty('--hero-fade-width', `${Math.max(350, Math.min(1000, width))}px`);
+    if (Number.isFinite(strength)) art.style.setProperty('--hero-fade-strength', String(Math.max(60, Math.min(100, strength)) / 100));
+    if (Number.isFinite(blur)) art.style.setProperty('--hero-fade-blur', `${Math.max(0, Math.min(60, blur))}px`);
+  } catch { /* Preview settings are optional and stay local to this browser. */ }
+}
+applyHeroGradientPreview();
+window.addEventListener('storage', event => {
+  if (event.key === heroGradientPreviewKey) applyHeroGradientPreview();
+});
+
 document.addEventListener('click', event => {
   if (event.target.closest('[data-lightbox-close]')) {
     closeLightbox();
