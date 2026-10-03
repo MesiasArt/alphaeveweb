@@ -1087,6 +1087,7 @@ function applySeoMetadata() {
 }
 function renderRoute() {
   renderRouteContent();
+  applyHeroGradientPreview();
   applySeoMetadata();
 }
 function notFound() { return `<section class="directory-page"><a class="detail-back" href="/" data-route>← Alpha Eve Studios</a><h1>PÁGINA NO<br>ENCONTRADA<span class="red">.</span></h1><a class="button button-dark" href="/" data-route>Volver al inicio <span>↗</span></a></section>`; }
