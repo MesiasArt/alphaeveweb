@@ -312,10 +312,13 @@ function renderCatalog(type) {
       && (!isComic || state.catalogTypeFilter === 'all' || (record.catalogType || '') === state.catalogTypeFilter);
   });
   const sortRecords = [...records].sort((a,b) => displayName(a).localeCompare(displayName(b), 'es'));
+  const ownCreatorProfile = state.user?.role === 'author' && isCreator
+    ? allRecords('authors').find(author => author.slug === state.user.authorSlug)
+    : null;
   const genreOptions = [...new Set([...genres, ...allRecords('comics').flatMap(item => item.genres || [])])].sort((a,b) => a.localeCompare(b, 'es'));
   const canCreate = state.user?.role === 'admin';
   root.innerHTML = `
-    <div class="page-heading"><div><p class="eyebrow">${state.user?.role==='author'?'TU ESPACIO DE AUTOR':'CATÁLOGO EDITORIAL'}</p><h1>${title}</h1><p>${state.user?.role==='author'&&isComic?'Aquí aparecen únicamente los cómics donde eres autor de la obra.':subtitle}</p></div>${canCreate?`<button class="button accent" data-create="${type}" type="button">+ Nuevo ${isComic ? 'cómic' : isCreator ? 'creador' : 'proyecto'}</button>`:''}</div>
+    <div class="page-heading"><div><p class="eyebrow">${state.user?.role==='author'?'TU ESPACIO DE AUTOR':'CATÁLOGO EDITORIAL'}</p><h1>${title}</h1><p>${state.user?.role==='author'&&isComic?'Aquí aparecen únicamente los cómics donde eres autor de la obra.':subtitle}</p></div>${ownCreatorProfile?`<button class="button accent" data-edit-my-profile type="button">Editar mi perfil</button>`:canCreate?`<button class="button accent" data-create="${type}" type="button">+ Nuevo ${isComic ? 'cómic' : isCreator ? 'creador' : 'proyecto'}</button>`:''}</div>
     <div class="catalog-toolbar">
       <label class="field search-field"><span class="screen-reader">Buscar ${title.toLowerCase()}</span><input type="search" id="catalog-search" placeholder="Buscar por nombre o cliente" value="${esc(state.filter)}"></label>
       <label class="field"><span class="screen-reader">Filtrar por estado</span><select id="status-filter"><option value="all">Todos los estados</option><option value="published">Publicados</option><option value="draft">Borradores</option><option value="archived">Archivados</option></select></label>
@@ -335,6 +338,7 @@ function renderCatalog(type) {
     $('#catalog-type-filter', root).addEventListener('change', event => { state.catalogTypeFilter = event.target.value; renderCatalog(type); });
   }
   $('[data-create]', root)?.addEventListener('click', event => createRecord(event.currentTarget.dataset.create));
+  $('[data-edit-my-profile]', root)?.addEventListener('click', () => openEditor('authors', ownCreatorProfile, false));
   $$('.record-card', root).forEach(card => card.addEventListener('click', () => {
     const record = findRecord(type, card.dataset.slug);
     if (record) openEditor(type, record, false);
