@@ -28,7 +28,11 @@ writeArtistGalleryLists(resolve(root, 'artistas'));
 for (const directory of ['artistas', 'series', 'clientes', 'historia', 'datos', 'eventos']) {
   cpSync(resolve(root, directory), resolve(output, directory), {
     recursive: true,
-    filter: source => basename(source).toLowerCase() !== 'readme.md',
+    filter: source => {
+      const name = basename(source).toLowerCase();
+      const extension = extname(name);
+      return name !== 'readme.md' && name !== '.gitkeep' && extension !== '.tif' && extension !== '.tiff';
+    },
   });
 }
 
