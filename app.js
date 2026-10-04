@@ -673,7 +673,8 @@ function clientStrip() {
 function clientLogoItem(item, decorative) {
   if (item.empty) return '<span class="client-logo client-logo-empty" aria-hidden="true"><span>LOGO</span></span>';
   const name = item.name || String(item.file).replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
-  return `<span class="client-logo"><img src="/clientes/${encodeURIComponent(item.file)}" alt="${decorative ? '' : esc(name)}"></span>`;
+  const logoClass = item.file.toLowerCase() === 'anya damiron.png' ? ' client-logo-anya' : '';
+  return `<span class="client-logo${logoClass}"><img src="/clientes/${encodeURIComponent(item.file)}" alt="${decorative ? '' : esc(name)}"></span>`;
 }
 async function mountClientLogos() {
   const rows = [...document.querySelectorAll('[data-client-marquee]')];
