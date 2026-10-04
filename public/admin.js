@@ -8,6 +8,14 @@ const compareSpanish = (a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' 
 const genres = ['Acción', 'Kaiju', 'Crimen', 'Sobrenatural', 'Histórico', 'Romance', 'Misterio', 'Ecchi +18', 'Vampiros', 'Detective', 'Thriller', 'Drama', 'Gore +18', 'Fantasía', 'Shonen', 'Zombies', 'Artes Marciales', 'Suspenso', 'Slice of Life', 'Cyberpunk', 'Aventura', 'Shojo', 'Steampunk', 'Magia', 'Psicológico', 'Comedia', 'Noir', 'Horror', 'Seinen', 'Western', 'Isekai', 'Superhéroes', 'Deportivo', 'Mecha', 'Sci-Fi', 'Josei'];
 const catalogTypes = ['Comics', 'Manga', 'Cuentos Infantiles', 'Novelas', 'Artbooks', 'Otros'];
 const creditRoles = ['Obra', 'Obra completa', 'Guion', 'Historia', 'Arte', 'Dibujo', 'Tinta', 'Color', 'Portada', 'Lettering', 'Rotulación', 'Traducción', 'Edición', 'Diseño', 'Asistencia'];
+const authorGalleryCategories = [
+  { value:'illustrations', label:'Illustrations' },
+  { value:'character-design', label:'Character Design' },
+  { value:'comics-novels-childrens-books', label:'Comics / Novels / Children’s Books' },
+  { value:'commissions', label:'Commissions' },
+  { value:'covers', label:'Covers' },
+  { value:'others', label:'Others' },
+];
 const entityForRoute = { comics: 'comics', creators: 'authors', projects: 'projects' };
 const labels = { comics: 'cómic', authors: 'creador', projects: 'proyecto' };
 const heroGradientPreviewKey = 'alphaeve-hero-gradient-preview-v1';
@@ -505,12 +513,14 @@ function chapterExternalCredit(credit = {}, index = 0) {
 function gallerySection(record, type) {
   const images = type !== 'projects' ? (record.gallery || []) : (record.assets?.gallery || []);
   const list = images.map((image,index) => typeof image === 'string' ? { src:image, alt:'' } : image);
-  return section('Galería', 'Agrega imágenes complementarias para mostrar el proceso y otras vistas.', `<div class="gallery-grid" data-gallery-list data-gallery-type="${type}">${list.length ? list.map((image,index) => galleryCard(image,index,type)).join('') : '<p class="muted">Todavía no hay imágenes en la galería.</p>'}</div><div class="button-row"><label class="button secondary small">+ Subir imágenes<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" data-add-gallery-files multiple hidden></label></div>`);
+  const help = type === 'authors' ? 'Sube tu trabajo y elige una categoría para cada imagen. Después aparecerán agrupadas en pestañas públicas.' : 'Agrega imágenes complementarias para mostrar el proceso y otras vistas.';
+  return section('Galería', help, `<div class="gallery-grid" data-gallery-list data-gallery-type="${type}">${list.length ? list.map((image,index) => galleryCard(image,index,type)).join('') : '<p class="muted">Todavía no hay imágenes en la galería.</p>'}</div><div class="button-row"><label class="button secondary small">+ Subir imágenes<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" data-add-gallery-files multiple hidden></label></div>`);
 }
 function galleryCard(image,index,type) {
   const value = type !== 'projects' ? image.src || '' : image.file || image.src || '';
   const caption = type !== 'projects' ? image.alt || '' : image.caption || '';
-  return `<article class="gallery-card" data-gallery-card data-gallery-index="${index}"><div class="gallery-preview">${value ? `<img src="${esc(type === 'projects' ? projectImage(state.editing.original, value) : value)}" alt="">` : 'Sin imagen'}</div><input type="hidden" data-gallery-url value="${esc(value)}">${field('Descripción', 'gallery-caption', caption, { placeholder:'Texto corto para la imagen' })}<button class="button quiet small" type="button" data-remove-gallery>Quitar de la galería</button></article>`;
+  const category = type === 'authors' ? `<label class="field">Sección de galería<select data-gallery-category>${authorGalleryCategories.map(item=>`<option value="${item.value}"${(image.category || (image.src?'others':'illustrations'))===item.value?' selected':''}>${esc(item.label)}</option>`).join('')}</select></label>` : '';
+  return `<article class="gallery-card" data-gallery-card data-gallery-index="${index}"><div class="gallery-preview">${value ? `<img src="${esc(type === 'projects' ? projectImage(state.editing.original, value) : value)}" alt="">` : 'Sin imagen'}</div><input type="hidden" data-gallery-url value="${esc(value)}">${category}${field('Descripción', 'gallery-caption', caption, { placeholder:'Texto corto para la imagen' })}<button class="button quiet small" type="button" data-remove-gallery>Quitar de la galería</button></article>`;
 }
 function renderEditor() {
   $('.modal-backdrop')?.remove();
@@ -747,7 +757,7 @@ function serializeCreators(overlay) {
 function serializeGallery(overlay,type) {
   return $$('[data-gallery-card]',overlay).map(card=>{
     const src=$('[data-gallery-url]',card)?.value || '';const caption=card.querySelector('[name="gallery-caption"]')?.value.trim() || '';
-    return type!=='projects'?{src,alt:caption}:{file:src,caption};
+    return type==='authors'?{src,alt:caption,category:card.querySelector('[data-gallery-category]')?.value || 'illustrations'}:type==='comics'?{src,alt:caption}:{file:src,caption};
   }).filter(item=>type!=='projects'?item.src:item.file);
 }
 function buildPayload(overlay,status) {

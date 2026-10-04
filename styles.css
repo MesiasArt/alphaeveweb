@@ -338,3 +338,4 @@ body.lightbox-open{overflow:hidden}
   .hero-bottom span:last-child{white-space:nowrap}
   .hero-bottom .scroll-line{width:32px}
 }
+.author-gallery{display:block}.author-gallery-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.author-gallery-tab{padding:10px 14px;border:1px solid rgba(244,241,235,.24);background:transparent;color:inherit;font:600 12px var(--body);cursor:pointer}.author-gallery-tab:hover,.author-gallery-tab.active{border-color:var(--red);background:var(--red);color:#fff}.author-gallery-panel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}.author-gallery-panel .gallery-tile[hidden]{display:none}@media(max-width:760px){.author-gallery-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.author-gallery-tabs{gap:6px}.author-gallery-tab{padding:8px 10px;font-size:11px}}

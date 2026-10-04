@@ -264,7 +264,7 @@ function startOriginals() {
 }
 function authorBioHtml(author) {
   if (!author.bio) return '';
-  return author.bio.split(/\n{2,}/).map(part => `<p>${esc(part.trim())}</p>`).join('');
+  return author.bio.split(/\n{2,}/).map(part => `<p>${esc(part.trim()).replace(/\*([^*\n]+)\*/g, '<em>$1</em>')}</p>`).join('');
 }
 
 function authorSocialsHtml(author) {
@@ -315,15 +315,36 @@ async function mountAuthorGallery(author) {
     }
   } catch { /* Empty gallery if the list cannot be loaded. */ }
   const uploaded = (Array.isArray(author.gallery) ? author.gallery : []).filter(image => image && typeof image.src === 'string' && /^(\/[^/]|https?:\/\/)/i.test(image.src));
-  if (!files.length && !uploaded.length) {
+  const labels = {
+    illustrations: 'Illustrations',
+    'character-design': 'Character Design',
+    'comics-novels-childrens-books': 'Comics / Novels / Children’s Books',
+    commissions: 'Commissions',
+    covers: 'Covers',
+    others: 'Others',
+  };
+  const entries = [
+    ...files.map(file => ({ src:`/artistas/${encodeURIComponent(author.slug)}/galeria/${encodeURIComponent(file)}`, alt:file.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '), category:'others' })),
+    ...uploaded.map(image => ({src:image.src,alt:image.alt || nick,category:labels[image.category]?image.category:'others'})),
+  ];
+  if (!entries.length) {
     gallery.innerHTML = '<div class="detail-empty">Todavía no hay imágenes en esta galería.</div>';
     return;
   }
-  gallery.innerHTML = files.map(file => {
-    const src = `/artistas/${encodeURIComponent(author.slug)}/galeria/${encodeURIComponent(file)}`;
-    const label = file.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
-    return `<figure class="gallery-tile">${lightboxTrigger({ src, caption: label, alt: `${nick} · ${label}` })}</figure>`;
-  }).join('') + uploaded.map(image => `<figure class="gallery-tile">${lightboxTrigger({src:image.src,caption:image.alt || nick,alt:image.alt || nick})}</figure>`).join('');
+  const activeCategory = entries[0].category;
+  const tabs = Object.entries(labels).map(([key,label])=>`<button class="author-gallery-tab${key===activeCategory?' active':''}" type="button" role="tab" id="author-gallery-tab-${key}" aria-selected="${key===activeCategory}" aria-controls="author-gallery-panel" data-gallery-tab="${key}">${esc(label)}</button>`).join('');
+  gallery.innerHTML = `<div class="author-gallery-tabs" role="tablist" aria-label="Categorías de galería">${tabs}</div><div class="author-gallery-panel" id="author-gallery-panel" role="tabpanel">${entries.map(entry=>`<figure class="gallery-tile" data-gallery-category="${entry.category}">${lightboxTrigger({src:entry.src,caption:entry.alt,alt:`${nick} · ${entry.alt}`})}</figure>`).join('')}</div>`;
+  gallery.addEventListener('click',event=>{
+    const tab=event.target.closest('[data-gallery-tab]');
+    if(!tab)return;
+    gallery.querySelectorAll('[data-gallery-tab]').forEach(item=>{
+      const selected=item===tab;
+      item.classList.toggle('active',selected);
+      item.setAttribute('aria-selected',String(selected));
+    });
+    gallery.querySelectorAll('.gallery-tile').forEach(item=>{item.hidden=item.dataset.galleryCategory!==tab.dataset.galleryTab;});
+  });
+  gallery.querySelectorAll('.gallery-tile').forEach(item=>{item.hidden=item.dataset.galleryCategory!==activeCategory;});
 }
 function workAuthorSlugs(comic) {
   return comic.workAuthorSlugs || (comic.creatorSlugs || []).filter(slug => String(comic.creatorCredits?.[slug] || '').split(/\s*·\s*/).some(role=>/^(autor(?:\/a)?|obra(?: completa)?|creador(?:\/a)?)$/i.test(role.trim())));
