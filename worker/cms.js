@@ -268,7 +268,7 @@ async function saveContent(request, env, user) {
     if (type === "authors" && !String(payload.name || "").trim()) return json({ error: "Para publicar un perfil, escribe el nombre del creador." }, 400);
     if (type === "projects" && (!String(payload.title || "").trim() || !String(payload.category || "").trim())) return json({ error: "Para publicar un proyecto, completa el título y la categoría." }, 400);
   }
-  const arrayFields = type === "comics" ? ["genres", "creatorSlugs", "chapters", "gallery"] : type === "authors" ? ["specialties"] : ["categories", "creatorSlugs"];
+  const arrayFields = type === "comics" ? ["genres", "creatorSlugs", "chapters", "gallery"] : type === "authors" ? ["specialties", "gallery"] : ["categories", "creatorSlugs"];
   if (arrayFields.some(key => payload[key] !== undefined && !Array.isArray(payload[key]))) return json({ error: "Hay una lista de contenido con un formato incorrecto." }, 400);
   const jsonPayload = JSON.stringify(payload);
   if (encoder.encode(jsonPayload).byteLength > MAX_JSON_BYTES) return json({ error: "El registro supera el límite de tamaño." }, 413);

@@ -18,7 +18,7 @@ function loadAdmin() {
     window:{addEventListener(){}}, location,
     history:{pushState(_state,_title,path){location.pathname=path;}, replaceState(_state,_title,path){location.pathname=path;}},
     fetch:async()=>({ok:true,status:200,json:async()=>({authenticated:false})}),
-    AbortSignal, console, setTimeout, clearTimeout,
+    AbortSignal, console, setTimeout, clearTimeout, structuredClone,
   });
   vm.runInContext(readFileSync(new URL('../public/admin.js', import.meta.url),'utf8'),context);
   vm.runInContext(`
@@ -26,6 +26,7 @@ function loadAdmin() {
     renderPasswordChange = required => views.push(['password',required]);
     renderCatalog = type => views.push(['catalog',type]);
     openEditor = () => views.push(['editor']);
+    renderEditor = () => views.push(['profile']);
   `,context);
   return {context,nodes,location,run:code=>vm.runInContext(code,context)};
 }
@@ -53,7 +54,8 @@ test('pending temporary password cannot navigate into empty comic or creator cat
   assert.equal(ui.run(`allRecords('authors')[0].slug`),'froggynami');
   assert.equal(ui.run(`views.at(-1).join(':')`),'catalog:comics');
   ui.run(`navigate('/admin/creators')`);
-  assert.equal(ui.run(`views.at(-1).join(':')`),'catalog:authors');
+  assert.equal(ui.run(`views.at(-1).join(':')`),'profile');
+  assert.equal(ui.run(`state.editing.original.slug`),'froggynami');
   assert.equal(ui.nodes.get('[data-route="comics"]').hidden,false);
   assert.equal(ui.nodes.get('[data-route="creators"]').hidden,false);
 });

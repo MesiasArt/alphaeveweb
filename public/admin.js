@@ -60,7 +60,7 @@ async function api(path, options = {}) {
     throw new Error('No se pudo conectar con el CMS. Revisa tu conexión e inténtalo otra vez.');
   }
   const result = await response.json().catch(() => ({}));
-  if (response.status === 401) {
+  if (response.status === 401 && path !== '/api/cms/login' && !(path === '/api/cms/password' && result.error === 'La contraseña actual no coincide.')) {
     logoutLocal();
     throw new Error('Tu sesión venció. Vuelve a iniciar sesión.');
   }
@@ -197,6 +197,12 @@ function renderRoute() {
   if (state.route === 'users' && state.user?.role === 'admin') renderUserAccounts();
   else if (state.route === 'password') renderPasswordChange(false);
   else if (state.route === 'dashboard' && state.user?.role === 'admin') renderDashboard();
+  else if (state.route === 'creators' && state.user?.role === 'author') {
+    const profile = findRecord('authors', state.user.authorSlug);
+    if (!profile) { root.innerHTML = '<p class="empty-state">No se encontró tu perfil de creador.</p>'; return; }
+    state.editing = {type:'authors', original:structuredClone(profile), isNew:false, autoSlug:false};
+    renderEditor();
+  }
   else renderCatalog(entityForRoute[state.route]);
 }
 function renderPasswordChange(required = false) {
@@ -383,6 +389,7 @@ function openEditor(type, record, isNew) {
   renderEditor();
 }
 function closeEditor() {
+  if (state.user?.role === 'author' && state.route === 'creators' && !cmsView.hidden) return;
   $('.modal-backdrop')?.remove();
   state.editing = null;
   if (cmsView.hidden) return;
@@ -496,13 +503,13 @@ function chapterExternalCredit(credit = {}, index = 0) {
   return `<div class="chapter-credit-person external-credit-person" data-chapter-external-credit><div class="chapter-credit-person-head"><strong>Colaborador externo</strong><button class="button quiet small" type="button" data-remove-chapter-external>Quitar colaborador</button></div>${field('Nombre', 'chapter-external-name', credit.name || '', { placeholder:'Nombre de la persona' })}${chapterRoleChoices(credit.roles || [],'external')}</div>`;
 }
 function gallerySection(record, type) {
-  const images = type === 'comics' ? (record.gallery || []) : (record.assets?.gallery || []);
+  const images = type !== 'projects' ? (record.gallery || []) : (record.assets?.gallery || []);
   const list = images.map((image,index) => typeof image === 'string' ? { src:image, alt:'' } : image);
   return section('Galería', 'Agrega imágenes complementarias para mostrar el proceso y otras vistas.', `<div class="gallery-grid" data-gallery-list data-gallery-type="${type}">${list.length ? list.map((image,index) => galleryCard(image,index,type)).join('') : '<p class="muted">Todavía no hay imágenes en la galería.</p>'}</div><div class="button-row"><label class="button secondary small">+ Subir imágenes<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" data-add-gallery-files multiple hidden></label></div>`);
 }
 function galleryCard(image,index,type) {
-  const value = type === 'comics' ? image.src || '' : image.file || image.src || '';
-  const caption = type === 'comics' ? image.alt || '' : image.caption || '';
+  const value = type !== 'projects' ? image.src || '' : image.file || image.src || '';
+  const caption = type !== 'projects' ? image.alt || '' : image.caption || '';
   return `<article class="gallery-card" data-gallery-card data-gallery-index="${index}"><div class="gallery-preview">${value ? `<img src="${esc(type === 'projects' ? projectImage(state.editing.original, value) : value)}" alt="">` : 'Sin imagen'}</div><input type="hidden" data-gallery-url value="${esc(value)}">${field('Descripción', 'gallery-caption', caption, { placeholder:'Texto corto para la imagen' })}<button class="button quiet small" type="button" data-remove-gallery>Quitar de la galería</button></article>`;
 }
 function renderEditor() {
@@ -511,6 +518,7 @@ function renderEditor() {
   if (!editing) return;
   const { type, original, isNew } = editing;
   const isComic = type === 'comics'; const isCreator = type === 'authors';
+  const inlineProfile = isCreator && state.user?.role === 'author' && state.route === 'creators';
   const title = displayName(original);
   const entityName = isComic ? 'comics' : isCreator ? 'authors' : 'projects';
   const inferredCatalogType = original.catalogType || ({ 'Manga':'Manga', 'Novela gráfica':'Novelas', 'Novelas':'Novelas', 'Artbook':'Artbooks', 'Artbooks':'Artbooks', 'Cuentos Infantiles':'Cuentos Infantiles', 'Otro':'Otros', 'Otros':'Otros' }[original.medium] || 'Comics');
@@ -527,6 +535,7 @@ function renderEditor() {
     sections += genreSection(original.genres || []);
     sections += creatorSection(original,type) + externalCreditsSection(original) + (original.format==='One-shot'?'':chapterSection(original)) + gallerySection(original,type);
   } else if (isCreator) {
+    sections += gallerySection(original,type);
     sections += section('Foto de perfil', 'Usa una imagen clara del creador. Puedes dejarla pendiente.', mediaField('Foto del creador','creator-image',original.image || '',{preview:imageUrl(original.image,'authors',original)}));
     sections += section('Especialidades', 'Selecciona o agrega las áreas en las que trabaja.', chipSection(original.specialties || [], ['Ilustración','Cómic','Diseño','Color','Guion','Lettering','Concept art','Animación'], 'specialties'));
   } else {
@@ -536,7 +545,13 @@ function renderEditor() {
   }
   const overlay = document.createElement('div');
   overlay.className = 'modal-backdrop'; overlay.innerHTML = `<section class="editor-drawer" role="dialog" aria-modal="true" aria-labelledby="editor-title"><header class="drawer-header"><div><p class="eyebrow">${isNew ? 'NUEVO CONTENIDO' : 'EDITAR CONTENIDO'}</p><h2 id="editor-title">${esc(isNew ? `Nuevo ${labels[type]}` : title)}</h2></div><div class="button-row"><button class="button secondary small" type="button" data-preview>Vista previa</button><button class="button quiet" type="button" data-close-editor aria-label="Cerrar editor">Cerrar</button></div></header><form data-editor-form novalidate><div class="drawer-body">${sections}<p class="muted">Las direcciones actuales del sitio se conservan. Los campos que dejes vacíos pueden completarse después.</p></div><footer class="drawer-footer"><button class="button quiet" type="button" data-close-editor>Cancelar</button><div class="button-row"><button class="button secondary save-draft" type="button" data-save-status="draft">Guardar borrador</button><button class="button primary" type="button" data-save-status="current">Guardar cambios</button><button class="button accent" type="button" data-save-status="published">Publicar</button></div></footer></form></section>`;
-  document.body.append(overlay);
+  if (inlineProfile) {
+    overlay.className = 'profile-editor';
+    const panel = $('.editor-drawer', overlay);
+    panel.removeAttribute('role'); panel.removeAttribute('aria-modal');
+    $$('[data-close-editor]',overlay).forEach(button => button.remove());
+    root.replaceChildren(overlay);
+  } else document.body.append(overlay);
   bindEditor(overlay);
   $('.editor-drawer', overlay).scrollTop = 0;
 }
@@ -732,8 +747,8 @@ function serializeCreators(overlay) {
 function serializeGallery(overlay,type) {
   return $$('[data-gallery-card]',overlay).map(card=>{
     const src=$('[data-gallery-url]',card)?.value || '';const caption=card.querySelector('[name="gallery-caption"]')?.value.trim() || '';
-    return type==='comics'?{src,alt:caption}:{file:src,caption};
-  }).filter(item=>type==='comics'?item.src:item.file);
+    return type!=='projects'?{src,alt:caption}:{file:src,caption};
+  }).filter(item=>type!=='projects'?item.src:item.file);
 }
 function buildPayload(overlay,status) {
   const editing=state.editing; const {type,original,isNew}=editing; const form=$('[data-editor-form]',overlay);
@@ -745,6 +760,7 @@ function buildPayload(overlay,status) {
     payload.genres=collectChips(overlay,'[data-genre-list] input');Object.assign(payload,serializeCreators(overlay));payload.externalCredits=serializeExternalCredits(overlay);payload.chapters=serializeChapters(overlay,original.chapters||[]);payload.gallery=serializeGallery(overlay,'comics');
     if(payload.chapters.length){payload.chapterCount=Math.max(...payload.chapters.map(ch=>ch.number));payload.availableChapters=payload.chapters.filter(ch=>normStatus(ch.status)==='published').length;}
   } else if(type==='authors') {
+    payload.gallery=serializeGallery(overlay,'authors');
     payload.name=formValue(form,'name');payload.slug=formValue(form,'slug')||uniqueSlug(type,slugify(payload.name)||'borrador-creador');payload.role=formValue(form,'role');payload.primaryRole=formValue(form,'primaryRole');payload.image=$('[data-media-container="creator-image"] [data-media-value]',overlay)?.value||'';payload.bio=formValue(form,'bio');payload.specialties=collectChips(overlay,'[data-chip-list="specialties"] input');payload.social=formValue(form,'instagram')||formValue(form,'twitter')||'';payload.instagram=formValue(form,'instagram');payload.twitter=formValue(form,'twitter');payload.website=formValue(form,'website');
   } else {
     payload.title=formValue(form,'title');payload.slug=formValue(form,'slug')||uniqueSlug(type,slugify(payload.title)||'borrador-proyecto');payload.category=formValue(form,'category');payload.categories=[...new Set([...(original.categories||[]).filter(value=>value!==original.category),payload.category].filter(Boolean))];payload.client=formValue(form,'client');payload.type=formValue(form,'type');payload.subtitle=formValue(form,'subtitle');payload.storyCopy=formValue(form,'description').split(/\n\s*\n/).map(part=>part.trim()).filter(Boolean);payload.externalUrl=formValue(form,'website');payload.roleCopy=formValue(form,'roleCopy');payload.storyBy=formValue(form,'storyBy');payload.illustrationBy=formValue(form,'illustrationBy');

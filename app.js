@@ -314,15 +314,16 @@ async function mountAuthorGallery(author) {
       if (Array.isArray(data)) files = data.filter(name => typeof name === 'string' && name && !/[\\/]/.test(name) && !name.includes('..'));
     }
   } catch { /* Empty gallery if the list cannot be loaded. */ }
-  if (!files.length) {
-    gallery.innerHTML = `<div class="detail-empty">Pon ilustraciones en artistas/${esc(author.slug)}/galeria/</div>`;
+  const uploaded = (Array.isArray(author.gallery) ? author.gallery : []).filter(image => image && typeof image.src === 'string' && /^(\/[^/]|https?:\/\/)/i.test(image.src));
+  if (!files.length && !uploaded.length) {
+    gallery.innerHTML = '<div class="detail-empty">Todavía no hay imágenes en esta galería.</div>';
     return;
   }
   gallery.innerHTML = files.map(file => {
     const src = `/artistas/${encodeURIComponent(author.slug)}/galeria/${encodeURIComponent(file)}`;
     const label = file.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
     return `<figure class="gallery-tile">${lightboxTrigger({ src, caption: label, alt: `${nick} · ${label}` })}</figure>`;
-  }).join('');
+  }).join('') + uploaded.map(image => `<figure class="gallery-tile">${lightboxTrigger({src:image.src,caption:image.alt || nick,alt:image.alt || nick})}</figure>`).join('');
 }
 function workAuthorSlugs(comic) {
   return comic.workAuthorSlugs || (comic.creatorSlugs || []).filter(slug => String(comic.creatorCredits?.[slug] || '').split(/\s*·\s*/).some(role=>/^(autor(?:\/a)?|obra(?: completa)?|creador(?:\/a)?)$/i.test(role.trim())));

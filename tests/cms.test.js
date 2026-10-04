@@ -156,11 +156,12 @@ test('author accounts can edit only their profile and comics they own, with forc
   assert.equal(scoped.comics[0].title,'Updated title');
   assert.deepEqual(scoped.comics[0].workAuthorSlugs,['ana-owner']);
   assert.deepEqual(scoped.comics[0].creatorSlugs,['ana-owner']);
-  const profile = {...scoped.authors[0], bio:'Updated biography', status:'draft'};
+  const profile = {...scoped.authors[0], bio:'Updated biography', status:'draft',gallery:[{src:'/media/art.jpg',alt:'Mi ilustración'}]};
   assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'authors',slug:'ana-owner',payload:profile}})).status,200);
   const updatedProfile = (await (await api(env,'/api/cms/content',{cookie:authorCookie})).json()).authors[0];
   assert.equal(updatedProfile.bio,'Updated biography');
   assert.equal(updatedProfile.status,'draft');
+  assert.deepEqual(updatedProfile.gallery,profile.gallery);
   assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'authors',slug:'luz-owner',payload:{...profile,slug:'luz-owner'}}})).status,403);
   assert.equal((await api(env,'/api/cms/users',{cookie:authorCookie})).status,403);
   await api(env,'/api/cms/users',{method:'POST',cookie:admin,body:{action:'disable',authorSlug:'ana-owner'}});
