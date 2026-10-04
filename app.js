@@ -309,7 +309,7 @@ async function mountAuthorGallery(author) {
   let files = [];
   try {
     const response = await fetch(`/artistas/${encodeURIComponent(author.slug)}/galeria.json`, { cache: 'no-store' });
-    if (response.ok) {
+    if (response.ok && !author.galleryManaged) {
       const data = await response.json();
       if (Array.isArray(data)) files = data.filter(name => typeof name === 'string' && name && !/[\\/]/.test(name) && !name.includes('..'));
     }

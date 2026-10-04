@@ -514,7 +514,7 @@ function gallerySection(record, type) {
   const images = type !== 'projects' ? (record.gallery || []) : (record.assets?.gallery || []);
   const list = images.map((image,index) => typeof image === 'string' ? { src:image, alt:'' } : image);
   const help = type === 'authors' ? 'Sube tu trabajo y elige una categoría para cada imagen. Después aparecerán agrupadas en pestañas públicas.' : 'Agrega imágenes complementarias para mostrar el proceso y otras vistas.';
-  return section('Galería', help, `<div class="gallery-grid" data-gallery-list data-gallery-type="${type}">${list.length ? list.map((image,index) => galleryCard(image,index,type)).join('') : '<p class="muted">Todavía no hay imágenes en la galería.</p>'}</div><div class="button-row"><label class="button secondary small">+ Subir imágenes<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" data-add-gallery-files multiple hidden></label></div>`);
+  return section('Galería', help, `${type==='authors' && !record.galleryManaged ? '<p class="muted" data-legacy-gallery-status>Buscando imágenes existentes…</p>' : ''}<div class="gallery-grid" data-gallery-list data-gallery-type="${type}">${list.length ? list.map((image,index) => galleryCard(image,index,type)).join('') : '<p class="muted" data-gallery-empty>Todavía no hay imágenes en la galería.</p>'}</div><div class="button-row"><label class="button secondary small">+ Subir imágenes<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" data-add-gallery-files multiple hidden></label></div>`);
 }
 function galleryCard(image,index,type) {
   const value = type !== 'projects' ? image.src || '' : image.file || image.src || '';
@@ -563,7 +563,42 @@ function renderEditor() {
     root.replaceChildren(overlay);
   } else document.body.append(overlay);
   bindEditor(overlay);
+  if (isCreator && !original.galleryManaged) importLegacyCreatorGallery(overlay, original);
   $('.editor-drawer', overlay).scrollTop = 0;
+}
+async function importLegacyCreatorGallery(overlay, author) {
+  const status=$('[data-legacy-gallery-status]',overlay);
+  const saveButtons=$$('[data-save-status]',overlay);
+  if (!status || !overlay.isConnected) return;
+  saveButtons.forEach(button=>button.disabled=true);
+  try {
+    const response=await fetch(`/artistas/${encodeURIComponent(author.slug)}/galeria.json`,{cache:'no-store'});
+    if (!response.ok) throw new Error('No se pudo cargar la galería existente.');
+    const files=await response.json();
+    if (!Array.isArray(files)) throw new Error('La lista de imágenes de la galería no es válida.');
+    if (!overlay.isConnected || state.editing?.original.slug !== author.slug) return;
+    const list=$('[data-gallery-list]',overlay);
+    const existing=new Set($$('[data-gallery-url]',list).map(input=>input.value));
+    const validFiles=files.filter(file=>typeof file==='string'&&file&&!/[\\/]/.test(file)&&!file.includes('..'));
+    for (const file of validFiles) {
+      const src=`/artistas/${encodeURIComponent(author.slug)}/galeria/${encodeURIComponent(file)}`;
+      if (existing.has(src)) continue;
+      const temp=document.createElement('div');
+      temp.innerHTML=galleryCard({src,alt:file.replace(/\.[^.]+$/,'').replace(/[-_]+/g,' '),category:'others'},$$('[data-gallery-card]',list).length,'authors');
+      $('[data-gallery-empty]',list)?.remove();
+      list.append(temp.firstElementChild);
+      existing.add(src);
+    }
+    status.textContent=validFiles.length?`${validFiles.length} imágenes existentes listas para organizar.`:'No hay imágenes antiguas para importar.';
+    status.classList.add('gallery-import-complete');
+    state.editing.original.galleryManaged=true;
+  } catch (error) {
+    status.textContent=`${error.message} No guardes el perfil todavía; vuelve a abrirlo para intentarlo otra vez.`;
+    status.classList.add('gallery-import-error');
+    saveButtons.forEach(button=>button.disabled=true);
+    return;
+  }
+  saveButtons.forEach(button=>button.disabled=false);
 }
 function projectCategoryChoices(current) {
   const known = [...new Set(['PROPIEDADES ORIGINALES','TRABAJOS PARA CLIENTES','COLABORACIONES','VIDEOJUEGOS Y JUEGOS DE MESA','ILUSTRACIÓN / DISEÑO', ...allRecords('projects').flatMap(item => [item.category, ...(item.categories || [])]).filter(Boolean)])];
@@ -771,6 +806,7 @@ function buildPayload(overlay,status) {
     if(payload.chapters.length){payload.chapterCount=Math.max(...payload.chapters.map(ch=>ch.number));payload.availableChapters=payload.chapters.filter(ch=>normStatus(ch.status)==='published').length;}
   } else if(type==='authors') {
     payload.gallery=serializeGallery(overlay,'authors');
+    payload.galleryManaged=true;
     payload.name=formValue(form,'name');payload.slug=formValue(form,'slug')||uniqueSlug(type,slugify(payload.name)||'borrador-creador');payload.role=formValue(form,'role');payload.primaryRole=formValue(form,'primaryRole');payload.image=$('[data-media-container="creator-image"] [data-media-value]',overlay)?.value||'';payload.bio=formValue(form,'bio');payload.specialties=collectChips(overlay,'[data-chip-list="specialties"] input');payload.social=formValue(form,'instagram')||formValue(form,'twitter')||'';payload.instagram=formValue(form,'instagram');payload.twitter=formValue(form,'twitter');payload.website=formValue(form,'website');
   } else {
     payload.title=formValue(form,'title');payload.slug=formValue(form,'slug')||uniqueSlug(type,slugify(payload.title)||'borrador-proyecto');payload.category=formValue(form,'category');payload.categories=[...new Set([...(original.categories||[]).filter(value=>value!==original.category),payload.category].filter(Boolean))];payload.client=formValue(form,'client');payload.type=formValue(form,'type');payload.subtitle=formValue(form,'subtitle');payload.storyCopy=formValue(form,'description').split(/\n\s*\n/).map(part=>part.trim()).filter(Boolean);payload.externalUrl=formValue(form,'website');payload.roleCopy=formValue(form,'roleCopy');payload.storyBy=formValue(form,'storyBy');payload.illustrationBy=formValue(form,'illustrationBy');
