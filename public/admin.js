@@ -478,14 +478,14 @@ function slugField(record, isNew, entityName) {
 function chapterSection(record) {
   const chapters = record.chapters || [];
   const workAuthors = workAuthorSlugsFor(record);
-  const help = chapters.length ? 'El autor de la obra aparecerá en todos los capítulos. Asigna aquí los colaboradores que participaron en cada uno.' : 'Este cómic todavía no tiene capítulos.';
+  const help = chapters.length ? 'El autor de la obra aparecerá en todos los capítulos. También puedes agregarlo aquí para asignarle roles específicos de un capítulo.' : 'Este cómic todavía no tiene capítulos.';
   return `<section class="editor-section" data-chapter-section><h3>Capítulos</h3><p class="section-help">${help}</p><div data-chapter-list>${chapters.length ? chapters.map((chapter,index) => chapterEditor(chapter,index,index,workAuthors)).join('') : '<p class="muted">Este cómic todavía no tiene capítulos.</p>'}</div><button class="button secondary small" type="button" data-add-chapter>+ Agregar capítulo</button></section>`;
 }
 function chapterEditor(chapter, index, originalIndex = index, seriesCreators = []) {
   const knownCreators = allRecords('authors').slice().sort((a,b)=>a.name.localeCompare(b.name,'es'));
   const seriesNames = seriesCreators.map(slug=>findRecord('authors',slug)?.name).filter(Boolean);
   const selectedSlugs = (chapter.credits || []).map(credit=>credit.creatorSlug);
-  const availableCreators = knownCreators.filter(author=>!selectedSlugs.includes(author.slug) && !seriesCreators.includes(author.slug));
+  const availableCreators = knownCreators.filter(author=>!selectedSlugs.includes(author.slug));
   const team = (chapter.credits || []).map((credit,creditIndex)=>chapterCreatorCredit(credit,creditIndex)).join('');
   const externalTeam = (chapter.externalCredits || []).map((credit,creditIndex)=>chapterExternalCredit(typeof credit === 'string' ? parseExternalCredit(credit) : credit,creditIndex)).join('');
   const chapterId = chapter.id || `chapter-${Number(chapter.number)||index+1}-${slugify(chapter.title)||'untitled'}`;
@@ -494,7 +494,7 @@ function chapterEditor(chapter, index, originalIndex = index, seriesCreators = [
     ${selectField('Estado del capítulo', 'chapter-status', normStatus(chapter.status || 'published'), [{value:'draft',label:'Borrador'},{value:'published',label:'Publicado'},{value:'archived',label:'Archivado'}])}
     ${field('Enlace de lectura (opcional)', 'chapter-digital', chapter.digitalUrl || '', { placeholder:'https://…' })}${field('Enlace de compra (opcional)', 'chapter-physical', chapter.physicalUrl || '', { placeholder:'https://…' })}</div>
     ${mediaField('Portada del capítulo', `chapter-${index}-cover`, chapter.cover || '', { ratio:'landscape' })}
-    <section class="chapter-credit-editor"><h4>Equipo y créditos del capítulo</h4><p class="field-hint">El autor de la obra se incluye automáticamente en todos los capítulos. Agrega aquí solo a los colaboradores de este capítulo.</p><div class="series-creator-reference"><strong>Autor de la obra · incluido siempre</strong><span>${seriesNames.length ? esc(seriesNames.join(' · ')) : 'Marca al autor en “Autoría y colaboradores” para incluirlo automáticamente.'}</span></div>
+    <section class="chapter-credit-editor"><h4>Equipo y créditos del capítulo</h4><p class="field-hint">El autor de la obra se incluye automáticamente. Agrégalo también a los créditos específicos del capítulo si tuvo otros roles, como lettering, color o portada.</p><div class="series-creator-reference"><strong>Autor de la obra · incluido siempre</strong><span>${seriesNames.length ? esc(seriesNames.join(' · ')) : 'Marca al autor en “Autoría y colaboradores” para incluirlo automáticamente.'}</span></div>
       <strong class="chapter-team-label">Colaboradores de este capítulo</strong><div class="chapter-credit-list" data-chapter-credit-list>${team || '<p class="muted">Todavía no hay colaboradores específicos.</p>'}</div>
       <div class="inline-add chapter-credit-add"><label class="field">Buscar creador<input type="search" data-chapter-creator-search placeholder="Buscar creador…"></label><label class="field">Creador<select data-chapter-creator-choice><option value="">Selecciona un creador</option>${availableCreators.map(person=>`<option value="${esc(person.slug)}" data-search="${esc(person.name.toLocaleLowerCase())}">${esc(person.name)}</option>`).join('')}</select></label><button class="button secondary small" type="button" data-add-chapter-creator>+ Agregar creador</button></div>
       <strong class="chapter-team-label">Colaboradores externos de este capítulo</strong><div class="chapter-credit-list" data-chapter-external-list>${externalTeam || '<p class="muted">Todavía no hay colaboradores externos.</p>'}</div><button class="button secondary small" type="button" data-add-chapter-external>+ Agregar colaborador externo</button>
