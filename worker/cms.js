@@ -399,7 +399,7 @@ function authorWorkspace(data, authorSlug) {
   const comics = data.comics.filter(comic => workAuthors(comic).includes(authorSlug));
   return {
     comics,
-    authors: data.authors.filter(author => author.slug === authorSlug).map(author => ({ ...author, comicSlugs: comics.map(comic => comic.slug), projectSlugs: [] })),
+    authors: data.authors.filter(author => author.slug === authorSlug || !isUnpublished(author.status)).map(author => author.slug === authorSlug ? ({ ...author, comicSlugs: comics.map(comic => comic.slug), projectSlugs: [] }) : author),
     projects: [],
   };
 }
