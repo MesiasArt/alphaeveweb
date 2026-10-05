@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { getContent, handleCms, serveMedia } from '../worker/cms.js';
+import { servePublicPage, serveSitemap } from '../worker/public-pages.js';
 import { pageMetadata, publicRoutes, resolvePage } from '../seo-data.js';
 import { comics as seedComics } from '../seo-data.js';
 
@@ -64,6 +67,7 @@ function makeEnv() {
     async batch(statements) { for (const statement of statements) await statement.run(); return []; },
   };
   return {
+    ASSETS: { async fetch() { return new Response(readFileSync(new URL('../index.html', import.meta.url), 'utf8'), { headers: { 'content-type': 'text/html; charset=utf-8' } }); } },
     CMS_DB: db,
     CMS_ADMIN_PASSWORD: 'local-test-password',
     CMS_SESSION_SECRET: 'test-only-secret-value',
@@ -72,6 +76,10 @@ function makeEnv() {
       async get(key) { return media.get(key) || null; },
     },
   };
+}
+
+async function publicPage(env, path) {
+  return servePublicPage(new Request(new URL(path, 'https://alphaeve.example')), env);
 }
 
 async function api(env, path, { method = 'GET', body, cookie } = {}) {
@@ -293,4 +301,98 @@ test('series creators and chapter credits stay separate in D1, API, and chapter 
   const work = metadata.schema['@graph'].find(node=>node['@type']==='CreativeWork');
   assert.deepEqual(work.hasPart[1].creator.map(person=>person.name),['Francisco','Carlos','Luz externa']);
   assert.equal(work.hasPart[1].creator.some(person=>person.name==='Darwin'),false);
+});
+
+test('cold public response uses published CMS content for route, HTML, SEO, and sitemap', async () => {
+  const routing = JSON.parse(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8')).assets.run_worker_first;
+  for (const path of ['/', '/comics', '/comics/*', '/authors/*', '/projects/*', '/sitemap.xml']) assert.ok(routing.includes(path));
+  const env = makeEnv();
+  const admin = await signedIn(env);
+  const published = { slug: 'hooligans-our-first-adventure', title: 'HOOLIGANS - Our first adventure', synopsis: 'Historia de prueba para verificar la ruta publicada.', cover: '/media/hooligans.jpg', status: 'published', creatorSlugs: [], chapters: [] };
+  const draft = { slug: 'fase-uno-draft', title: 'Borrador privado', cover: '/media/draft.jpg', status: 'draft', creatorSlugs: [], chapters: [] };
+  const archived = { slug: 'fase-uno-archived', title: 'Archivado privado', cover: '/media/archived.jpg', status: 'archived', creatorSlugs: [], chapters: [] };
+  for (const record of [published, draft, archived]) {
+    const response = await api(env, '/api/cms/content', { method: 'PUT', cookie: admin, body: { type: 'comics', slug: record.slug, payload: record } });
+    assert.equal(response.status, 200);
+  }
+  for (const entry of [
+    { type: 'authors', payload: { slug: 'autor-cms-fase-uno', name: 'Autor CMS Fase Uno', bio: 'Perfil publicado.', status: 'published' } },
+    { type: 'projects', payload: { slug: 'proyecto-cms-fase-uno', title: 'Proyecto CMS Fase Uno', category: 'TRABAJOS PARA CLIENTES', description: 'Proyecto publicado.', status: 'published' } },
+  ]) {
+    assert.equal((await api(env, '/api/cms/content', { method: 'PUT', cookie: admin, body: { type: entry.type, slug: entry.payload.slug, payload: entry.payload } })).status, 200);
+  }
+
+  const seedResponse = await publicPage(env, '/comics/baka-el-mito-asesino');
+  const seedHtml = await seedResponse.text();
+  assert.equal(seedResponse.status, 200);
+  assert.match(seedHtml, /<main id="app">[\s\S]*Baká: El Mito Asesino/);
+  assert.match(seedHtml, /<link rel="canonical" href="https:\/\/alphaeve\.example\/comics\/baka-el-mito-asesino">/);
+  for (const [path, title] of [
+    ['/authors/darkereve', 'Darwin Núñez'],
+    ['/projects/a-great-and-terrible', 'A Great and Terrible #1'],
+    ['/authors/autor-cms-fase-uno', 'Autor CMS Fase Uno'],
+    ['/projects/proyecto-cms-fase-uno', 'Proyecto CMS Fase Uno'],
+  ]) {
+    const sample = await publicPage(env, path);
+    assert.equal(sample.status, 200);
+    const sampleHtml = await sample.text();
+    assert.ok(sampleHtml.includes(`<h1>${title}</h1>`));
+    assert.ok(sampleHtml.includes(`<link rel="canonical" href="https://alphaeve.example${path}">`));
+  }
+
+  const response = await publicPage(env, '/comics/hooligans-our-first-adventure');
+  const html = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(html, /<main id="app">[\s\S]*HOOLIGANS - Our first adventure/);
+  assert.doesNotMatch(html, /Cómic no encontrado|PÁGINA NO ENCONTRADA/);
+  assert.match(html, /<title>HOOLIGANS - Our first adventure — Alpha Eve Studios<\/title>/);
+  assert.match(html, /<meta name="description" content="Historia de prueba para verificar la ruta publicada\.">/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/alphaeve\.example\/comics\/hooligans-our-first-adventure">/);
+  assert.match(html, /<meta property="og:title" content="HOOLIGANS - Our first adventure — Alpha Eve Studios">/);
+  assert.match(html, /<meta property="og:url" content="https:\/\/alphaeve\.example\/comics\/hooligans-our-first-adventure">/);
+  assert.match(html, /<script type="application\/ld\+json" data-page-schema="true">[\s\S]*HOOLIGANS - Our first adventure/);
+  const embedded = html.match(/<script type="application\/json" id="initial-public-content">([^<]+)<\/script>/);
+  assert.ok(embedded);
+  const hydrated = JSON.parse(embedded[1]);
+  assert.deepEqual(hydrated, await (await api(env, '/api/content')).json());
+  assert.equal(hydrated.comics.find(comic => comic.slug === published.slug)?.title, published.title);
+  assert.equal(hydrated.comics.some(comic => comic.slug === draft.slug || comic.slug === archived.slug), false);
+
+  const server = createServer(async (incoming, outgoing) => {
+    try {
+      const page = await servePublicPage(new Request(`http://127.0.0.1${incoming.url}`), env);
+      outgoing.writeHead(page.status, Object.fromEntries(page.headers));
+      outgoing.end(await page.text());
+    } catch (error) { outgoing.writeHead(500); outgoing.end(String(error)); }
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const direct = await fetch(`http://127.0.0.1:${server.address().port}/comics/hooligans-our-first-adventure`);
+    assert.equal(direct.status, 200);
+    const directHtml = await direct.text();
+    assert.match(directHtml, /<main id="app">[\s\S]*HOOLIGANS - Our first adventure/);
+    assert.match(directHtml, /<meta property="og:title" content="HOOLIGANS - Our first adventure — Alpha Eve Studios">/);
+  } finally { await new Promise(resolve => server.close(resolve)); }
+
+  for (const slug of [draft.slug, archived.slug, 'no-existe-audit']) {
+    const missing = await publicPage(env, `/comics/${slug}`);
+    const missingHtml = await missing.text();
+    assert.equal(missing.status, 404);
+    assert.match(missingHtml, /<meta name="robots" content="noindex,follow">/);
+    assert.doesNotMatch(missingHtml, /<link rel="canonical"/);
+  }
+
+  const sitemap = await serveSitemap(new Request('https://alphaeve.example/sitemap.xml'), env);
+  const xml = await sitemap.text();
+  assert.equal(sitemap.status, 200);
+  assert.match(xml, /\/comics\/baka-el-mito-asesino<\/loc>/);
+  assert.match(xml, /\/comics\/hooligans-our-first-adventure<\/loc>/);
+  assert.match(xml, /\/authors\/autor-cms-fase-uno<\/loc>/);
+  assert.match(xml, /\/projects\/proyecto-cms-fase-uno<\/loc>/);
+  assert.doesNotMatch(xml, /fase-uno-draft|fase-uno-archived|no-existe-audit/);
+
+  const hiddenSeed = { ...seedComics.find(comic => comic.slug === 'baka-el-mito-asesino'), status: 'draft' };
+  assert.equal((await api(env, '/api/cms/content', { method: 'PUT', cookie: admin, body: { type: 'comics', slug: hiddenSeed.slug, payload: hiddenSeed } })).status, 200);
+  assert.equal((await publicPage(env, '/comics/baka-el-mito-asesino')).status, 404);
+  assert.doesNotMatch(await (await serveSitemap(new Request('https://alphaeve.example/sitemap.xml'), env)).text(), /\/comics\/baka-el-mito-asesino<\/loc>/);
 });

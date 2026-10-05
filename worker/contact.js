@@ -1,6 +1,6 @@
 import { EmailMessage } from "cloudflare:email";
-import { pageMetadata, publicRoutes, resolvePage } from "../seo-data.js";
-import { getContent, handleCms, serveMedia } from "./cms.js";
+import { handleCms, serveMedia } from "./cms.js";
+import { servePublicPage, serveRobots, serveSitemap } from "./public-pages.js";
 
 const SERVICES = [
   "Ilustración",
@@ -23,88 +23,19 @@ export default {
     if (url.pathname === "/api/contact") return handleContact(request, env);
     if (url.pathname.startsWith("/api/cms/") || url.pathname === "/api/content") return handleCms(request, env, url);
     if (url.pathname.startsWith("/media/")) return serveMedia(request, env, url);
-    if (url.pathname === "/robots.txt") return robotsResponse(url, request.method);
-    if (url.pathname === "/sitemap.xml") return sitemapResponse(url, request, env);
+    if (url.pathname === "/robots.txt") return serveRobots(request, url);
+    if (url.pathname === "/sitemap.xml") return serveSitemap(request, env, url);
 
     if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname.startsWith("/admin/")) {
       return env.ASSETS.fetch(new Request(new URL("/admin.html", url), request));
     }
 
-    const pathname = normalizePath(url.pathname);
     if (/\.[a-z\d]{2,8}$/i.test(url.pathname) && !["/index.html"].includes(url.pathname)) {
       return env.ASSETS.fetch(request);
     }
-    const content = await getContent(env);
-    const page = resolvePage(pathname, url.origin, content);
-    if (!page) {
-      const notFoundUrl = new URL("/index.html", url);
-      const notFoundRequest = new Request(notFoundUrl, request);
-      const response = await env.ASSETS.fetch(notFoundRequest);
-      return withSeoHead(response, {
-        title: "Página no encontrada — Alpha Eve Studios",
-        description: "La página solicitada no existe.",
-        canonical: "",
-        image: "",
-        ogType: "website",
-        schema: null,
-      }, 404, request.method);
-    }
-
-    const documentRequest = new Request(new URL("/index.html", url), request);
-    const response = await env.ASSETS.fetch(documentRequest);
-    return withSeoHead(response, pageMetadata(pathname, url.origin, content), response.status, request.method);
+    return servePublicPage(request, env, url);
   },
 };
-
-function normalizePath(pathname) {
-  let decoded;
-  try { decoded = decodeURIComponent(pathname); } catch { decoded = pathname; }
-  decoded = decoded.replace(/\/+$/, "") || "/";
-  return decoded === "/index.html" ? "/" : decoded;
-}
-
-function robotsResponse(url, method) {
-  const body = `User-agent: *\nAllow: /\n\nSitemap: ${url.origin}/sitemap.xml\n`;
-  return new Response(method === "HEAD" ? null : body, {
-    headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
-  });
-}
-
-async function sitemapResponse(url, request, env) {
-  const content = await getContent(env);
-  const entries = publicRoutes(content).map(path => `  <url><loc>${xmlEscape(new URL(path, url.origin).href)}</loc></url>`).join("\n");
-  const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
-  return new Response(request.method === "HEAD" ? null : body, {
-    headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" },
-  });
-}
-
-function xmlEscape(value) {
-  return value.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[character]);
-}
-
-function htmlEscape(value) {
-  return String(value ?? "").replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
-}
-
-function withSeoHead(response, metadata, status = response.status, method = "GET") {
-  const headers = new Headers(response.headers);
-  if (!headers.get("content-type")?.includes("text/html")) return response;
-  headers.delete("content-length");
-  headers.delete("content-encoding");
-  headers.delete("etag");
-  let html = response.body ? null : "";
-  return response.text().then(source => {
-    const canonical = metadata.canonical ? `<link rel="canonical" href="${htmlEscape(metadata.canonical)}">` : "";
-    const imageTags = metadata.image ? `<meta property="og:image" content="${htmlEscape(metadata.image)}"><meta name="twitter:image" content="${htmlEscape(metadata.image)}">` : "";
-    const social = metadata.canonical ? `<meta property="og:title" content="${htmlEscape(metadata.title)}"><meta property="og:description" content="${htmlEscape(metadata.description)}"><meta property="og:url" content="${htmlEscape(metadata.canonical)}"><meta property="og:type" content="${htmlEscape(metadata.ogType)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${htmlEscape(metadata.title)}"><meta name="twitter:description" content="${htmlEscape(metadata.description)}">${imageTags}` : '<meta name="robots" content="noindex,follow">';
-    const schema = metadata.schema ? `<script type="application/ld+json" data-page-schema="true">${JSON.stringify(metadata.schema).replace(/</g, "\\u003c")}</script>` : "";
-    const robots = metadata.indexable === false ? '<meta name="robots" content="noindex,follow">' : "";
-    const head = `<title>${htmlEscape(metadata.title)}</title><meta name="description" content="${htmlEscape(metadata.description)}">${canonical}${robots}${social}${schema}`;
-    html = source.replace(/<title>[^<]*<\/title>/i, "").replace(/<meta\s+name=["']description["'][^>]*>/i, "").replace(/<\/head>/i, `${head}</head>`);
-    return new Response(method === "HEAD" ? null : html, { status, statusText: status === 404 ? "Not Found" : response.statusText, headers });
-  });
-}
 
 async function handleContact(request, env) {
   if (request.method === "OPTIONS") {

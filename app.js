@@ -90,7 +90,22 @@ function collectLightboxItems(group) {
 }
 
 import { comics, authors, projects, originalIp, pageMetadata } from './seo-data.js';
-let liveCmsContent = {};
+function readInitialPublicContent() {
+  const element = document.getElementById('initial-public-content');
+  if (!element) return null;
+  try {
+    const content = JSON.parse(element.textContent);
+    if (!['comics', 'authors', 'projects'].every(key => Array.isArray(content[key]))) return null;
+    return content;
+  } catch { return null; }
+}
+const initialPublicContent = readInitialPublicContent();
+let liveCmsContent = initialPublicContent || {};
+if (initialPublicContent) {
+  for (const [key, target] of [['comics', comics], ['authors', authors], ['projects', projects]]) {
+    target.splice(0, target.length, ...initialPublicContent[key]);
+  }
+}
 function projectAsset(project, file) {
   if (!file) return '';
   if (/^(?:https?:)?\/\//i.test(file) || file.startsWith('/')) return file;
@@ -1256,7 +1271,7 @@ async function hydrateCmsContent() {
     }
   } catch { /* Keep the bundled content available when CMS is unreachable. */ }
 }
-hydrateCmsContent();
+if (!initialPublicContent) hydrateCmsContent();
 window.addEventListener('popstate', () => {
   closeLightbox();
   renderRoute();
