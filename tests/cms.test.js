@@ -139,8 +139,8 @@ test('author accounts can edit only their profile and comics they own, with forc
   for (const person of [{slug:'ana-owner',name:'Ana Owner',status:'published'},{slug:'luz-owner',name:'Luz Owner',status:'published'}]) {
     assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:admin,body:{type:'authors',slug:person.slug,payload:person}})).status,200);
   }
-  const owned = {slug:'ana-work',title:'Ana Work',cover:'/banner.jpg',status:'published',creatorSlugs:['ana-owner','luz-owner'],creatorCredits:{'ana-owner':'Autora','luz-owner':'Color'},workAuthorSlugs:['ana-owner'],chapters:[]};
-  const collaboratorOnly = {slug:'luz-work',title:'Luz Work',cover:'/banner.jpg',status:'published',creatorSlugs:['luz-owner','ana-owner'],creatorCredits:{'luz-owner':'Autora','ana-owner':'Color'},workAuthorSlugs:['luz-owner'],chapters:[]};
+  const owned = {slug:'ana-work',title:'Ana Work',cover:'/banner.jpg',status:'published',creatorSlugs:['ana-owner','luz-owner'],creatorCredits:{'ana-owner':'Autora','luz-owner':'Color'},workAuthorSlugs:['ana-owner'],editorSlugs:['ana-owner'],chapters:[]};
+  const collaboratorOnly = {slug:'luz-work',title:'Luz Work',cover:'/banner.jpg',status:'published',creatorSlugs:['luz-owner','ana-owner'],creatorCredits:{'luz-owner':'Autora','ana-owner':'Color'},workAuthorSlugs:['luz-owner'],editorSlugs:['luz-owner'],chapters:[]};
   for (const comic of [owned,collaboratorOnly]) assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:admin,body:{type:'comics',slug:comic.slug,payload:comic}})).status,200);
   const created = await api(env,'/api/cms/users',{method:'POST',cookie:admin,body:{action:'create',authorSlug:'ana-owner',username:'ana',password:'temporary-pass-123'}});
   assert.equal(created.status,201);
@@ -153,27 +153,70 @@ test('author accounts can edit only their profile and comics they own, with forc
   assert.equal(session.user.mustChangePassword,true);
   let scoped=await (await api(env,'/api/cms/content',{cookie:authorCookie})).json();
   assert.deepEqual(scoped.comics.map(item=>item.slug),['ana-work']);
-  assert.deepEqual(scoped.authors.map(item=>item.slug),['ana-owner']);
+  assert.ok(scoped.authors.some(item=>item.slug==='ana-owner'));
+  assert.ok(scoped.authors.some(item=>item.slug==='luz-owner'));
+  assert.ok(scoped.authors.every(item=>item.slug==='ana-owner' || !['draft','archived'].includes(item.status)));
   assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'luz-work',payload:collaboratorOnly}})).status,403);
   const forged={...owned,title:'Updated title',creatorSlugs:['luz-owner'],creatorCredits:{},workAuthorSlugs:['luz-owner']};
   assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'ana-work',payload:forged}})).status,403); // temporary password must be changed first
   assert.equal((await api(env,'/api/cms/password',{method:'POST',cookie:authorCookie,body:{currentPassword:'temporary-pass-123',newPassword:'permanent-pass-456'}})).status,200);
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'ana-work',payload:{...owned,editorSlugs:['ana-owner','luz-owner']}}})).status,403);
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'ana-work',payload:{...owned,editorSlugs:[]}}})).status,403);
   const edited = {...owned, title:'Updated title', creatorSlugs:['ana-owner'], creatorCredits:{'ana-owner':'Autor'}, workAuthorSlugs:['ana-owner']};
   assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'ana-work',payload:edited}})).status,200);
   scoped=await (await api(env,'/api/cms/content',{cookie:authorCookie})).json();
   assert.equal(scoped.comics[0].title,'Updated title');
   assert.deepEqual(scoped.comics[0].workAuthorSlugs,['ana-owner']);
   assert.deepEqual(scoped.comics[0].creatorSlugs,['ana-owner']);
-  const profile = {...scoped.authors[0], bio:'Updated biography', status:'draft',gallery:[{src:'/media/art.jpg',alt:'Mi ilustración'}]};
+  assert.deepEqual(scoped.comics[0].editorSlugs,['ana-owner']);
+  const credited = {...scoped.comics[0], creatorSlugs:['ana-owner','luz-owner'], creatorCredits:{'ana-owner':'Autor','luz-owner':'Autora'}, workAuthorSlugs:['ana-owner','luz-owner'], chapters:[{id:'chapter-2',number:2,title:'Chapter 2',status:'draft',credits:[{creatorSlug:'luz-owner',roles:['Color']}]}]};
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:'ana-work',payload:credited}})).status,200);
+  const afterCredits=(await (await api(env,'/api/cms/content',{cookie:authorCookie})).json()).comics[0];
+  assert.deepEqual(afterCredits.editorSlugs,['ana-owner']);
+  assert.equal(afterCredits.chapters[0].credits[0].creatorSlug,'luz-owner');
+  assert.deepEqual(afterCredits.chapters[0].credits[0].roles,['Color']);
+  assert.equal((await api(env,'/api/cms/users',{method:'POST',cookie:admin,body:{action:'create',authorSlug:'luz-owner',username:'luz',password:'temporary-luz-123'}})).status,201);
+  const luzLogin=await api(env,'/api/cms/login',{method:'POST',body:{username:'luz',password:'temporary-luz-123'}});
+  assert.equal(luzLogin.status,200);
+  const luzCookie=luzLogin.headers.get('set-cookie').split(';')[0];
+  assert.deepEqual((await (await api(env,'/api/cms/content',{cookie:luzCookie})).json()).comics.map(item=>item.slug),['luz-work']);
+  assert.equal((await api(env,'/api/cms/password',{method:'POST',cookie:luzCookie,body:{currentPassword:'temporary-luz-123',newPassword:'permanent-luz-456'}})).status,200);
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:luzCookie,body:{type:'comics',slug:'ana-work',payload:afterCredits}})).status,403);
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:admin,body:{type:'comics',slug:'ana-work',payload:{...afterCredits,editorSlugs:['ana-owner','luz-owner']}}})).status,200);
+  const granted=(await (await api(env,'/api/cms/content',{cookie:admin})).json()).comics.find(item=>item.slug==='ana-work');
+  assert.deepEqual(granted.editorSlugs,['ana-owner','luz-owner']);
+  assert.deepEqual((await (await api(env,'/api/cms/content',{cookie:luzCookie})).json()).comics.map(item=>item.slug).sort(),['ana-work','luz-work']);
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:admin,body:{type:'comics',slug:'ana-work',payload:{...granted,editorSlugs:['ana-owner']}}})).status,200);
+  assert.deepEqual((await (await api(env,'/api/cms/content',{cookie:luzCookie})).json()).comics.map(item=>item.slug),['luz-work']);
+  const profile = {...scoped.authors.find(item=>item.slug==='ana-owner'), bio:'Updated biography', status:'draft',gallery:[{src:'/media/art.jpg',alt:'Mi ilustración'}]};
   assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'authors',slug:'ana-owner',payload:profile}})).status,200);
-  const updatedProfile = (await (await api(env,'/api/cms/content',{cookie:authorCookie})).json()).authors[0];
+  const updatedProfile = (await (await api(env,'/api/cms/content',{cookie:authorCookie})).json()).authors.find(item=>item.slug==='ana-owner');
   assert.equal(updatedProfile.bio,'Updated biography');
   assert.equal(updatedProfile.status,'draft');
   assert.deepEqual(updatedProfile.gallery,profile.gallery);
   assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'authors',slug:'luz-owner',payload:{...profile,slug:'luz-owner'}}})).status,403);
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'projects',slug:'outside-project',payload:{slug:'outside-project',title:'Outside',status:'draft'}}})).status,403);
   assert.equal((await api(env,'/api/cms/users',{cookie:authorCookie})).status,403);
   await api(env,'/api/cms/users',{method:'POST',cookie:admin,body:{action:'disable',authorSlug:'ana-owner'}});
   assert.equal((await (await api(env,'/api/cms/session',{cookie:authorCookie})).json()).authenticated,false);
+});
+
+test('legacy seed editorial access is preserved and frozen separately from credits on save', async () => {
+  const env=makeEnv();
+  const admin=await signedIn(env);
+  assert.equal((await api(env,'/api/cms/users',{method:'POST',cookie:admin,body:{action:'create',authorSlug:'tonypan',username:'tonypan-test',password:'temporary-tonypan-123'}})).status,201);
+  const login=await api(env,'/api/cms/login',{method:'POST',body:{username:'tonypan-test',password:'temporary-tonypan-123'}});
+  const authorCookie=login.headers.get('set-cookie').split(';')[0];
+  const workspace=await (await api(env,'/api/cms/content',{cookie:authorCookie})).json();
+  const seedComic=workspace.comics.find(item=>item.slug==='a-la-deriva-con-mi-perro');
+  assert.ok(seedComic);
+  assert.equal(seedComic.editorSlugs,undefined);
+  assert.equal((await api(env,'/api/cms/password',{method:'POST',cookie:authorCookie,body:{currentPassword:'temporary-tonypan-123',newPassword:'permanent-tonypan-456'}})).status,200);
+  const updated={...seedComic,creatorCredits:{...seedComic.creatorCredits,tonypan:'Color'},workAuthorSlugs:[]};
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:authorCookie,body:{type:'comics',slug:seedComic.slug,payload:updated}})).status,200);
+  const after=(await (await api(env,'/api/cms/content',{cookie:authorCookie})).json()).comics.find(item=>item.slug===seedComic.slug);
+  assert.deepEqual(after.editorSlugs,['tonypan']);
+  assert.deepEqual(after.workAuthorSlugs,[]);
 });
 
 test('media upload validates image signature and serves uploaded bytes', async () => {

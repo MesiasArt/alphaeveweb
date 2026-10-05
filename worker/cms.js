@@ -243,7 +243,7 @@ async function saveContent(request, env, user) {
   if (!TYPES.has(type) || !validSlug(slug) || !payload || typeof payload !== "object" || Array.isArray(payload)) return json({ error: "Tipo, slug o registro inválido." }, 400);
   if (payload.slug !== slug) return json({ error: "El slug del registro debe coincidir con la clave y no puede cambiarse." }, 400);
   if (user.role !== 'admin') {
-    if (type === 'projects' || !['authors','comics'].includes(type)) return json({ error: 'Tu cuenta solo puede editar tu perfil y los cómics donde figuras como autor de la obra.' }, 403);
+    if (type === 'projects' || !['authors','comics'].includes(type)) return json({ error: 'Tu cuenta solo puede editar tu perfil y los cómics con permiso editorial.' }, 403);
     if (type === 'authors' && slug !== user.authorSlug) return json({ error: 'Solo puedes editar tu propio perfil.' }, 403);
     if (type === 'authors') {
       const current = await getContent(env, { includeUnpublished: true });
@@ -254,11 +254,16 @@ async function saveContent(request, env, user) {
     if (type === 'comics') {
       const current = await getContent(env, { includeUnpublished: true });
       const oldComic = current.comics.find(item => item.slug === slug);
-      if (!oldComic || !workAuthors(oldComic).includes(user.authorSlug)) return json({ error: 'Solo puedes editar los cómics donde figuras como autor de la obra.' }, 403);
+      if (!oldComic || !workAuthors(oldComic).includes(user.authorSlug)) return json({ error: 'Solo puedes editar los cómics para los que tienes permiso editorial.' }, 403);
     }
   }
   const currentContent = type === 'comics' ? await getContent(env, { includeUnpublished: true }) : null;
   if (type === 'comics') {
+    const oldComic = currentContent.comics.find(item => item.slug === slug);
+    const previousEditors = oldComic ? workAuthors(oldComic) : [];
+    if (user.role !== 'admin' && payload.editorSlugs !== undefined && !sameSlugs(payload.editorSlugs, previousEditors)) return json({ error: 'Solo administración puede cambiar los permisos editoriales.' }, 403);
+    if (payload.editorSlugs === undefined) payload.editorSlugs = previousEditors;
+    if (!Array.isArray(payload.editorSlugs) || new Set(payload.editorSlugs).size !== payload.editorSlugs.length || payload.editorSlugs.some(editor => typeof editor !== 'string' || !currentContent.authors.some(author => author.slug === editor))) return json({ error: 'Selecciona creadores válidos y sin repetir para los permisos editoriales.' }, 400);
     const creditError = validateComicCredits(payload, currentContent.authors);
     if (creditError) return json({ error: creditError }, 400);
   }
@@ -388,12 +393,16 @@ function isWorkAuthorRole(role) {
   return /^(autor(?:\/a)?|autor(?:es)?(?: de la obra)?|obra(?: completa)?|creador(?:\/a)?|creador(?:a)? de la obra)$/i.test(String(role || '').trim());
 }
 function workAuthors(comic) {
+  if (Array.isArray(comic.editorSlugs)) return comic.editorSlugs;
   const authors = new Set(Array.isArray(comic.workAuthorSlugs) ? comic.workAuthorSlugs : []);
   for (const slug of comic.creatorSlugs || []) {
     const roles = String(comic.creatorCredits?.[slug] || '').split(/\s*[·,]\s*/);
     if (roles.some(isWorkAuthorRole)) authors.add(slug);
   }
   return [...authors].filter(Boolean);
+}
+function sameSlugs(left, right) {
+  return Array.isArray(left) && left.length === right.length && left.every(slug => right.includes(slug));
 }
 function authorWorkspace(data, authorSlug) {
   const comics = data.comics.filter(comic => workAuthors(comic).includes(authorSlug));
