@@ -1,4 +1,5 @@
 import { authors as seedAuthors, comics as seedComics, projects as seedProjects } from "../seo-data.js";
+import { comicPreflight } from "../editorial.js";
 
 const TYPES = new Set(["comics", "authors", "projects"]);
 const MAX_JSON_BYTES = 1_000_000;
@@ -268,8 +269,11 @@ async function saveContent(request, env, user) {
     if (creditError) return json({ error: creditError }, 400);
   }
   const visibility = String(payload.status || "draft").trim().toLowerCase();
+  const oldComic = type === 'comics' ? currentContent.comics.find(item => item.slug === slug) : null;
+  const preflight = type === 'comics' ? comicPreflight(payload) : null;
+  if (type === 'comics' && !isUnpublished(visibility) && (!oldComic || isUnpublished(oldComic.status)) && preflight.errors.length) return json({ error: 'La publicación necesita correcciones antes de publicarse.', preflight }, 422);
   if (!isUnpublished(visibility)) {
-    if (type === "comics" && (!String(payload.title || "").trim() || !String(payload.cover || "").trim())) return json({ error: "Para publicar un cómic, completa el título y agrega una portada." }, 400);
+    if (type === "comics" && (!oldComic || isUnpublished(oldComic.status)) && (!String(payload.title || "").trim() || !String(payload.cover || "").trim())) return json({ error: "Para publicar un cómic, completa el título y agrega una portada." }, 400);
     if (type === "authors" && !String(payload.name || "").trim()) return json({ error: "Para publicar un perfil, escribe el nombre del creador." }, 400);
     if (type === "projects" && (!String(payload.title || "").trim() || !String(payload.category || "").trim())) return json({ error: "Para publicar un proyecto, completa el título y la categoría." }, 400);
   }
@@ -283,7 +287,7 @@ async function saveContent(request, env, user) {
   } else if (type === 'authors') {
     await env.CMS_DB.batch([contentStatement, env.CMS_DB.prepare("INSERT INTO cms_creators (slug, name) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET name=excluded.name, updated_at=CURRENT_TIMESTAMP").bind(slug, payload.name || payload.role || slug)]);
   } else await contentStatement.run();
-  return json({ ok: true, type, slug });
+  return json({ ok: true, type, slug, ...(preflight ? { preflight } : {}) });
 }
 
 function validateComicCredits(comic, authors) {

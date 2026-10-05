@@ -40,3 +40,4 @@ copyFileSync(resolve(root, 'alpha eve logo.png'), resolve(output, 'alpha eve log
 copyFileSync(resolve(root, 'alpha eve favicon.png'), resolve(output, 'alpha eve favicon.png'));
 copyFileSync(resolve(root, 'banner.jpg'), resolve(output, 'banner.jpg'));
 copyFileSync(resolve(root, 'packito logo.png'), resolve(output, 'packito logo.png'));
+copyFileSync(resolve(root, 'editorial.js'), resolve(output, 'editorial.js'));

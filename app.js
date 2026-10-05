@@ -1,4 +1,5 @@
-const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+import { editorialText, validEditorialLink, comicReadingState, chapterNumber } from './editorial.js';
+const esc = value => editorialText(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 
 function lightboxTrigger({ src, caption = '', alt = '' }) {
   if (!src) return '';
@@ -136,9 +137,12 @@ function authorCard(author, options = {}) {
   </a>`;
 }
 function comicCard(comic, index = 0) {
+  const reading = comicReadingState(comic);
+  const format = comic.format === 'One-shot' ? 'Tomo único (oneshot)' : comic.format === 'Series' ? reading.badge.replace(/^SERIE/, 'Serie') : '';
+  const meta = [Array.isArray(comic.genres) ? comic.genres.map(editorialText).filter(Boolean).join(' · ') : '', editorialText(comicCatalogType(comic)), format].filter(Boolean);
   return `<a class="comic-card" href="/comics/${comic.slug}" data-route>
-    <div class="comic-card-art"><span class="comic-edition">ORIGINAL DE ALPHA EVE · ${String(index + 1).padStart(2, '0')}</span>${comic.cover ? `<img src="${esc(comic.cover)}" alt="Portada de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()">` : ''}<strong>${esc(comic.initials)}</strong><span class="comic-art-note">PORTADA POR AGREGAR</span></div>
-    <div class="comic-card-copy"><h3>${esc(comic.title)}</h3><p>${esc(comic.genres?.length ? comic.genres.join(' · ') : 'Géneros por agregar')} <span>·</span> ${esc(comicCatalogType(comic) || 'Tipo por confirmar')} <span>·</span> ${esc(comic.format === 'One-shot' ? 'Tomo único (oneshot)' : comic.format === 'Series' ? `Serie · ${comic.availableChapters || 0}${comic.chapterCount && comic.chapterCount !== comic.availableChapters ? ` de ${comic.chapterCount}` : ''} capítulos` : 'Formato por confirmar')}</p><span class="comic-card-arrow">↗</span></div>
+    <div class="comic-card-art"><span class="comic-edition">ORIGINAL DE ALPHA EVE · ${String(index + 1).padStart(2, '0')}</span>${editorialText(comic.cover) ? `<img src="${esc(comic.cover)}" alt="Portada de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="this.remove()">` : ''}${editorialText(comic.initials) ? `<strong>${esc(comic.initials)}</strong>` : ''}<span class="comic-art-note">PORTADA POR AGREGAR</span></div>
+    <div class="comic-card-copy"><h3>${esc(comic.title)}</h3>${meta.length ? `<p>${meta.map(esc).join(' · ')}</p>` : ''}<span class="comic-card-arrow">↗</span></div>
   </a>`;
 }
 function shuffledComicsWithCovers(excludeSlug = '') {
@@ -381,21 +385,20 @@ function comicPage(comic) {
   const workAuthors = new Set(workAuthorSlugs(comic));
   const linkedWorkAuthors = linkedAuthors.filter(author=>workAuthors.has(author.slug));
   const linkedCollaborators = linkedAuthors.filter(author=>!workAuthors.has(author.slug));
-  const publicChapters = (comic.chapters || []).filter(chapter => !['draft','borrador','archived','archivado'].includes(String(chapter.status || 'published').toLowerCase()));
-  const hasReadingContent = publicChapters.length > 0;
-  const readingSection = hasReadingContent ? `<section class="detail-block" id="reading"><p class="eyebrow">LEE LA HISTORIA</p><h2>${comic.format === 'One-shot' ? 'Tomo único' : 'Capítulos'}</h2><div class="chapter-grid">${publicChapters.map(chapter => `<article class="chapter-card"><div class="chapter-art">${chapter.cover ? `<img src="${esc(chapter.cover)}" alt="${esc(comic.title)} — portada del ${esc(chapter.title)}" onerror="this.remove()">` : ''}<span>PORTADA DEL CAPÍTULO POR AGREGAR</span></div><div><b>CAPÍTULO ${String(chapter.number).padStart(2, '0')}</b><h3>${esc(chapter.title)}</h3>${chapter.synopsis ? `<p>${esc(chapter.synopsis)}</p>` : ''}${chapterCreditsHtml(chapter, comic)}${chapter.digitalUrl ? `<a href="${esc(chapter.digitalUrl)}">COMPRAR EDICIÓN DIGITAL ↗</a>` : ''}${chapter.physicalUrl ? `<a href="${esc(chapter.physicalUrl)}">COMPRAR EDICIÓN IMPRESA ↗</a>` : ''}</div></article>`).join('')}</div></section>` : '';
+  const { chapters: publicChapters, hasReadingContent, badge: seriesBadge } = comicReadingState(comic);
+  const readingSection = hasReadingContent ? `<section class="detail-block" id="reading"><p class="eyebrow">LEE LA HISTORIA</p><h2>${comic.format === 'One-shot' ? 'Tomo único' : 'Capítulos'}</h2><div class="chapter-grid">${publicChapters.map(chapter => `<article class="chapter-card">${editorialText(chapter.cover) ? `<div class="chapter-art"><img src="${esc(chapter.cover)}" alt="Portada del capítulo" onerror="this.remove()"></div>` : ''}<div>${chapterNumber(chapter) ? `<b>CAPÍTULO ${String(chapterNumber(chapter)).padStart(2, '0')}</b>` : ''}${editorialText(chapter.title) ? `<h3>${esc(chapter.title)}</h3>` : ''}${editorialText(chapter.synopsis) ? `<p>${esc(chapter.synopsis)}</p>` : ''}${chapterCreditsHtml(chapter, comic)}${validEditorialLink(chapter.readUrl) ? `<a href="${esc(chapter.readUrl)}">LEER ↗</a>` : ''}${validEditorialLink(chapter.digitalUrl) ? `<a href="${esc(chapter.digitalUrl)}">COMPRAR DIGITAL ↗</a>` : ''}${validEditorialLink(chapter.physicalUrl) ? `<a href="${esc(chapter.physicalUrl)}">COMPRAR FÍSICO ↗</a>` : ''}</div></article>`).join('')}</div></section>` : '';
   const characters = (comic.characters || []).filter(character => character && (String(character.name || '').trim() || String(character.image || '').trim()));
   const charSection = characters.length ? `<section class="detail-block"><p class="eyebrow">PERSONAJES</p><h2>Conoce al elenco</h2><div class="character-grid">${characters.map(character => `<article class="character-card"><div class="character-art">${character.image ? `<img src="${esc(character.image)}" alt="${esc(character.name)}">` : ''}</div>${character.name ? `<h3>${esc(character.name)}</h3>` : ''}</article>`).join('')}</div></section>` : '';
   const comicGallery = (comic.gallery || []).filter(image => image && String(image.src || '').trim());
   const gallery = comicGallery.length ? `<section class="detail-block"><p class="eyebrow">ARTE Y PROCESO</p><h2>Galería</h2><div class="comic-gallery" data-lightbox-group>${comicGallery.map(image => `<figure class="gallery-tile">${lightboxTrigger({ src: image.src, caption: image.alt || comic.title, alt: image.alt || comic.title })}</figure>`).join('')}</div></section>` : '';
   const heroBanner = `/series/hero-banners/${comic.slug}.jpg`;
-  const cover = `<div class="comic-key-art"><img src="${esc(heroBanner)}" alt="Banner de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src='${esc(comic.cover)}'}else{this.remove()}"><small>ORIGINAL DE ALPHA EVE</small><strong>${esc(comic.initials)}</strong><span>ARTE CLAVE POR AGREGAR</span></div>`;
-  const formatBadge = comic.format === 'One-shot' ? '<span class="series-badge oneshot-badge">TOMO ÚNICO · ONESHOT</span>' : comic.format === 'Series' ? `<span class="series-badge">SERIE · ${comic.availableChapters} CAPÍTULO${comic.availableChapters === 1 ? '' : 'S'}${comic.chapterCount !== comic.availableChapters ? ` · ${comic.availableChapters} DE ${comic.chapterCount}` : ''}</span>` : '<span class="series-badge">FORMATO POR CONFIRMAR</span>';
-  const genreText = comic.genres?.length ? comic.genres.map(esc).join(' · ') : 'Géneros por agregar';
+  const cover = `<div class="comic-key-art"><img src="${esc(heroBanner)}" alt="Banner de ${esc(comic.title)}" onload="this.parentElement.classList.add('has-cover')" onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src='${esc(comic.cover)}'}else{this.remove()}"><small>ORIGINAL DE ALPHA EVE</small>${editorialText(comic.initials) ? `<strong>${esc(comic.initials)}</strong>` : ''}<span>ARTE CLAVE POR AGREGAR</span></div>`;
+  const formatBadge = comic.format === 'One-shot' ? '<span class="series-badge oneshot-badge">TOMO ÚNICO · ONESHOT</span>' : seriesBadge ? `<span class="series-badge">${seriesBadge}</span>` : '';
+  const genreText = Array.isArray(comic.genres) ? comic.genres.map(editorialText).filter(Boolean).map(esc).join(' · ') : '';
   return `<section class="detail-shell comic-detail">
     <a class="detail-back" href="/comics" data-route>← Todos los cómics</a>
-    <div class="series-hero-banner">${cover}<div class="series-hero-shade"></div><div class="series-hero-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE · ${esc(comicCatalogType(comic) || comic.medium || 'CÓMIC / MANGA')}</p><h1>${esc(comic.title)}<span class="red">.</span></h1><div class="series-badges">${formatBadge}<span class="series-badge">GÉNERO · ${genreText}</span></div><a class="button button-light" href="#reading">Leer o comprar <span>↘</span></a></div></div>
-    <section class="detail-block synopsis-block"><p class="eyebrow">LA HISTORIA</p><h2>Sinopsis</h2>${String(comic.synopsis || '').trim() ? `<p class="series-synopsis">${esc(comic.synopsis)}</p>` : ''}</section>
+    <div class="series-hero-banner">${cover}<div class="series-hero-shade"></div><div class="series-hero-copy"><p class="eyebrow">ORIGINAL DE ALPHA EVE${editorialText(comicCatalogType(comic) || comic.medium) ? ` · ${esc(comicCatalogType(comic) || comic.medium)}` : ''}</p><h1>${esc(editorialText(comic.title))}<span class="red">.</span></h1><div class="series-badges">${formatBadge}${genreText ? `<span class="series-badge">GÉNERO · ${genreText}</span>` : ''}</div>${hasReadingContent ? '<a class="button button-light" href="#reading">Ver capítulos <span>↘</span></a>' : ''}</div></div>
+    ${editorialText(comic.synopsis) ? `<section class="detail-block synopsis-block"><p class="eyebrow">LA HISTORIA</p><h2>Sinopsis</h2><p class="series-synopsis">${esc(comic.synopsis)}</p></section>` : ''}
     ${readingSection}
     ${charSection}
     ${gallery}

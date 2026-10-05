@@ -1,3 +1,5 @@
+import { editorialText } from './editorial.js';
+
 const comics = [
   { title: 'A la deriva con mi perro', slug: 'a-la-deriva-con-mi-perro', initials: 'DERIVA', format: 'One-shot', genres: [], status: null, synopsis: 'Una niña de escasos recursos escapa de casa tras una fuerte discusión de sus padres. Sin más allá donde huir, se echa al mar acompañada de su perro. Juntos terminan a la deriva, donde vivirán una ardua aventura en la delgada línea entre la imaginación y la realidad. La obra trata la realidad que muchos niños son forzados a enfrentar, empujados a tomar decisiones sin la madurez para enfrentarlas.', cover: '/series/a-la-deriva-con-mi-perro/cover/A%20LA%20DERIVA%20CON%20MI%20PERRO%20DEF_001%20cover%20copia.jpg', creatorSlugs: ['tonypan'], creatorCredits: { tonypan: 'Obra completa' }, chapters: [], characters: [], gallery: [] },
   { title: 'Baká: El Mito Asesino', slug: 'baka-el-mito-asesino', initials: 'BAKÁ', format: 'One-shot', genres: [], status: null, synopsis: null, cover: '/series/baka-el-mito-asesino/cover/Baka%20El%20mito%20Asesino%20Vol.1.jpg', creatorSlugs: ['darkereve', 'spencer_draw'], creatorCredits: { darkereve: 'Dibujo', spencer_draw: 'Color' }, chapters: [], characters: [], gallery: [] },
@@ -525,12 +527,13 @@ const STATIC_PAGES = {
 };
 
 const absoluteAsset = (origin, value) => value ? new URL(value.startsWith('/') ? value : `/${value}`, origin).href : '';
-const cleanText = value => String(value ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const cleanText = value => editorialText(value).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 const truncate = (value, max = 300) => cleanText(value).slice(0, max);
 const automaticTitle = value => {
   const suffix = ` — ${SITE_NAME}`;
   const max = 70;
   const title = cleanText(value);
+  if (!title) return SITE_NAME;
   return title.length + suffix.length <= max ? `${title}${suffix}` : `${title.slice(0, max - suffix.length - 1).trimEnd()}…${suffix}`;
 };
 
@@ -553,8 +556,9 @@ export function resolvePage(pathname, origin, data = {}) {
     const comic = comicData.find(item => item.slug === match[1]);
     if (!comic) return null;
     const creators = (comic.creatorSlugs || []).map(slug => authorData.find(author => author.slug === slug)?.name).filter(Boolean);
-    const description = comic.synopsis || `${comic.title}: consulta la portada y los créditos${creators.length ? ` de ${creators.join(', ')}` : ''} en el catálogo de Alpha Eve Studios.`;
-    return { path, kind: 'creativework', title: automaticTitle(comic.title), description: truncate(description, 160), image: comic.cover || homeImage, comic };
+    const comicTitle = cleanText(comic.title);
+    const description = cleanText(comic.synopsis) || `${comicTitle ? `${comicTitle}: ` : ''}consulta la portada y los créditos${creators.length ? ` de ${creators.join(', ')}` : ''} en el catálogo de Alpha Eve Studios.`;
+    return { path, kind: 'creativework', title: automaticTitle(comicTitle), description: truncate(description, 160), image: cleanText(comic.cover) || homeImage, comic };
   }
   match = path.match(/^\/authors\/([^/]+)$/);
   if (match) {
@@ -612,9 +616,11 @@ export function pageMetadata(pathname, origin, data = {}) {
       const chapterCreators = (chapter.credits || []).map(credit => authorData.find(author => author.slug === credit.creatorSlug)?.name).filter(Boolean);
       const externalCreators = (chapter.externalCredits || []).filter(credit => typeof credit === 'object' && credit.name).map(credit => credit.name);
       const chapterPeople = [...chapterCreators, ...externalCreators];
-      return { '@type': 'Chapter', name: chapter.title, position: chapter.number, ...(chapterPeople.length ? { creator: [...new Set(chapterPeople)].map(name => ({ '@type': 'Person', name })) } : {}) };
+      const name = cleanText(chapter.title);
+      const position = Number(chapter.number);
+      return { '@type': 'Chapter', ...(name ? { name } : {}), ...(Number.isInteger(position) && position > 0 ? { position } : {}), ...(chapterPeople.length ? { creator: [...new Set(chapterPeople)].map(name => ({ '@type': 'Person', name })) } : {}) };
     });
-    graph.push({ '@type': 'CreativeWork', name: page.comic?.title || page.project?.title, url: canonical, image, description: page.description, ...(creators.length ? { creator: creators.map(name => ({ '@type': 'Person', name })) } : {}), ...(hasPart.length ? { hasPart } : {}) });
+    graph.push({ '@type': 'CreativeWork', name: cleanText(page.comic?.title || page.project?.title) || page.title, url: canonical, image, description: page.description, ...(creators.length ? { creator: creators.map(name => ({ '@type': 'Person', name })) } : {}), ...(hasPart.length ? { hasPart } : {}) });
   }
   if (breadcrumbs.length) graph.push({ '@type': 'BreadcrumbList', itemListElement: breadcrumbs });
   return { ...page, indexable: page.indexable !== false, canonical, image, ogType: page.kind === 'website' ? 'website' : 'article', schema: { '@context': 'https://schema.org', '@graph': graph } };

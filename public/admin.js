@@ -1,3 +1,4 @@
+import { comicPreflight } from '/editorial.js';
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const root = $('#page-content');
@@ -497,7 +498,7 @@ function chapterEditor(chapter, index, originalIndex = index, seriesCreators = [
   return `<article class="chapter-card" data-chapter-index="${index}" data-original-index="${originalIndex ?? ''}" data-chapter-id="${esc(chapterId)}"><div class="chapter-head"><strong>Capítulo ${String(chapter.number ?? index + 1).padStart(2,'0')}</strong><button class="button quiet small" type="button" data-remove-chapter>Quitar</button></div>
     <div class="form-grid">${field('Número', 'chapter-number', chapter.number ?? index + 1, { type:'number', step:'1' })}${field('Título', 'chapter-title', chapter.title || '', { placeholder:'Título del capítulo' })}${field('Sinopsis', 'chapter-synopsis', chapter.synopsis || '', { type:'textarea', full:true, rows:3 })}
     ${selectField('Estado del capítulo', 'chapter-status', normStatus(chapter.status || 'published'), [{value:'draft',label:'Borrador'},{value:'published',label:'Publicado'},{value:'archived',label:'Archivado'}])}
-    ${field('Enlace de lectura (opcional)', 'chapter-digital', chapter.digitalUrl || '', { placeholder:'https://…' })}${field('Enlace de compra (opcional)', 'chapter-physical', chapter.physicalUrl || '', { placeholder:'https://…' })}</div>
+    ${field('Enlace para leer (opcional)', 'chapter-read', chapter.readUrl || '', { placeholder:'https://…' })}${field('Enlace de compra digital (opcional)', 'chapter-digital', chapter.digitalUrl || '', { placeholder:'https://…' })}${field('Enlace de compra física (opcional)', 'chapter-physical', chapter.physicalUrl || '', { placeholder:'https://…' })}</div>
     ${mediaField('Portada del capítulo', `chapter-${index}-cover`, chapter.cover || '', { ratio:'landscape' })}
     <section class="chapter-credit-editor"><h4>Equipo y créditos del capítulo</h4><p class="field-hint">El autor de la obra se incluye automáticamente. Agrégalo también a los créditos específicos del capítulo si tuvo otros roles, como lettering, color o portada.</p><div class="series-creator-reference"><strong>Autor de la obra · incluido siempre</strong><span>${seriesNames.length ? esc(seriesNames.join(' · ')) : 'Marca al autor en “Autoría y colaboradores” para incluirlo automáticamente.'}</span></div>
       <strong class="chapter-team-label">Colaboradores de este capítulo</strong><div class="chapter-credit-list" data-chapter-credit-list>${team || '<p class="muted">Todavía no hay colaboradores específicos.</p>'}</div>
@@ -545,6 +546,7 @@ function renderEditor() {
 
   let sections = basic;
   if (isComic) {
+    sections += `<section class="editor-section" data-publication-preflight role="status" aria-live="polite"></section>`;
     sections += section('Sinopsis', 'Cuenta de qué trata la historia.', field('Sinopsis', 'synopsis', original.synopsis || '', { type:'textarea', full:true, rows:6, placeholder:'Escribe aquí la sinopsis…' }));
     sections += section('Portadas', 'Sube imágenes desde tu equipo. El CMS guarda y coloca los enlaces por ti.', mediaField('Portada principal','comic-cover',original.cover || '') + mediaField('Contraportada','comic-back-cover',original.backCover || '',{ratio:'landscape'}));
     sections += genreSection(original.genres || []);
@@ -568,6 +570,7 @@ function renderEditor() {
     root.replaceChildren(overlay);
   } else document.body.append(overlay);
   bindEditor(overlay);
+  if (isComic) showComicPreflight(overlay, original);
   if (isCreator && !original.galleryManaged) importLegacyCreatorGallery(overlay, original);
   $('.editor-drawer', overlay).scrollTop = 0;
 }
@@ -641,6 +644,7 @@ function bindEditor(overlay) {
     if (previewButton) showPreview(overlay);
   });
   overlay.addEventListener('input', event => {
+    resetPublishConfirmation(overlay);
     if (event.target.matches('[data-creator-search]')) filterCreatorChoices(overlay,event.target.value);
     if (event.target.matches('[data-chapter-creator-search]')) filterChapterCreatorChoices(event.target.closest('[data-chapter-index]'),event.target.value);
     if (event.target.name === 'title' || event.target.name === 'name') updateSlugPreview(overlay,event.target.value);
@@ -652,10 +656,11 @@ function bindEditor(overlay) {
     if(event.key==='Enter' && event.target.matches('[data-new-credit-role]')){event.preventDefault();addChapterRole(event.target.closest('.chapter-credit-person'));}
   });
   overlay.addEventListener('change', async event => {
+    resetPublishConfirmation(overlay);
     if (event.target.matches('[data-media-input]') && event.target.files?.[0]) await uploadMedia(event.target.files[0],event.target.closest('[data-media-container]'));
     if (event.target.matches('[data-add-gallery-files]') && event.target.files?.length) await uploadGalleryFiles(event.target.files,overlay);
     if (event.target.matches('[data-person-type]')) $('[data-person-credit]',event.target.closest('[data-person]')).hidden=event.target.value==='author';
-    if (event.target.name==='format' && type==='comics') syncChapterSection(overlay,event.target.value);
+    if (event.target.name==='format' && state.editing.type==='comics') syncChapterSection(overlay,event.target.value);
     if (event.target.name === 'status') state.editing.tempStatus = event.target.value;
   });
   overlay.addEventListener('dragover', event => { if (event.target.closest('[data-media-container]')) { event.preventDefault(); event.target.closest('[data-media-container]').classList.add('dragging'); } });
@@ -783,7 +788,7 @@ function serializeChapters(overlay,originalChapters=[]) {
     const prior=originalIndex === '' ? {} : (originalChapters[Number(originalIndex)] || {});
     const credits=$$('[data-chapter-credit]',card).map(person=>({creatorSlug:person.dataset.creditSlug,roles:collectChips(person,'[data-credit-role-list] input'),order:$$('[data-chapter-credit]',card).indexOf(person)})).filter(credit=>credit.creatorSlug&&credit.roles.length);
     const externalCredits=$$('[data-chapter-external-credit]',card).map((person,order)=>({name:formValue(person,'chapter-external-name'),roles:collectChips(person,'[data-credit-role-list] input'),order})).filter(credit=>credit.name&&credit.roles.length);
-    return {...prior,id:card.dataset.chapterId||crypto.randomUUID(),number:Number($('[name="chapter-number"]',card).value)||index+1,title:formValue(card,'chapter-title'),synopsis:formValue(card,'chapter-synopsis'),cover:$('[data-media-value]',card)?.value||'',status:formValue(card,'chapter-status')||'draft',digitalUrl:formValue(card,'chapter-digital'),physicalUrl:formValue(card,'chapter-physical'),credits,externalCredits};
+    return {...prior,id:card.dataset.chapterId||crypto.randomUUID(),number:Number($('[name="chapter-number"]',card).value)||index+1,title:formValue(card,'chapter-title'),synopsis:formValue(card,'chapter-synopsis'),cover:$('[data-media-value]',card)?.value||'',status:formValue(card,'chapter-status')||'draft',readUrl:formValue(card,'chapter-read'),digitalUrl:formValue(card,'chapter-digital'),physicalUrl:formValue(card,'chapter-physical'),credits,externalCredits};
   }).filter(item=>item.title || item.cover || item.synopsis).sort((a,b)=>a.number-b.number);
 }
 function serializeExternalCredits(overlay) {
@@ -822,16 +827,36 @@ function buildPayload(overlay,status) {
   return payload;
 }
 function publishRequirements(type,payload) {
-  if(type==='comics' && (!payload.title || !payload.cover)) return 'Para publicar un cómic, completa el título y agrega una portada.';
   if(type==='authors' && !payload.name) return 'Para publicar un perfil, escribe el nombre del creador.';
   if(type==='projects' && (!payload.title || !payload.category)) return 'Para publicar un proyecto, completa el título y la categoría.';
   return '';
+}
+function showComicPreflight(overlay, comic) {
+  const panel=$('[data-publication-preflight]',overlay);
+  const result=comicPreflight(comic);
+  if(!panel) return result;
+  const published=!state.editing?.isNew && normStatus(state.editing?.original.status)==='published';
+  const needsAttention=result.errors.length || result.warnings.length;
+  const heading=published ? (needsAttention?'PUBLISHED — NEEDS ATTENTION':'PUBLISHED — READY') : (needsAttention?'NEEDS ATTENTION':'READY TO PUBLISH');
+  panel.innerHTML=`<h3>${heading}</h3><p class="section-help">${result.errors.length?'ERROR impide una publicación nueva. ':''}${result.warnings.length?'WARNING permite publicar, pero conviene revisarlo.':''}${!needsAttention?'Los datos editoriales básicos están listos.':''}</p>${needsAttention?`<ul>${result.errors.map(message=>`<li><strong>ERROR:</strong> ${esc(message)}</li>`).join('')}${result.warnings.map(message=>`<li><strong>WARNING:</strong> ${esc(message)}</li>`).join('')}</ul>`:''}`;
+  return result;
+}
+function resetPublishConfirmation(overlay) {
+  const button=$('[data-save-status="published"]',overlay);
+  if(button?.dataset.confirmPublish){delete button.dataset.confirmPublish;button.textContent='Publicar';}
+  if(state.editing?.type==='comics') showComicPreflight(overlay,buildPayload(overlay,'current'));
 }
 async function saveEditor(intent,overlay,button) {
   const status=intent==='current'?'current':intent;
   const payload=buildPayload(overlay,status);
   const realStatus=status==='current'?(formValue($('[data-editor-form]',overlay),'status')||'draft'):status;
-  if(realStatus==='published') { const problem=publishRequirements(state.editing.type,payload);if(problem){toast(problem,true);return;} }
+  if(state.editing.type==='comics') {
+    const preflight=showComicPreflight(overlay,payload);
+    const wasPublished=!state.editing.isNew && normStatus(state.editing.original.status)==='published';
+    if(realStatus==='published' && preflight.errors.length && !wasPublished){toast('Corrige los errores del preflight antes de publicar.',true);return;}
+    if(intent==='published' && !button.dataset.confirmPublish){button.dataset.confirmPublish='true';button.textContent='Confirmar publicación';return;}
+  }
+  if(realStatus==='published' && state.editing.type!=='comics') { const problem=publishRequirements(state.editing.type,payload);if(problem){toast(problem,true);return;} }
   const form=$('[data-editor-form]',overlay);const titleInput=form.querySelector('[name="title"], [name="name"]');
   if(!payload.slug) payload.slug=uniqueSlug(state.editing.type,slugify(titleInput?.value)||`borrador-${Date.now()}`);
   const buttons=$$('[data-save-status]',overlay);buttons.forEach(item=>item.disabled=true);

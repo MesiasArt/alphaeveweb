@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { comicPreflight } from '../editorial.js';
 
 // Exercise the real client router without requiring a browser or production credentials.
 function loadAdmin() {
@@ -18,9 +19,9 @@ function loadAdmin() {
     window:{addEventListener(){}}, location,
     history:{pushState(_state,_title,path){location.pathname=path;}, replaceState(_state,_title,path){location.pathname=path;}},
     fetch:async()=>({ok:true,status:200,json:async()=>({authenticated:false})}),
-    AbortSignal, console, setTimeout, clearTimeout, structuredClone,
+    AbortSignal, console, setTimeout, clearTimeout, structuredClone, comicPreflight,
   });
-  vm.runInContext(readFileSync(new URL('../public/admin.js', import.meta.url),'utf8'),context);
+  vm.runInContext(readFileSync(new URL('../public/admin.js', import.meta.url),'utf8').replace(/^import [^\r\n]*\r?\n/,''),context);
   vm.runInContext(`
     const views=[];
     renderPasswordChange = required => views.push(['password',required]);

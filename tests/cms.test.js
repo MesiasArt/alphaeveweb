@@ -6,6 +6,7 @@ import { getContent, handleCms, serveMedia } from '../worker/cms.js';
 import { servePublicPage, serveSitemap } from '../worker/public-pages.js';
 import { pageMetadata, publicRoutes, resolvePage } from '../seo-data.js';
 import { comics as seedComics } from '../seo-data.js';
+import { comicReadingState } from '../editorial.js';
 
 function makeEnv() {
   const rows = new Map();
@@ -120,7 +121,7 @@ test('admin authentication, draft visibility, publication validation, and relati
   assert.equal(publicData.comics.some(item => item.slug === draft.slug), false);
 
   response = await api(env, '/api/cms/content', { method: 'PUT', cookie, body: { type: 'comics', slug: draft.slug, payload: { ...draft, status: 'published' } } });
-  assert.equal(response.status, 400);
+  assert.equal(response.status, 422);
   const published = { ...draft, title: 'Published from audit', cover: '/media/audit-cover.jpg', status: 'published' };
   response = await api(env, '/api/cms/content', { method: 'PUT', cookie, body: { type: 'comics', slug: draft.slug, payload: published } });
   assert.equal(response.status, 200);
@@ -217,6 +218,22 @@ test('legacy seed editorial access is preserved and frozen separately from credi
   const after=(await (await api(env,'/api/cms/content',{cookie:authorCookie})).json()).comics.find(item=>item.slug===seedComic.slug);
   assert.deepEqual(after.editorSlugs,['tonypan']);
   assert.deepEqual(after.workAuthorSlugs,[]);
+});
+
+test('preflight blocks new invalid publication but permits incomplete drafts and published legacy edits', async () => {
+  const env=makeEnv();
+  const admin=await signedIn(env);
+  const draft={slug:'preflight-draft',title:'Preflight draft',status:'draft',cover:'',format:'Series',chapters:[{id:'one',number:1,title:'One',status:'draft',readUrl:'javascript:alert(1)'}]};
+  assert.equal((await api(env,'/api/cms/content',{method:'PUT',cookie:admin,body:{type:'comics',slug:draft.slug,payload:draft}})).status,200);
+  const publishing=await api(env,'/api/cms/content',{method:'PUT',cookie:admin,body:{type:'comics',slug:draft.slug,payload:{...draft,status:'published',cover:'/media/cover.jpg'}}});
+  assert.equal(publishing.status,422);
+  assert.ok((await publishing.json()).preflight.errors.some(message=>message.includes('lectura')));
+  const legacy=(await getContent(env,{includeUnpublished:true})).comics.find(item=>item.slug==='baka-el-mito-asesino');
+  assert.equal(legacy.status,null);
+  const saved=await api(env,'/api/cms/content',{method:'PUT',cookie:admin,body:{type:'comics',slug:legacy.slug,payload:{...legacy,status:'published'}}});
+  assert.equal(saved.status,200);
+  assert.ok((await saved.json()).preflight.warnings.some(message=>message.includes('sinopsis')));
+  assert.equal((await getContent(env)).comics.some(item=>item.slug===legacy.slug),true);
 });
 
 test('media upload validates image signature and serves uploaded bytes', async () => {
@@ -352,6 +369,8 @@ test('cold public response uses published CMS content for route, HTML, SEO, and 
   const env = makeEnv();
   const admin = await signedIn(env);
   const published = { slug: 'hooligans-our-first-adventure', title: 'HOOLIGANS - Our first adventure', synopsis: 'Historia de prueba para verificar la ruta publicada.', cover: '/media/hooligans.jpg', status: 'published', creatorSlugs: [], chapters: [] };
+  assert.equal(comicReadingState(published).hasReadingContent,false);
+  assert.doesNotMatch(comicReadingState(published).badge,/undefined capítulos/i);
   const draft = { slug: 'fase-uno-draft', title: 'Borrador privado', cover: '/media/draft.jpg', status: 'draft', creatorSlugs: [], chapters: [] };
   const archived = { slug: 'fase-uno-archived', title: 'Archivado privado', cover: '/media/archived.jpg', status: 'archived', creatorSlugs: [], chapters: [] };
   for (const record of [published, draft, archived]) {
