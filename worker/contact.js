@@ -26,6 +26,13 @@ export default {
     if (url.pathname === "/robots.txt") return serveRobots(request, url);
     if (url.pathname === "/sitemap.xml") return serveSitemap(request, env, url);
 
+    if (url.pathname === '/admin/ventas' || url.pathname === '/admin/ventas/') {
+      const response = await env.ASSETS.fetch(new Request(new URL('/sales.html', url), request));
+      const headers = new Headers(response.headers);
+      headers.set('x-robots-tag','noindex, nofollow');
+      headers.set('cache-control','no-store');
+      return new Response(response.body,{status:response.status,headers});
+    }
     if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname.startsWith("/admin/")) {
       return env.ASSETS.fetch(new Request(new URL("/admin.html", url), request));
     }

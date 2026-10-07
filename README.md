@@ -16,6 +16,18 @@ Comic, author and project records are modeled in `seo-data.js`. Creator-to-comic
 
 ## Content CMS (Cloudflare D1 + R2)
 
+### Ventas privadas en eventos
+
+En `/admin/ventas` (también enlazado desde el CMS), solo las cuentas con rol `admin` pueden consultar inventarios y registrar ventas tocando una portada y eligiendo efectivo, transferencia, tarjeta o regalo. Administración prepara cada evento con nombre, fecha, efectivo inicial para cambio, unidades llevadas y precios en RD$, incluyendo volúmenes individuales del catálogo. El inventario, historial y cobros se guardan en D1 y requieren conexión. Los regalos descuentan existencias sin sumar ingresos; caja significa efectivo inicial más ventas en efectivo. Los precios se almacenan en centavos y quedan fijados por evento.
+
+Solo administración crea eventos, anula movimientos (restituyendo la unidad) y cierra eventos. Un evento cerrado conserva su historial y no permite nuevas ventas ni anulaciones. Los registros repetidos con el mismo identificador no duplican ventas; la base de datos impide consumir unidades agotadas incluso con varios dispositivos. La sección no tiene enlaces públicos y sus datos requieren una sesión de administrador del CMS. Las cuentas de autores no tienen acceso, tampoco mediante la API.
+
+En **Productos de venta** (`/admin/ventas#productos`) puedes agregar, editar y archivar productos privados con nombre, categoría, precio habitual e imagen (ruta/URL o subida al R2 existente). Se guardan autor y porcentaje como referencia; no se implementó liquidación automática de autores. Archivar un producto lo excluye de nuevos eventos y restaurarlo vuelve a incluirlo. Los eventos anteriores conservan su nombre, precio e inventario aunque se edite o archive el producto.
+
+La migración `0005_sales_products.sql` incorpora 37 productos (32 cómics/ediciones y 5 productos de mercancía) desde `Control de Ventas de Comics.xlsx`, hoja `Control de Ventas`, filas 8–44: nombres, precios, autor y porcentaje. Los productos vinculados al catálogo usan las portadas existentes; los recopilatorios mantienen identidades independientes. No se importan cantidades, ventas, regalos ni cobros históricos. Cada evento comienza con cantidades en cero, que administración introduce manualmente, y puede ajustar los precios de referencia.
+
+Antes de usar esta función en producción, aplica las migraciones pendientes (`0004_event_sales.sql` y `0005_sales_products.sql`) con `pnpm dlx wrangler d1 migrations apply alphaeve-cms --remote` y despliega el sitio.
+
 The private editor is at `/admin`. It supports creating and editing comic, author and project records, restoring the original bundled version, and uploading raster images to R2. It uses the existing record shapes so project case pages, chapter data, credits, galleries, relationship slugs and SEO metadata remain compatible. Public pages, sitemap, canonical/Open Graph metadata and JSON-LD read the merged content.
 
 The studio password remains the administrator login. Administrators can create individual author accounts in **Cuentas de autores**. Each author account can edit that author's profile and comics where the account holder is listed as a work author; contributor credits alone do not grant access. Temporary passwords are shown once, stored as salted PBKDF2 hashes, and must be changed at first login. Authors cannot edit author assignments or delete/reset content. Apply pending D1 migrations before deploying account changes.

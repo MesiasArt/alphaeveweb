@@ -1,5 +1,6 @@
 import { authors as seedAuthors, comics as seedComics, projects as seedProjects } from "../seo-data.js";
 import { comicPreflight } from "../editorial.js";
+import { handleSales } from './sales.js';
 
 const TYPES = new Set(["comics", "authors", "projects"]);
 const MAX_JSON_BYTES = 1_000_000;
@@ -14,6 +15,13 @@ const encoder = new TextEncoder();
 const loginAttempts = new Map();
 
 export async function handleCms(request, env, url) {
+  if (url.pathname.startsWith('/api/cms/sales')) {
+    const user = await requireCms(request, env, url);
+    if (!user) return json({ error: 'No autorizado.' }, 401);
+    if (user.role !== 'admin') return json({ error: 'Solo administración puede acceder a ventas e inventario.' }, 403);
+    if (user.mustChangePassword) return json({ error: 'Cambia tu contraseña temporal en el CMS.' }, 403);
+    return handleSales(request, env, url, user, () => getContent(env));
+  }
   if (url.pathname === "/api/content") {
     if (request.method !== "GET" && request.method !== "HEAD") return json({ error: "Método no permitido." }, 405);
     return json(await getContent(env), 200, { "cache-control": "no-store" }, request.method === "HEAD");
